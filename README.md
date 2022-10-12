@@ -9,7 +9,8 @@ https://arxiv.org/pdf/2011.02831.pdf
 /phaseone
 
 # Phase Two:
-Apply lessons in Phase One to the plankton data set. Compare with naive rnn.
+Apply lessons in Phase One to the plankton data set. We will look at the cartesian product comparison of binary classification via the "fair" 4x4 neural net. Do the same for the quantum scenario.
+
 (We are here)
 
 # Phase Three: Generalize binary quantum classifier 
