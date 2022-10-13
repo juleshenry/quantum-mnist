@@ -1,6 +1,7 @@
 # quantum-mnist
 This project seeks to confirm results published in https://thesai.org/Downloads/Volume11No10/Paper_40-Handwritten_Numeric_Image_Classification.pdf
 
+We will explore quantum image processing via plankton data set found in this paper: https://arxiv.org/pdf/2108.05258.pdf
 
 Other relevant research:
 https://arxiv.org/pdf/2011.02831.pdf
