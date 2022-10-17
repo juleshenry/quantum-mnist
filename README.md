@@ -1,7 +1,7 @@
 # quantum-mnist
 This project seeks to confirm results published in https://thesai.org/Downloads/Volume11No10/Paper_40-Handwritten_Numeric_Image_Classification.pdf
 
-We will explore quantum image processing via plankton data set found in this paper: https://arxiv.org/pdf/2108.05258.pdf
+We will explore quantum image processing via plankton data set found in this paper: https://arxiv.org/pdf/2108.05258.pdfß
 
 Other relevant research:
 https://arxiv.org/pdf/2011.02831.pdf
@@ -12,6 +12,7 @@ https://arxiv.org/pdf/2011.02831.pdf
 # Phase Two:
 Apply lessons in Phase One to the plankton data set. We will look at the cartesian product comparison of binary classification via the "fair" 4x4 neural net. Do the same for the quantum scenario.
 
+We need to convert the plankton dataset to grayscale. We do so using the 			
 (We are here)
 
 # Phase Three: Generalize binary quantum classifier 
