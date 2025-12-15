@@ -112,7 +112,8 @@ def test_circuit_encoding():
         from plankton_quantum_algorithm import PlanktonQuantumClassifier
         import cirq
         
-        classifier = PlanktonQuantumClassifier(image_size=(4, 4))  # Use smaller for testing
+        # Use default threshold (0.5)
+        classifier = PlanktonQuantumClassifier(image_size=(4, 4), threshold=0.5)  # Use smaller for testing
         
         # Create test image
         test_image = np.array([
@@ -128,12 +129,12 @@ def test_circuit_encoding():
         # Verify circuit properties
         assert len(circuit.all_qubits()) == 16, "Should have 16 qubits for 4x4 image"
         
-        # Count X gates (pixels > 0.5)
+        # Count X gates (pixels > classifier.threshold)
         x_gates = sum(1 for op in circuit.all_operations())
-        expected_x_gates = (test_image > 0.5).sum()
+        expected_x_gates = (test_image > classifier.threshold).sum()
         assert x_gates == expected_x_gates, f"Expected {expected_x_gates} X gates, got {x_gates}"
         
-        print(f"✓ Circuit encoding works: {x_gates} X gates for {expected_x_gates} pixels > 0.5")
+        print(f"✓ Circuit encoding works: {x_gates} X gates for {expected_x_gates} pixels > {classifier.threshold}")
         return True
         
     except ImportError as e:

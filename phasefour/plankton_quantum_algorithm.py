@@ -39,7 +39,7 @@ class PlanktonQuantumClassifier:
     Quantum classifier for plankton images using parameterized quantum circuits.
     """
     
-    def __init__(self, image_size=(8, 8), seed=0):
+    def __init__(self, image_size=(8, 8), seed=0, threshold=0.5):
         """
         Initialize the quantum classifier.
         
@@ -47,9 +47,12 @@ class PlanktonQuantumClassifier:
             image_size: Tuple (height, width) for image dimensions. 
                        Recommended: (8, 8) for faster simulation, (16, 16) for better accuracy
             seed: Random seed for reproducibility
+            threshold: Binary threshold for quantum encoding (default: 0.5)
+                      Pixels > threshold map to |1⟩, others to |0⟩
         """
         self.image_size = image_size
         self.n_qubits = image_size[0] * image_size[1]
+        self.threshold = threshold
         np.random.seed(seed)
         
         # Verify image size is feasible for quantum simulation
@@ -57,6 +60,7 @@ class PlanktonQuantumClassifier:
             print(f"Warning: {self.n_qubits} qubits may be too large for efficient simulation")
         
         print(f"Initialized quantum classifier with {image_size} images ({self.n_qubits} qubits)")
+        print(f"Binary encoding threshold: {threshold}")
     
     def bilinear_interpolation(self, image, y, x):
         """Perform bilinear interpolation for smooth image resizing."""
@@ -154,10 +158,9 @@ class PlanktonQuantumClassifier:
         qubits = cirq.GridQubit.rect(*self.image_size)
         circuit = cirq.Circuit()
         
-        # Binary encoding: apply X gate if pixel value > 0.5
-        threshold = 0.5
+        # Binary encoding: apply X gate if pixel value > threshold
         for i, value in enumerate(values):
-            if value > threshold:
+            if value > self.threshold:
                 circuit.append(cirq.X(qubits[i]))
         
         return circuit
@@ -463,6 +466,10 @@ if __name__ == "__main__":
     print("Quantum Plankton Classification Demo")
     print("=" * 60)
     
+    # Determine data directory relative to this file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(os.path.dirname(script_dir), "data", "zooplankton_0p5x")
+    
     # Quick test with single pair
     classifier = PlanktonQuantumClassifier(image_size=(8, 8))
     
@@ -470,7 +477,7 @@ if __name__ == "__main__":
         model, history, accuracy = classifier.train_binary_classifier(
             category_a="bosmina",
             category_b="cyclops",
-            plankton_dir="/home/runner/work/quantum-mnist/quantum-mnist/data/zooplankton_0p5x",
+            plankton_dir=data_dir,
             max_images=20,
             epochs=10,
             batch_size=4
