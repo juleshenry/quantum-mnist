@@ -9,7 +9,6 @@ import sys
 import numpy as np
 import tensorflow as tf
 from PIL import Image
-from pathlib import Path
 import matplotlib.pyplot as plt
 
 # Add parent directory to path to import phase three module
@@ -211,8 +210,6 @@ def train_classical_model(x_train, y_train, x_test, y_test,
 
 def plot_comparison(quantum_acc, cnn_acc, fair_nn_acc, class_names):
     """Plot comparison of different models."""
-    import matplotlib.pyplot as plt
-    
     models = ['Quantum\n(4x4)', 'Classical CNN\n(64x64)', 'Fair Classical\n(4x4)']
     accuracies = [quantum_acc, cnn_acc, fair_nn_acc]
     

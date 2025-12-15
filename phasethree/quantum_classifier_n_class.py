@@ -154,14 +154,6 @@ def build_quantum_model(num_classes, image_size=(4, 4)):
     return model
 
 
-def hinge_accuracy(y_true, y_pred):
-    """Calculate accuracy for hinge loss."""
-    y_true = tf.squeeze(y_true) > 0.0
-    y_pred = tf.squeeze(y_pred) > 0.0
-    result = tf.cast(y_true == y_pred, tf.float32)
-    return tf.reduce_mean(result)
-
-
 def preprocess_data(x_train, y_train, x_test, y_test, image_size=(4, 4), threshold=0.5):
     """Complete preprocessing pipeline for quantum classification."""
     
