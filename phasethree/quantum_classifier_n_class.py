@@ -45,7 +45,7 @@ def remove_contradicting(xs, ys):
             # Throw out images that match more than one label
             pass
     
-    print(f"Number of unique images: {len(mapping.values())}")
+    print(f"Number of unique images: {len(mapping)}")
     print(f"Initial number of images: {len(xs)}")
     print(f"Remaining non-contradicting unique images: {len(new_x)}")
     
@@ -59,7 +59,7 @@ def binarize_images(x, threshold=0.5):
 
 def convert_to_circuit(image):
     """Encode truncated classical image into quantum circuit."""
-    values = np.ndarray.flatten(image)
+    values = image.flatten()
     h, w = image.shape[0], image.shape[1]
     qubits = cirq.GridQubit.rect(h, w)
     circuit = cirq.Circuit()
