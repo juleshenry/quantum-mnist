@@ -142,7 +142,7 @@ def remove_contradicting(xs, ys):
     return np.array(new_x), np.array(new_y)
 
 
-def convert_to_circuit(image):
+def convert_to_circuit(image, image_size: Tuple[int, int] = (4, 4)):
     """
     Encode a binary image into a quantum circuit.
     
@@ -150,12 +150,13 @@ def convert_to_circuit(image):
     
     Args:
         image: Binary image array
+        image_size: Size of the image (height, width), must match image dimensions
     
     Returns:
         cirq.Circuit encoding the image
     """
-    values = np.ndarray.flatten(image)
-    qubits = cirq.GridQubit.rect(4, 4)
+    values = image.flatten()
+    qubits = cirq.GridQubit.rect(*image_size)
     circuit = cirq.Circuit()
     
     for i, value in enumerate(values):
@@ -213,16 +214,18 @@ def create_quantum_model(num_classes: int = 10,
 def create_classical_model(num_classes: int = 10, 
                            image_size: Tuple[int, int] = (4, 4)):
     """
-    Create a fair classical neural network for comparison.
+    Create a simple classical neural network baseline for comparison.
     
-    Uses the same parameter count as the quantum model for fair comparison.
+    Note: This baseline uses fewer parameters than the quantum model.
+    Quantum model: ~320 parameters (2 layers × 16 data × 10 readout qubits)
+    Classical model: ~54 parameters ((16×2 + 2) + (2×10 + 10))
     
     Args:
         num_classes: Number of output classes
         image_size: Size of input images
     
     Returns:
-        Compiled Keras model
+        Keras model
     """
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(input_shape=(*image_size, 1)),
@@ -270,8 +273,8 @@ def main():
     
     # Step 4: Convert to quantum circuits
     print("\n4. Converting images to quantum circuits...")
-    x_train_circ = [convert_to_circuit(x) for x in x_train_nocon]
-    x_test_circ = [convert_to_circuit(x) for x in x_test_bin]
+    x_train_circ = [convert_to_circuit(x, IMAGE_SIZE) for x in x_train_nocon]
+    x_test_circ = [convert_to_circuit(x, IMAGE_SIZE) for x in x_test_bin]
     
     x_train_tfcirc = tfq.convert_to_tensor(x_train_circ)
     x_test_tfcirc = tfq.convert_to_tensor(x_test_circ)
