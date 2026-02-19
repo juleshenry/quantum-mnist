@@ -6,16 +6,15 @@ pillow>=8.0.0
 
 # Quantum computing and ML frameworks (required for training)
 # Note: TensorFlow Quantum has specific version requirements
-tensorflow==2.7.0
-tensorflow-quantum==0.7.2
-cirq==0.14.1
+tensorflow==2.16.2
+tensorflow-quantum
+cirq
 sympy>=1.9
 
 # Optional: for visualization and analysis
 matplotlib>=3.3.0
 seaborn>=0.11.0
 
-# Note: TensorFlow Quantum compatibility
-# - Requires Python 3.7-3.9 (not 3.10+)
-# - TensorFlow 2.7.0 is the recommended version for TFQ 0.7.2
+# Note: TensorFlow Quantum
+# - Works with TensorFlow 2.16+
 # - May require additional system dependencies for some platforms
