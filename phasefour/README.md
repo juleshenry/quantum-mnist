@@ -238,7 +238,7 @@ This implementation is part of the quantum-mnist project exploring quantum machi
 ```
 docker build --platform linux/amd64 -t my-quantum-app .
 
-docker run -it quantum-env
+docker run -it my-quantum-app
 
-docker run -it quantum-env python example_usage.py
+docker run -it my-quantum-app python example_usage.py
 ```

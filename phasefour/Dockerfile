@@ -1,19 +1,18 @@
-# Use Python 3.9 as requested
-FROM python:3.9-slim
+# Use a base image that matches the TensorFlow version required by TFQ
+FROM tensorflow/tensorflow:2.11.0-gpu
 
-# Install system dependencies (required for some quantum/imaging libs)
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+COPY . .
 
-# Upgrade pip first to avoid the notice in your logs
-RUN pip install --no-cache-dir --upgrade pip
-
-# TFQ is very sensitive to the TF version. 
-# As of current releases, TFQ 0.7.3 pairs with TF 2.11.0.
-RUN pip install --no-cache-dir \
+# Fix the Protobuf issue by pinning a compatible version (3.20.x is usually the sweet spot for TF 2.11)
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+    protobuf==3.20.3 \
     tensorflow==2.11.0 \
     tensorflow-quantum \
     cirq \
