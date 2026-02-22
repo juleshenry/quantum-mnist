@@ -6,7 +6,6 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential && \
     pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir \
-    protobuf==3.20.3 \
     tensorflow-quantum \
     cirq \
     sympy \
