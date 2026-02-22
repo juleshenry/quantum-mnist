@@ -1,18 +1,18 @@
-# Keep your base image
-FROM tensorflow/tensorflow:2.11.0
+# Use the older but most compatible version for TFQ
+FROM tensorflow/tensorflow:2.7.0
 
-# Install build-essential for C++ compatibility
+# System dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential && \
     pip install --no-cache-dir --upgrade pip && \
-    # TFQ 0.7.2 is the correct match for TF 2.11.0
-    # We also pin Cirq to 0.14.1 which is the stable partner for this TFQ version
+    # We must pin these exactly to avoid the 'undefined symbol' error
     pip install --no-cache-dir \
-    tensorflow-quantum==0.7.2 \
-    cirq==0.14.1 \
-    sympy \
+    tensorflow==2.7.0 \
+    tensorflow-quantum==0.6.1 \
+    cirq==0.13.1 \
+    sympy==1.8 \
     pillow \
-    numpy && \
+    numpy==1.21.6 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
