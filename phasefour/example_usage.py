@@ -46,7 +46,8 @@ def example_single_pair():
     print()
     
     # Initialize classifier
-    classifier = PlanktonQuantumClassifier(image_size=(8, 8), seed=42)
+    
+    classifier = PlanktonQuantumClassifier(image_size=(4, 4), seed=42) 
     
     # Define data directory (adjust path as needed)
     data_dir = data_dir_str()
@@ -58,13 +59,15 @@ def example_single_pair():
     
     try:
         # Train classifier
+        # Modified for stability
+
         model, history, accuracy = classifier.train_binary_classifier(
             category_a="bosmina",
             category_b="cyclops",
             plankton_dir=data_dir,
-            max_images=20,
-            epochs=10,
-            batch_size=4
+            max_images=5, # Tiny dataset for testing
+            epochs=1,     # Just one pass
+            batch_size=2
         )
         
         print("\n" + "="*70)
