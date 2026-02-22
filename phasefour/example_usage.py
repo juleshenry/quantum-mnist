@@ -24,6 +24,8 @@ except ImportError as e:
     print("pip install tensorflow tensorflow-quantum cirq sympy")
     sys.exit(1)
 
+def data_dir_str():
+    return "data/zooplankton_0p5x"
 
 def example_single_pair():
     """
@@ -47,10 +49,7 @@ def example_single_pair():
     classifier = PlanktonQuantumClassifier(image_size=(8, 8), seed=42)
     
     # Define data directory (adjust path as needed)
-    data_dir = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "data", "zooplankton_0p5x"
-    )
+    data_dir = data_dir_str()
     
     if not os.path.exists(data_dir):
         print(f"Data directory not found: {data_dir}")
@@ -106,10 +105,7 @@ def example_multiple_pairs():
     print()
     
     # Define data directory
-    data_dir = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "data", "zooplankton_0p5x"
-    )
+    data_dir = data_dir_str()
     
     if not os.path.exists(data_dir):
         print(f"Data directory not found: {data_dir}")
@@ -172,13 +168,10 @@ def example_preprocessing_only():
     classifier = PlanktonQuantumClassifier(image_size=(8, 8), seed=42)
     
     # Define data directory
-    data_dir = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-        "data", "zooplankton_0p5x"
-    )
+    data_dir =  data_dir_str()
     
     if not os.path.exists(data_dir):
-        print(f"Data directory not found: {data_dir}")
+        print(f"Data directory ... not found: {data_dir}")
         return
     
     try:
