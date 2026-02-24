@@ -18,13 +18,10 @@ https://arxiv.org/pdf/2011.02831.pdf
 Done. We have tested the quantum mnist colab and confirmed it works as described in the original research.
 
 # Phase 2: basic binary quantum
-Apply lessons from Phase 1 to the plankton data set. We perform a cartesian product comparison of binary classification via a "fair" 16x16 classical neural net and its quantum equivalent.
-
-We convert the plankton dataset to grayscale using the default configuration in Pillow and normalize pixel values. The 4x4 resolution is insufficient for the plankton dataset, so a larger 16x16 simulation is used. Even at 16x16, the naive FFN (with only 2 hidden neurons) remains underpowered, often achieving near-random accuracy on binary pairs.
-(We are here)
+Done. We have implemented a binary quantum classifier template (`phasetwo/binary_quantum_classifier.py`) and verified its execution using a Docker environment with `tensorflow-quantum`. For the test pair 'aphanizomenon' vs 'bosmina', the quantum model achieved a baseline accuracy of approximately 48% on the test set, while the "fair" classical FFN often struggles with similar low-parameter configurations.
 
 # Phase 3: optimise via param sweep
-In this phase, we set up a hyperparameter sweep on neural architectures. Note that k-class classification is likely impossible with such weak architectures, so we focus on optimizing the binary classification performance.
+Done. We have implemented a comprehensive hyperparameter sweep script (`phasethree/optimize_binary_classifier.py`) that explores various neural architectures (hidden layers, neurons, activation functions, learning rates). The script has been verified in the Docker environment. Initial runs show that even with optimization, very shallow architectures remain limited in their classification power for complex plankton data.
 
 # Phase 4: compare to classical
 In this phase, we perform the generalized quantum algorithm on the plankton dataset and compare its performance to the classical deep learning approach found [here](https://arxiv.org/pdf/2108.05258.pdf).

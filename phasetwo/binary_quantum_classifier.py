@@ -99,8 +99,16 @@ def run_quantum_classification(class_a, class_b):
     return model.evaluate(x_test_tfq, y_test_hinge)
 
 if __name__ == "__main__":
-    # This will likely fail locally without TFQ
-    print("This script is a template for Phase 2 Quantum Classification.")
-    print("Run this in an environment with tensorflow_quantum installed.")
-    # names = get_plankton_names()
-    # run_quantum_classification(names[0], names[1])
+    print("--- Phase 2: Basic Binary Quantum Classification ---")
+    plank = get_plankton_names()
+    if len(plank) < 2:
+        print("Not enough plankton classes.")
+    else:
+        class_a, class_b = plank[0], plank[3] # aphanizomenon vs bosmina
+        print(f"Running Quantum Classification for {class_a} vs {class_b}")
+        try:
+            results = run_quantum_classification(class_a, class_b)
+            print(f"\nQuantum Results - Loss: {results[0]:.4f}, Accuracy: {results[1]:.4f}")
+        except Exception as e:
+            print(f"Error during quantum execution: {e}")
+            print("Note: This requires a working tensorflow_quantum installation.")

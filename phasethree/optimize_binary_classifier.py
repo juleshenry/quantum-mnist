@@ -25,13 +25,13 @@ def create_model(hidden_layers, neurons_per_layer, activation='relu', learning_r
     )
     return model
 
-# Define a reduced hyperparameter search space for testing
+# Define the hyperparameter search space
 hyperparams = {
-    'hidden_layers': [1, 2],
-    'neurons_per_layer': [4, 8],
-    'activation': ['relu'],
-    'learning_rate': [0.001],
-    'batch_size': [32]
+    'hidden_layers': [1, 2, 3],
+    'neurons_per_layer': [4, 8, 16],
+    'activation': ['relu', 'tanh'],
+    'learning_rate': [0.001, 0.0001],
+    'batch_size': [16, 32]
 }
 
 def setup_sweep():
