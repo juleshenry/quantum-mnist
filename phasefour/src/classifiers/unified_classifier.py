@@ -1,5 +1,6 @@
 import os
 import sys
+import collections
 import sympy
 import cirq
 import numpy as np
@@ -7,99 +8,144 @@ import tensorflow as tf
 import tensorflow_quantum as tfq
 from PIL import Image
 from sklearn.model_selection import train_test_split
-from sklearn.decomposition import PCA
 
 # Suppress TensorFlow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 class UnifiedQuantumClassifier:
-    def __init__(self, image_size=(4, 4), encoding='angle', threshold=0.5):
+    """
+    Unified Quantum Binary Classifier following the exact Farhi et al. approach
+    from the TensorFlow Quantum MNIST tutorial.
+    """
+    
+    def __init__(self, image_size=(4, 4), threshold=0.5):
         self.image_size = image_size
         self.n_qubits = image_size[0] * image_size[1]
-        self.encoding = encoding
         self.threshold = threshold
-        self.qubits = cirq.GridQubit.rect(*self.image_size)
+        
+        # Define qubits
+        self.data_qubits = cirq.GridQubit.rect(*self.image_size)
         self.readout_qubit = cirq.GridQubit(-1, -1)
-        print("Initialized Unified Classifier: {}x{} images, {} qubits".format(image_size[0], image_size[1], self.n_qubits))
+        
+        print("Initialized Tutorial-style Classifier: {}x{} images, {} qubits".format(
+            image_size[0], image_size[1], self.n_qubits))
 
-    def preprocess_image(self, path):
-        """Load and normalize image at higher resolution for PCA/Pooling."""
-        try:
-            # Load at 16x16 to keep some detail before compression
-            img = Image.open(path).convert("L").resize((16, 16), Image.BILINEAR)
-            img_array = np.array(img) / 255.0
-            return img_array.flatten()
-        except Exception as e:
-            return None
+    def remove_contradicting(self, xs, ys):
+        """Removes images that map to both labels (from the tutorial)."""
+        mapping = collections.defaultdict(set)
+        orig_x = {}
+        for x, y in zip(xs, ys):
+           orig_x[tuple(x.flatten())] = x
+           mapping[tuple(x.flatten())].add(y)
+        
+        new_x = []
+        new_y = []
+        for flatten_x in mapping:
+          x = orig_x[flatten_x]
+          labels = mapping[flatten_x]
+          if len(labels) == 1:
+              new_x.append(x)
+              new_y.append(next(iter(labels)))
+        
+        print("Unique images: {}, Contradictory removed: {}".format(
+            len(mapping), len(xs) - len(new_x)))
+        return np.array(new_x), np.array(new_y)
 
-    def to_circuit(self, features):
+    def convert_to_circuit(self, image):
+        """Binary encoding as per tutorial."""
+        values = np.ndarray.flatten(image)
+        qubits = cirq.GridQubit.rect(*self.image_size)
         circuit = cirq.Circuit()
-        # Ensure we only use n_qubits
-        vals = features[:self.n_qubits]
-        if self.encoding == 'angle':
-            for i, q in enumerate(self.qubits):
-                angle = vals[i] * np.pi
-                circuit.append(cirq.ry(angle)(q))
+        for i, value in enumerate(values):
+            if value > self.threshold:
+                circuit.append(cirq.X(qubits[i]))
         return circuit
 
     def build_model(self):
+        """Build the specific XX/ZZ model from the tutorial."""
+        readout = cirq.GridQubit(-1, -1)
+        data_qubits = cirq.GridQubit.rect(*self.image_size)
         circuit = cirq.Circuit()
-        circuit.append(cirq.H(self.readout_qubit))
-        # Variational layers with more entanglement
-        for i, q in enumerate(self.qubits):
-            circuit.append(cirq.rx(sympy.Symbol("x_" + str(i)))(q))
-            circuit.append(cirq.ry(sympy.Symbol("y_" + str(i)))(q))
         
-        # Ring entanglement
-        for i in range(self.n_qubits):
-            circuit.append(cirq.CNOT(self.qubits[i], self.qubits[(i+1)%self.n_qubits]))
+        # Prepare the readout qubit.
+        circuit.append(cirq.X(readout))
+        circuit.append(cirq.H(readout))
         
-        # Connect to readout
-        for i in range(0, self.n_qubits, 4): # Sample some qubits to readout
-            circuit.append(cirq.CNOT(self.qubits[i], self.readout_qubit))
+        # XX Layers
+        for i, qubit in enumerate(data_qubits):
+            symbol = sympy.Symbol('xx-' + str(i))
+            circuit.append(cirq.XX(qubit, readout)**symbol)
+            
+        # ZZ Layers
+        for i, qubit in enumerate(data_qubits):
+            symbol = sympy.Symbol('zz-' + str(i))
+            circuit.append(cirq.ZZ(qubit, readout)**symbol)
 
-        readout_op = cirq.Z(self.readout_qubit)
+        # Final readout preparation
+        circuit.append(cirq.H(readout))
+        readout_op = cirq.Z(readout)
+
         model = tf.keras.Sequential([
             tf.keras.layers.Input(shape=(), dtype=tf.string),
-            tfq.layers.PQC(circuit, readout_op, differentiator=tfq.differentiators.ParameterShift()),
-            tf.keras.layers.Dense(8, activation='relu'),
-            tf.keras.layers.Dense(1, activation='sigmoid')
+            tfq.layers.PQC(circuit, readout_op),
         ])
-        model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
-                      loss='binary_crossentropy', metrics=['accuracy'])
+        
+        def hinge_accuracy(y_true, y_pred):
+            y_true = tf.squeeze(y_true) > 0.0
+            y_pred = tf.squeeze(y_pred) > 0.0
+            return tf.reduce_mean(tf.cast(y_true == y_pred, tf.float32))
+
+        model.compile(
+            loss=tf.keras.losses.Hinge(),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
+            metrics=[hinge_accuracy]
+        )
         return model
 
-    def train(self, cat_a, cat_b, data_dir, epochs=20):
-        def load_data(cat):
-            p = os.path.join(data_dir, cat, "training_data")
-            if not os.path.exists(p): p = os.path.join(data_dir, cat)
-            files = [os.path.join(p, f) for f in os.listdir(p) if f.lower().endswith('.jpeg')][:60]
-            return [self.preprocess_image(f) for f in files if self.preprocess_image(f) is not None]
+    def train(self, cat_a, cat_b, data_dir, imgs_per=100, epochs=20):
+        def load_cat(category, label):
+            path = os.path.join(data_dir, category, "training_data")
+            if not os.path.exists(path): path = os.path.join(data_dir, category)
+            files = [os.path.join(path, f) for f in os.listdir(path) if f.lower().endswith('.jpeg')][:imgs_per]
+            
+            imgs = []
+            for f in files:
+                img = Image.open(f).convert("L").resize(self.image_size, Image.BILINEAR)
+                imgs.append(np.array(img) / 255.0)
+            return imgs, [label] * len(imgs)
 
-        print("Loading {} and {}...".format(cat_a, cat_b))
-        raw_a = load_data(cat_a)
-        raw_b = load_data(cat_b)
-        X_raw = np.array(raw_a + raw_b)
-        y = np.array([0]*len(raw_a) + [1]*len(raw_b))
-
-        # PCA to compress 256 (16x16) features to n_qubits
-        print("Compressing features via PCA (256 -> {})...".format(self.n_qubits))
-        pca = PCA(n_components=self.n_qubits)
-        X_compressed = pca.fit_transform(X_raw)
-        # Normalize to [0, 1] for angle encoding
-        X_compressed = (X_compressed - X_compressed.min()) / (X_compressed.max() - X_compressed.min())
-
-        X_train, X_test, y_train, y_test = train_test_split(X_compressed, y, test_size=0.2, stratify=y)
+        print("Loading {} vs {}...".format(cat_a, cat_b))
+        imgs_a, labels_a = load_cat(cat_a, 1) # True
+        imgs_b, labels_b = load_cat(cat_b, 0) # False
         
-        x_train_tf = tfq.convert_to_tensor([self.to_circuit(x) for x in X_train])
-        x_test_tf = tfq.convert_to_tensor([self.to_circuit(x) for x in X_test])
+        X = np.array(imgs_a + imgs_b)
+        y = np.array(labels_a + labels_b)
+
+        # 1. Remove contradictory examples after downscaling
+        X, y = self.remove_contradicting(X, y)
+
+        # 2. Convert to circuits
+        tf_circuits = tfq.convert_to_tensor([self.convert_to_circuit(x) for x in X])
+        
+        # 3. Hinge labels: [-1, 1]
+        y_hinge = 2.0 * y - 1.0
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            tf_circuits.numpy(), y_hinge, test_size=0.2, stratify=y_hinge, random_state=42)
+        
+        X_train = tf.convert_to_tensor(X_train)
+        X_test = tf.convert_to_tensor(X_test)
 
         model = self.build_model()
-        # Early stopping if no improvement in 5 epochs
-        early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy', patience=5, restore_best_weights=True)
         
-        model.fit(x_train_tf, y_train, epochs=epochs, batch_size=8, 
-                  validation_data=(x_test_tf, y_test), callbacks=[early_stop], verbose=1)
+        print("Starting training (Tutorial Style)...")
+        model.fit(
+            X_train, y_train,
+            epochs=epochs,
+            batch_size=32,
+            validation_data=(X_test, y_test),
+            verbose=1
+        )
         
-        _, acc = model.evaluate(x_test_tf, y_test, verbose=0)
+        _, acc = model.evaluate(X_test, y_test, verbose=0)
         return acc

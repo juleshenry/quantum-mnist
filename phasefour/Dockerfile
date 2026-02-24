@@ -26,4 +26,4 @@ COPY . .
 # Set python path to include src
 ENV PYTHONPATH="${PYTHONPATH}:/app"
 
-CMD ["python", "scripts/compare_unified.py"]
+CMD ["python", "scripts/run_unified_classifier.py"]
