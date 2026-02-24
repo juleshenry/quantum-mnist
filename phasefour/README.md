@@ -94,7 +94,7 @@ The 8×8 configuration provides a good balance between quantum circuit complexit
 ### Basic Example: Single Pair Classification
 
 ```python
-from plankton_quantum_algorithm import PlanktonQuantumClassifier
+from src.classifiers.plankton_classifier import PlanktonQuantumClassifier
 
 # Initialize classifier with 8x8 images (64 qubits)
 classifier = PlanktonQuantumClassifier(image_size=(8, 8))
@@ -115,7 +115,7 @@ print(f"Test Accuracy: {accuracy:.4f}")
 ### Cartesian Product Comparison
 
 ```python
-from plankton_quantum_algorithm import run_cartesian_comparison
+from src.classifiers.plankton_classifier import run_cartesian_comparison
 
 # Run on multiple category pairs
 results = run_cartesian_comparison(
@@ -235,8 +235,12 @@ Based on quantum image classification literature:
 
 This implementation is part of the quantum-mnist project exploring quantum machine learning for image classification. Contributions and improvements are welcome!
 
-```
+```bash
 docker build --platform linux/amd64 -t my-quantum-app .
 
-docker run -it --platform linux/amd64 my-quantum-app python example_usage.py
+# To run all classifiers and tests:
+docker run -it --platform linux/amd64 my-quantum-app python scripts/run_all.py
+
+# To run the specific plankton example:
+docker run -it --platform linux/amd64 my-quantum-app python scripts/example_plankton_usage.py
 ```

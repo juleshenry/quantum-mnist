@@ -10,7 +10,7 @@ import os
 import numpy as np
 
 # Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
 def test_imports():
@@ -18,7 +18,7 @@ def test_imports():
     print("Testing imports...")
     try:
         # This will work even without TFQ, just won't be able to train
-        import plankton_quantum_algorithm as pqa
+        import src.classifiers.plankton_classifier as pqa
         print("✓ Module imported successfully")
         return True
     except ImportError as e:
@@ -30,7 +30,7 @@ def test_class_initialization():
     """Test PlanktonQuantumClassifier initialization."""
     print("\nTesting class initialization...")
     try:
-        from plankton_quantum_algorithm import PlanktonQuantumClassifier
+        from src.classifiers.plankton_classifier import PlanktonQuantumClassifier
         
         # Test with 8x8
         classifier = PlanktonQuantumClassifier(image_size=(8, 8))
@@ -54,7 +54,7 @@ def test_image_preprocessing():
     """Test image preprocessing functions."""
     print("\nTesting image preprocessing...")
     try:
-        from plankton_quantum_algorithm import PlanktonQuantumClassifier
+        from src.classifiers.plankton_classifier import PlanktonQuantumClassifier
         from PIL import Image
         
         classifier = PlanktonQuantumClassifier(image_size=(8, 8))
@@ -84,7 +84,7 @@ def test_bilinear_interpolation():
     """Test bilinear interpolation resizing."""
     print("\nTesting bilinear interpolation...")
     try:
-        from plankton_quantum_algorithm import PlanktonQuantumClassifier
+        from src.classifiers.plankton_classifier import PlanktonQuantumClassifier
         
         classifier = PlanktonQuantumClassifier(image_size=(8, 8))
         
@@ -109,7 +109,7 @@ def test_circuit_encoding():
     """Test quantum circuit encoding (requires Cirq)."""
     print("\nTesting circuit encoding...")
     try:
-        from plankton_quantum_algorithm import PlanktonQuantumClassifier
+        from src.classifiers.plankton_classifier import PlanktonQuantumClassifier
         import cirq
         
         # Use default threshold (0.5)
@@ -149,7 +149,7 @@ def test_circuit_layer_builder():
     """Test CircuitLayerBuilder class (requires Cirq)."""
     print("\nTesting CircuitLayerBuilder...")
     try:
-        from plankton_quantum_algorithm import CircuitLayerBuilder
+        from src.classifiers.plankton_classifier import CircuitLayerBuilder
         import cirq
         import sympy
         
@@ -182,7 +182,7 @@ def test_data_loading():
     """Test plankton data loading."""
     print("\nTesting data loading...")
     try:
-        from plankton_quantum_algorithm import PlanktonQuantumClassifier
+        from src.classifiers.plankton_classifier import PlanktonQuantumClassifier
         
         classifier = PlanktonQuantumClassifier(image_size=(8, 8))
         

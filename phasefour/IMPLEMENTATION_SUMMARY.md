@@ -5,7 +5,7 @@ Implement a quantum neural network architecture for plankton image classificatio
 
 ## What Was Implemented
 
-### 1. Core Quantum Classifier (`plankton_quantum_algorithm.py`)
+### 1. Core Quantum Classifier (`src/classifiers/plankton_classifier.py`)
 
 **PlanktonQuantumClassifier Class:**
 - Configurable quantum image encoding (default: 8×8 = 64 qubits)
@@ -53,12 +53,12 @@ Quantum output (1 value) → Dense(1) → Binary classification
 - `IMPLEMENTATION_SUMMARY.md`: This summary document
 
 **Testing:**
-- `test_structure.py`: 7 comprehensive structure tests
+- `tests/test_structure.py`: 7 comprehensive structure tests
 - All tests pass without requiring TensorFlow Quantum installation
 - Validates preprocessing, encoding, and data loading
 
 **Examples:**
-- `example_usage.py`: Three usage examples with detailed explanations
+- `scripts/example_plankton_usage.py`: Three usage examples with detailed explanations
 - Demonstrates single-pair, multi-pair, and preprocessing-only workflows
 
 **Configuration:**
@@ -160,7 +160,7 @@ Based on quantum image classification literature:
 
 ### Basic Usage
 ```python
-from phasefour.plankton_quantum_algorithm import PlanktonQuantumClassifier
+from src.classifiers.plankton_classifier import PlanktonQuantumClassifier
 
 # Initialize
 classifier = PlanktonQuantumClassifier(image_size=(8, 8))
@@ -178,7 +178,7 @@ model, history, accuracy = classifier.train_binary_classifier(
 ### Advanced Usage
 ```python
 # Custom threshold and multiple pairs
-from phasefour.plankton_quantum_algorithm import run_cartesian_comparison
+from src.classifiers.plankton_classifier import run_cartesian_comparison
 
 results = run_cartesian_comparison(
     plankton_dir='data/zooplankton_0p5x',
@@ -200,16 +200,17 @@ pip install tensorflow==2.7.0 tensorflow-quantum==0.7.2 cirq sympy
 
 ## Files Created/Modified
 
-### New Files (9)
-1. `phasefour/plankton_quantum_algorithm.py` - Main implementation (487 lines)
-2. `phasefour/README.md` - Technical documentation
-3. `phasefour/example_usage.py` - Usage examples
-4. `phasefour/test_structure.py` - Structure tests
-5. `phasefour/COMPARISON_REPORT.md` - Classical vs Quantum comparison
-6. `phasefour/comparison_report.py` - Report generator
-7. `phasefour/requirements.txt` - Dependencies
-8. `phasefour/IMPLEMENTATION_SUMMARY.md` - This document
-9. `.gitignore` - Ignore patterns for build artifacts
+### Reorganized Structure
+1. `src/classifiers/plankton_classifier.py` - Main implementation
+2. `src/classifiers/binary_classifier.py` - Binary classifier variant
+3. `src/classifiers/image_classifier.py` - Image classifier variant
+4. `src/classifiers/simple_classifier.py` - Simple synthetic classifier
+5. `src/utils/report_generator.py` - Report generation logic
+6. `scripts/example_plankton_usage.py` - Usage examples
+7. `scripts/run_all.py` - Master execution script
+8. `tests/test_structure.py` - Structure tests
+9. `README.md` - Technical documentation
+10. `Dockerfile` - Docker environment configuration
 
 ### Modified Files (1)
 1. `README.md` - Updated with Phase Four documentation

@@ -278,8 +278,8 @@ For production use, classical approaches remain more practical, but the quantum 
 
 1. Phase One implementation: `phaseone/quantum_image_mnist.ipynb`
 2. Phase Two implementation: `phasetwo/PhaseTwo.ipynb`
-3. Phase Four implementation: `phasefour/plankton_quantum_algorithm.py`
-4. Technical documentation: `phasefour/README.md`
+3. Phase Four implementation: `src/classifiers/plankton_classifier.py`
+4. Technical documentation: `README.md`
 """
     
     return report

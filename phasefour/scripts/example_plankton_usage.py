@@ -12,10 +12,10 @@ import sys
 import os
 
 # Add parent directory to path to import the module
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    from plankton_quantum_algorithm import PlanktonQuantumClassifier, run_cartesian_comparison
+    from src.classifiers.plankton_classifier import PlanktonQuantumClassifier, run_cartesian_comparison
     import numpy as np
 except ImportError as e:
     print(f"Error importing dependencies: {e}")
