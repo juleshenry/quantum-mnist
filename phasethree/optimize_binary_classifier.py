@@ -1,10 +1,9 @@
 import tensorflow as tf
 import numpy as np
 import itertools
+from phasetwo.plankton_ingress import prepare_binary_dataset, get_plankton_names
 
-# Configuration for the hyperparameter sweep
-# Note: This is set up but NOT executed as per Phase 3 requirements.
-
+# Configuration
 QUBIT_DIMS = (16, 16)
 
 def create_model(hidden_layers, neurons_per_layer, activation='relu', learning_rate=0.001):
@@ -26,13 +25,13 @@ def create_model(hidden_layers, neurons_per_layer, activation='relu', learning_r
     )
     return model
 
-# Define the hyperparameter search space
+# Define a reduced hyperparameter search space for testing
 hyperparams = {
-    'hidden_layers': [1, 2, 3],
-    'neurons_per_layer': [2, 4, 8, 16],
-    'activation': ['relu', 'tanh'],
-    'learning_rate': [0.01, 0.001, 0.0001],
-    'batch_size': [16, 32, 64]
+    'hidden_layers': [1, 2],
+    'neurons_per_layer': [4, 8],
+    'activation': ['relu'],
+    'learning_rate': [0.001],
+    'batch_size': [32]
 }
 
 def setup_sweep():
@@ -45,31 +44,57 @@ def setup_sweep():
     print(f"Total combinations to explore: {len(combinations)}")
     return combinations
 
-def run_sweep_placeholder(combinations, x_train, y_train, x_test, y_test):
+def run_sweep(combinations, x_train, y_train, x_test, y_test):
     """
-    Placeholder for the actual sweep execution.
-    K-class classification is likely impossible with such weak architecture.
+    Executes the hyperparameter sweep.
     """
-    results = []
+    best_accuracy = 0
+    best_config = None
     
-    # DO NOT RUN: This is just a setup.
-    print("Sweep setup complete. Execution is disabled for this phase.")
-    
-    # for config in combinations:
-    #     print(f"Testing configuration: {config}")
-    #     model = create_model(
-    #         hidden_layers=config['hidden_layers'],
-    #         neurons_per_layer=config['neurons_per_layer'],
-    #         activation=config['activation'],
-    #         learning_rate=config['learning_rate']
-    #     )
-    #     # model.fit(x_train, y_train, batch_size=config['batch_size'], epochs=10, verbose=0)
-    #     # score = model.evaluate(x_test, y_test, verbose=0)
-    #     # results.append({'config': config, 'accuracy': score[1]})
-    
-    return results
+    for i, config in enumerate(combinations):
+        print(f"[{i+1}/{len(combinations)}] Testing: {config}")
+        model = create_model(
+            hidden_layers=config['hidden_layers'],
+            neurons_per_layer=config['neurons_per_layer'],
+            activation=config['activation'],
+            learning_rate=config['learning_rate']
+        )
+        
+        # Expand dims for channel
+        x_train_expanded = np.expand_dims(x_train, -1)
+        x_test_expanded = np.expand_dims(x_test, -1)
+        
+        history = model.fit(
+            x_train_expanded, y_train, 
+            batch_size=config['batch_size'], 
+            epochs=10, 
+            verbose=0,
+            validation_data=(x_test_expanded, y_test)
+        )
+        
+        val_acc = max(history.history['val_accuracy'])
+        print(f"Best Val Acc: {val_acc:.4f}")
+        
+        if val_acc > best_accuracy:
+            best_accuracy = val_acc
+            best_config = config
+            
+    return best_config, best_accuracy
 
 if __name__ == "__main__":
-    combos = setup_sweep()
-    # Mock data or real data loading would go here
-    # run_sweep_placeholder(combos, None, None, None, None)
+    plank = get_plankton_names()
+    if len(plank) < 2:
+        print("Not enough plankton classes found.")
+    else:
+        # Use a representative pair for optimization
+        class_a, class_b = plank[0], plank[3] # aphanizomenon vs bosmina
+        print(f"Optimizing for {class_a} vs {class_b}")
+        
+        (x_train, y_train), (x_test, y_test) = prepare_binary_dataset(class_a, class_b, limit=100)
+        
+        combos = setup_sweep()
+        best_cfg, best_acc = run_sweep(combos, x_train, y_train, x_test, y_test)
+        
+        print("\n--- SWEEP COMPLETE ---")
+        print(f"Best Configuration: {best_cfg}")
+        print(f"Best Accuracy: {best_acc:.4f}")

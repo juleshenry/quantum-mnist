@@ -1,0 +1,5 @@
+**/venv
+.git
+.DS_Store
+*.ipynb_checkpoints
+phasefour/results/*

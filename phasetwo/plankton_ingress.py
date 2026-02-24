@@ -1,11 +1,56 @@
 import os
+import numpy as np
+from PIL import Image
 from pathlib import Path
-plank_dir = '/'.join(os.path.dirname(os.path.abspath(__file__)).split('/')[:-1]) + '/data/zooplankton_0p5x'
-plank_dir = (os.listdir(plank_dir))
-plank=sorted(filter(lambda x:x[0]!='.', plank_dir))
-cartesian_names = []
-cartesian_names = [(a,b,) for a in plank for b in plank if a!=b]
-print((cartesian_names))
-assert len(cartesian_names) + len(plank) == len(plank)**2
-print(cartesian_names[0])
-import tensorflow
+
+# Configuration
+QUBIT_DIMS = (16, 16)
+DATA_DIR = Path(__file__).parent.parent / 'data' / 'zooplankton_0p5x'
+
+def get_plankton_names():
+    plank_dir = os.listdir(DATA_DIR)
+    plank = sorted(filter(lambda x: not x.startswith('.'), plank_dir))
+    return plank
+
+def load_images_for_class(class_name, limit=50):
+    class_dir = DATA_DIR / class_name / 'training_data'
+    if not class_dir.exists():
+        return []
+    
+    img_paths = list(class_dir.glob('*.jpeg'))[:limit]
+    imgs = []
+    for p in img_paths:
+        try:
+            with Image.open(p) as img:
+                # Convert to grayscale and resize to 16x16 as per Phase Two requirement
+                img = img.convert('L')
+                img = img.resize(QUBIT_DIMS, Image.BILINEAR)
+                imgs.append(np.asarray(img) / 255.0)
+        except Exception as e:
+            print(f"Error loading {p}: {e}")
+    return imgs
+
+def prepare_binary_dataset(class_a, class_b, limit=50, test_split=0.25):
+    imgs_a = load_images_for_class(class_a, limit)
+    imgs_b = load_images_for_class(class_b, limit)
+    
+    labels_a = np.zeros(len(imgs_a))
+    labels_b = np.ones(len(imgs_b))
+    
+    X = np.array(imgs_a + imgs_b)
+    y = np.concatenate([labels_a, labels_b])
+    
+    # Shuffle
+    indices = np.random.permutation(len(X))
+    X, y = X[indices], y[indices]
+    
+    split_idx = int(len(X) * (1 - test_split))
+    return (X[:split_idx], y[:split_idx]), (X[split_idx:], y[split_idx:])
+
+if __name__ == "__main__":
+    plank = get_plankton_names()
+    print(f"Found {len(plank)} classes.")
+    if len(plank) >= 2:
+        (x_train, y_train), (x_test, y_test) = prepare_binary_dataset(plank[0], plank[1])
+        print(f"Prepared dataset for {plank[0]} vs {plank[1]}")
+        print(f"Train size: {len(x_train)}, Test size: {len(x_test)}")
