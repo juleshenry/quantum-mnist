@@ -1,5 +1,4 @@
 import os
-import sys
 import collections
 import sympy
 import cirq
@@ -12,76 +11,62 @@ from sklearn.model_selection import train_test_split
 # Suppress TensorFlow warnings
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-class UnifiedQuantumClassifier:
+class SimpleQuantumClassifier:
     """
-    Unified Quantum Binary Classifier following the exact Farhi et al. approach
-    from the TensorFlow Quantum MNIST tutorial.
+    Exact implementation of the Farhi et al. architecture from 
+    quantum_image_mnist.ipynb.
+    - 4x4 resolution (16 qubits)
+    - Threshold-based binary encoding
+    - Contradiction removal
+    - Single layer of XX interaction + Single layer of ZZ interaction
+    - Hinge Loss
     """
-    
     def __init__(self, image_size=(4, 4), threshold=0.5):
         self.image_size = image_size
-        self.n_qubits = image_size[0] * image_size[1]
         self.threshold = threshold
-        
-        # Define qubits
         self.data_qubits = cirq.GridQubit.rect(*self.image_size)
         self.readout_qubit = cirq.GridQubit(-1, -1)
-        
-        print("Initialized Tutorial-style Classifier: {}x{} images, {} qubits".format(
-            image_size[0], image_size[1], self.n_qubits))
 
     def remove_contradicting(self, xs, ys):
-        """Removes images that map to both labels (from the tutorial)."""
         mapping = collections.defaultdict(set)
         orig_x = {}
         for x, y in zip(xs, ys):
            orig_x[tuple(x.flatten())] = x
            mapping[tuple(x.flatten())].add(y)
-        
-        new_x = []
-        new_y = []
+        new_x, new_y = [], []
         for flatten_x in mapping:
-          x = orig_x[flatten_x]
-          labels = mapping[flatten_x]
-          if len(labels) == 1:
-              new_x.append(x)
-              new_y.append(next(iter(labels)))
-        
-        print("Unique images: {}, Contradictory removed: {}".format(
-            len(mapping), len(xs) - len(new_x)))
+          if len(mapping[flatten_x]) == 1:
+              new_x.append(orig_x[flatten_x])
+              new_y.append(next(iter(mapping[flatten_x])))
         return np.array(new_x), np.array(new_y)
 
     def convert_to_circuit(self, image):
-        """Binary encoding as per tutorial."""
         values = np.ndarray.flatten(image)
-        qubits = cirq.GridQubit.rect(*self.image_size)
         circuit = cirq.Circuit()
         for i, value in enumerate(values):
             if value > self.threshold:
-                circuit.append(cirq.X(qubits[i]))
+                circuit.append(cirq.X(self.data_qubits[i]))
         return circuit
 
     def build_model(self):
-        """Build the specific XX/ZZ model from the tutorial."""
-        readout = cirq.GridQubit(-1, -1)
-        data_qubits = cirq.GridQubit.rect(*self.image_size)
+        readout = self.readout_qubit
+        data_qubits = self.data_qubits
         circuit = cirq.Circuit()
         
-        # Prepare the readout qubit.
+        # Tutorial Preparation
         circuit.append(cirq.X(readout))
         circuit.append(cirq.H(readout))
         
-        # XX Layers
+        # XX layer
         for i, qubit in enumerate(data_qubits):
             symbol = sympy.Symbol('xx-' + str(i))
             circuit.append(cirq.XX(qubit, readout)**symbol)
             
-        # ZZ Layers
+        # ZZ layer
         for i, qubit in enumerate(data_qubits):
             symbol = sympy.Symbol('zz-' + str(i))
             circuit.append(cirq.ZZ(qubit, readout)**symbol)
 
-        # Final readout preparation
         circuit.append(cirq.H(readout))
         readout_op = cirq.Z(readout)
 
@@ -102,50 +87,31 @@ class UnifiedQuantumClassifier:
         )
         return model
 
-    def train(self, cat_a, cat_b, data_dir, imgs_per=100, epochs=20):
+    def train(self, cat_a, cat_b, data_dir, imgs_per=100, epochs=30):
         def load_cat(category, label):
             path = os.path.join(data_dir, category, "training_data")
             if not os.path.exists(path): path = os.path.join(data_dir, category)
             files = [os.path.join(path, f) for f in os.listdir(path) if f.lower().endswith('.jpeg')][:imgs_per]
-            
             imgs = []
             for f in files:
                 img = Image.open(f).convert("L").resize(self.image_size, Image.BILINEAR)
                 imgs.append(np.array(img) / 255.0)
             return imgs, [label] * len(imgs)
 
-        print("Loading {} vs {}...".format(cat_a, cat_b))
-        imgs_a, labels_a = load_cat(cat_a, 1) # True
-        imgs_b, labels_b = load_cat(cat_b, 0) # False
+        imgs_a, labels_a = load_cat(cat_a, 1)
+        imgs_b, labels_b = load_cat(cat_b, 0)
+        X, y = self.remove_contradicting(np.array(imgs_a + imgs_b), np.array(labels_a + labels_b))
         
-        X = np.array(imgs_a + imgs_b)
-        y = np.array(labels_a + labels_b)
-
-        # 1. Remove contradictory examples after downscaling
-        X, y = self.remove_contradicting(X, y)
-
-        # 2. Convert to circuits
-        tf_circuits = tfq.convert_to_tensor([self.convert_to_circuit(x) for x in X])
-        
-        # 3. Hinge labels: [-1, 1]
+        # Binarize as per tutorial
+        X_bin = np.array(X > self.threshold, dtype=np.float32)
+        tf_circs = tfq.convert_to_tensor([self.convert_to_circuit(x) for x in X_bin])
         y_hinge = 2.0 * y - 1.0
 
         X_train, X_test, y_train, y_test = train_test_split(
-            tf_circuits.numpy(), y_hinge, test_size=0.2, stratify=y_hinge, random_state=42)
+            tf_circs.numpy(), y_hinge, test_size=0.2, stratify=y, random_state=42)
         
-        X_train = tf.convert_to_tensor(X_train)
-        X_test = tf.convert_to_tensor(X_test)
-
+        X_train, X_test = tf.convert_to_tensor(X_train), tf.convert_to_tensor(X_test)
         model = self.build_model()
-        
-        print("Starting training (Tutorial Style)...")
-        model.fit(
-            X_train, y_train,
-            epochs=epochs,
-            batch_size=32,
-            validation_data=(X_test, y_test),
-            verbose=1
-        )
-        
+        model.fit(X_train, y_train, epochs=epochs, batch_size=32, validation_data=(X_test, y_test), verbose=1)
         _, acc = model.evaluate(X_test, y_test, verbose=0)
         return acc
