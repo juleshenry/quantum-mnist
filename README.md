@@ -28,13 +28,13 @@ graph TD
     %% Classical Layer
     subgraph Classical_Layer [STRATEGY 1: CLASSICAL PREPROCESSING]
         direction LR
-        A["<br/>16x16 Grayscale<br/>Plankton Image<br/><br/>"] --> B["<br/>Downsample<br/>to 4x4<br/><br/>"]
-        B --> C["<br/>Min-Max<br/>Normalization<br/><br/>"]
-        C --> D["<br/>Feature Vector<br/>(16 dimensions)<br/><br/>"]
+        A["<br/><b>16x16 Grayscale</b><br/><b>Plankton Image</b><br/><br/>"] --> B["<br/><b>Downsample</b><br/><b>to 4x4</b><br/><br/>"]
+        B --> C["<br/><b>Min-Max</b><br/><b>Normalization</b><br/><br/>"]
+        C --> D["<br/><b>Feature Vector</b><br/><b>(16 dimensions)</b><br/><br/>"]
     end
 
     %% Data Handover
-    D ==> Interface{{"<br/>Classical-Quantum Handover<br/>(θ = π · x)<br/><br/>"}}
+    D ==> Interface{{"<br/><b>Classical-Quantum Handover</b><br/><b>(θ = π · x)</b><br/><br/>"}}
 
     %% Quantum Layer
     subgraph Quantum_Layer [STRATEGY 2: QUANTUM CIRCUIT - PHASE 2]
@@ -42,30 +42,43 @@ graph TD
         
         subgraph Register_Init [Register Init]
             direction TB
-            Q_Data["<br/>Data Qubits<br/>|00...0⟩₁₆<br/><br/>"]
-            Q_Anc["<br/>Ancilla Qubit<br/>|0⟩<br/><br/>"]
+            Q_Data["<br/><b>Data Qubits</b><br/><b>|00...0⟩₁₆</b><br/><br/>"]
+            Q_Anc["<br/><b>Ancilla Qubit</b><br/><b>|0⟩</b><br/><br/>"]
         end
 
         subgraph PQC_Flow [Quantum Processing Unit]
             direction LR
-            E["<br/>Angle Encoding<br/>(Ry Gates)<br/><br/>"] --> F["<br/>Entanglement<br/>(CZ Chain)<br/><br/>"]
-            F --> G["<br/>Parameterized<br/>Interactions<br/>(XX, ZZ, YY)<br/><br/>"]
+            E["<br/><b>Angle Encoding</b><br/><b>(Ry Gates)</b><br/><br/>"] --> F["<br/><b>Entanglement</b><br/><b>(CZ Chain)</b><br/><br/>"]
+            F --> G["<br/><b>Parameterized</b><br/><b>Interactions</b><br/><b>(XX, ZZ, YY)</b><br/><br/>"]
         end
         
         Register_Init ==> PQC_Flow
-        PQC_Flow --> H["<br/>Interference<br/>(Hadamard)<br/><br/>"]
-        H --> I["<br/>Measurement<br/>(⟨Z⟩ Expectation)<br/><br/>"]
+        PQC_Flow --> H["<br/><b>Interference</b><br/><b>(Hadamard)</b><br/><br/>"]
+        H --> I["<br/><b>Measurement</b><br/><b>(⟨Z⟩ Expectation)</b><br/><br/>"]
     end
 
     %% Final Output
-    I ==> J["<br/>Binary Classification<br/>Result<br/><br/>"]
+    I ==> J["<br/><b>Binary Classification</b><br/><b>Result</b><br/><br/>"]
 
-    %% Styling
-    style Classical_Layer fill:#f9f9f9,stroke:#333,stroke-width:2px
-    style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5
-    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    %% Styling with High Contrast
+    style Classical_Layer fill:#f0f0f0,stroke:#000,stroke-width:2px,color:#000
+    style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5,color:#000
+    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    
+    %% Node-specific high contrast
+    style A color:#000
+    style B color:#000
+    style C color:#000
+    style D color:#000
+    style E color:#000
+    style F color:#000
+    style G color:#000
+    style H color:#000
+    style I color:#000
+    style Q_Data color:#000
+    style Q_Anc color:#000
 ```
 
 *   **Data Encoding (Angle Encoding):** Instead of binary thresholding ($x > 0.5$), we now use Angle Encoding. Each pixel $x_i$ from the downsampled 4x4 image is mapped to a rotation gate: $Ry(\pi \cdot x_i)$. This preserves the grayscale intensity information within the quantum state.
@@ -103,7 +116,32 @@ The model now consistently exceeds the 60% threshold. Below are the verified acc
 | **diaphanosoma vs diatom_chain** | **95.3%** | Target Reached |
 
 # Phase 4: compare to classical
-In this phase, we perform the generalized quantum algorithm on the plankton dataset and compare its performance to the classical deep learning approach found [here](https://arxiv.org/pdf/2108.05258.pdf).
+In this phase, we perform the generalized quantum algorithm on the plankton dataset and compare its performance to established classical deep learning approaches. 
+
+We evaluate three levels of classical models (MobileNetV2, Custom CNN, and a "Fair" MLP) against our expressive Quantum Neural Network to determine the presence of a quantum advantage in parameter efficiency.
+
+**Detailed Documentation:** [Phase 4 Neural Architectures & Comparison](phasefour/README.md)
+
+### 1. Hybrid Comparison Pipeline
+The phase 4 implementation (`phasefour/run_experiments.py`) compares models across different input resolutions and parameter scales:
+
+```mermaid
+graph TD
+    A["Plankton Dataset"] --> B1["128x128 RGB"]
+    A --> B2["4x4 Grayscale"]
+    
+    B1 --> C1["MobileNetV2 (Transfer)"]
+    B1 --> C2["SmallCNN (Custom)"]
+    
+    B2 --> D1["Fair Classical MLP"]
+    B2 --> D2["Quantum Neural Net (QNN)"]
+    
+    C1 & C2 & D1 & D2 --> E["Performance Comparison Matrix"]
+```
+
+*   **Classical SOTA:** Uses MobileNetV2 and a custom 4-layer CNN to establish a high-accuracy baseline on full-resolution data.
+*   **Quantum QNN:** An expressive PQC using multi-axis (XX, ZZ, YY) interactions and entanglement.
+*   **Fair Comparison:** A 35-parameter classical MLP used to benchmark the QNN's parameter efficiency on 4x4 data.
 
 ---
 
