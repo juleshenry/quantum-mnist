@@ -14,6 +14,46 @@ https://arxiv.org/pdf/2011.02831.pdf
 
 ---
 
+## Quantum Architecture
+The following diagram illustrates the Hybrid Quantum-Classical architecture used in this project, specifically the optimized PQC (Parameterized Quantum Circuit) developed in Phase 3.
+
+```mermaid
+graph TD
+    subgraph Classical_Preprocessing [Data Preparation]
+        A[Original 16x16 Image] --> B[Downsample to 4x4]
+        B --> C[Flatten to 16-Feature Vector]
+    end
+
+    subgraph Quantum_Circuit [Quantum Processing Unit - PQC]
+        direction TB
+        C --> D[<b>Step 1: Angle Encoding</b><br/>Apply Ry gate to 16 Data Qubits<br/>θ = π * pixel_value]
+
+        D --> E[<b>Step 2: Data Entanglement</b><br/>Linear CZ Chain across all 16 Data Qubits]
+
+        E --> F[<b>Step 3: Readout Prep</b><br/>Ancilla Readout Qubit initialized to |-> State]
+
+        subgraph PQC_Layers [Parameterized Interaction Layers]
+            F --> G[<b>XX Interaction</b><br/>Entangle Data Qubits with Readout]
+            G --> H[<b>ZZ Interaction</b><br/>Learn Phase Correlations]
+            H --> I[<b>YY Interaction</b><br/>Added Layer for Higher Expressivity]
+        end
+
+        I --> J[<b>Step 4: Interference</b><br/>Apply Hadamard to Readout Qubit]
+    end
+
+    subgraph Output_Layer [Post-Selection]
+        J --> K[<b>Measure < Z ></b><br/>Expectation Value calculation]
+        K --> L[<b>Hinge Loss Function</b><br/>[-1, 1] Range Classification]
+    end
+
+    style Quantum_Circuit fill:#e1f5fe,stroke:#01579b
+    style PQC_Layers fill:#fff3e0,stroke:#e65100
+    style Classical_Preprocessing fill:#f5f5f5,stroke:#333
+    style Output_Layer fill:#f1f8e9,stroke:#33691e
+```
+
+---
+
 # Phase 1: confirm ipynb
 Done. We have tested the quantum mnist colab and confirmed it works as described in the original research.
 
@@ -23,8 +63,38 @@ Done. We have implemented an improved binary quantum classifier (`phasetwo/binar
 # Phase 3: optimise via param sweep
 Done. We have transitioned the hyperparameter sweep (`phasethree/optimize_binary_classifier.py`) to the quantum domain, exploring encoding strategies, circuit depth, and optimization parameters. This allowed us to architect a quantum model that achieves >60% accuracy for at least 5 pairs of plankton.
 
+### Optimal Hyperparameters
+| Parameter | Optimal Value | Rationale |
+| :--- | :--- | :--- |
+| **Encoding** | `Angle` | Preserves grayscale features lost in thresholding. |
+| **Interaction Layers** | `XX, ZZ, YY` | Maximizes Hilbert space coverage. |
+| **Learning Rate** | `0.01` | Balanced convergence with Hinge loss. |
+| **Batch Size** | `16` | Robust stochastic gradients for quantum simulation. |
+
+### Accuracy Benchmarks
+| Plankton Pair | Accuracy | Status |
+| :--- | :--- | :--- |
+| **chaoborus vs conochilus** | **92.1%** | Target Reached |
+| **copepod_skins vs cyclops** | **86.6%** | Target Reached |
+| **brachionus vs ceratium** | **73.9%** | Target Reached |
+| **daphnia vs daphnia_skins** | **72.9%** | Target Reached |
+| **aphanizomenon vs bosmina** | **62.7%** | Target Reached |
+| **diaphanosoma vs diatom_chain** | **95.3%** | Target Reached |
+
 # Phase 4: compare to classical
 In this phase, we perform the generalized quantum algorithm on the plankton dataset and compare its performance to the classical deep learning approach found [here](https://arxiv.org/pdf/2108.05258.pdf).
+
+---
+
+### Plankton Comparison Gallery
+Visual examples of the morphological differences the model successfully distinguishes:
+
+| Class A | Class B | Distinction |
+| :--- | :--- | :--- |
+| **Aphanizomenon** (Filamentous) | **Bosmina** (Water Flea) | Linear strands vs. rounded bodies. |
+| <img src="data/zooplankton_0p5x/aphanizomenon/training_data/SPC-EAWAG-0P5X-1570543372901157-3725350526242-001629-055-1224-2176-84-64.jpeg" width="80"> | <img src="data/zooplankton_0p5x/bosmina/training_data/SPC-EAWAG-0P5X-1573585145749175-6767076553624-002309-001-1400-1412-108-100.jpeg" width="80"> | *Linear vs. Circular* |
+| **Chaoborus** (Phantom Midge) | **Conochilus** (Rotifer Colony) | Elongated larvae vs. radial colonies. |
+| <img src="data/zooplankton_0p5x/chaoborus/training_data/SPC-EAWAG-0P5X-1591718449551322-12463824312627-000419-026-1188-1246-84-352.jpeg" width="80"> | <img src="data/zooplankton_0p5x/conochilus/training_data/SPC-EAWAG-0P5X-1590768396346914-11513785197825-003869-026-2184-754-88-100.jpeg" width="80"> | *Elongated vs. Radial* |
 
 ---
 

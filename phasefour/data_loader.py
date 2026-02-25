@@ -3,19 +3,56 @@ import numpy as np
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
-def load_plankton_binary(class_a, class_b, img_size=(28, 28), data_dir='data/zooplankton_0p5x'):
+def load_plankton_data(img_size=(128, 128), data_dir='data/zooplankton_0p5x', test_size=0.15, val_size=0.15):
+    """Loads all classes from the data directory."""
+    classes = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
+    classes.sort()
+    class_to_idx = {cls: i for i, cls in enumerate(classes)}
+    
+    X = []
+    y = []
+    
+    for cls in classes:
+        path = os.path.join(data_dir, cls, 'training_data')
+        if not os.path.exists(path):
+            continue
+        
+        for img_name in os.listdir(path):
+            if img_name.lower().endswith(('.jpeg', '.jpg', '.png')):
+                img_path = os.path.join(path, img_name)
+                try:
+                    img = Image.open(img_path).convert('RGB')
+                    img = img.resize(img_size)
+                    X.append(np.array(img))
+                    y.append(class_to_idx[cls])
+                except Exception as e:
+                    print(f"Error loading {img_path}: {e}")
+                    
+    X = np.array(X, dtype='float32') / 255.0
+    y = np.array(y)
+    
+    # Split into train, val, test (70:15:15 as per paper)
+    X_train_val, X_test, y_train_val, y_test = train_test_split(X, y, test_size=test_size, random_state=42, stratify=y)
+    
+    # Calculate relative val_size for the remaining train_val set
+    val_relative_size = val_size / (1.0 - test_size)
+    X_train, X_val, y_train, y_val = train_test_split(X_train_val, y_train_val, test_size=val_relative_size, random_state=42, stratify=y_train_val)
+    
+    return X_train, X_val, X_test, y_train, y_val, y_test, classes
+
+def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir='data/zooplankton_0p5x'):
     def get_images(class_name):
         path = os.path.join(data_dir, class_name, 'training_data')
         images = []
         if not os.path.exists(path):
             return np.array([])
         for img_name in os.listdir(path):
-            if img_name.endswith('.jpeg'):
+            if img_name.lower().endswith(('.jpeg', '.jpg', '.png')):
                 img_path = os.path.join(path, img_name)
                 try:
-                    img = Image.open(img_path).convert('L') # Grayscale
+                    img = Image.open(img_path).convert('RGB')
                     img = img.resize(img_size)
-                    images.append(np.array(img) / 255.0)
+                    images.append(np.array(img))
                 except Exception as e:
                     print(f"Error loading {img_path}: {e}")
         return np.array(images)
@@ -23,7 +60,10 @@ def load_plankton_binary(class_a, class_b, img_size=(28, 28), data_dir='data/zoo
     imgs_a = get_images(class_a)
     imgs_b = get_images(class_b)
 
-    X = np.concatenate([imgs_a, imgs_b], axis=0)
+    if len(imgs_a) == 0 or len(imgs_b) == 0:
+        raise ValueError(f"One of the classes {class_a} or {class_b} has no images.")
+
+    X = np.concatenate([imgs_a, imgs_b], axis=0).astype('float32') / 255.0
     y = np.concatenate([np.ones(len(imgs_a)), np.zeros(len(imgs_b))], axis=0)
 
     # Shuffle
