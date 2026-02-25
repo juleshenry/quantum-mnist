@@ -24,38 +24,36 @@ Done. We have implemented an improved binary quantum classifier (`phasetwo/binar
 The transition from Phase 2 (baseline) to the optimized model involved a shift from simple thresholding to a more feature-rich quantum circuit.
 
 ```mermaid
-graph TD
-    subgraph Classical_Preprocessing [Data Preparation]
-        A[Original 16x16 Image] --> B[Downsample to 4x4]
-        B --> C[Flatten to 16-Feature Vector]
+graph LR
+    subgraph Classical_Prep [Classical Input]
+        A[16x16 Image] --> B[4x4 Downsample]
+        B --> C[Flatten Vector x]
     end
 
-    subgraph Quantum_Circuit [Quantum Processing Unit - PQC]
-        direction TB
-        C --> D[<b>Step 1: Angle Encoding</b><br/>Apply Ry gate to 16 Data Qubits<br/>θ = π * pixel_value]
-
-        D --> E[<b>Step 2: Data Entanglement</b><br/>Linear CZ Chain across all 16 Data Qubits]
-
-        E --> F[<b>Step 3: Readout Prep</b><br/>Ancilla Readout Qubit initialized to &#124;-&gt; State]
-
-        subgraph PQC_Layers [Parameterized Interaction Layers]
-            F --> G[<b>XX Interaction</b><br/>Entangle Data Qubits with Readout]
-            G --> H[<b>ZZ Interaction</b><br/>Learn Phase Correlations]
-            H --> I[<b>YY Interaction</b><br/>Added Layer for Higher Expressivity]
+    subgraph Quantum_Circuit [Quantum Circuit - PQC]
+        direction LR
+        
+        subgraph Data_Register [Data Register q₀...q₁₅]
+            D_Init["|0⟩"] --> D_Enc["Ry(π·x)"]
+            D_Enc --> D_Ent["CZ Entanglement"]
         end
 
-        I --> J[<b>Step 4: Interference</b><br/>Apply Hadamard to Readout Qubit]
+        subgraph Ancilla_Register [Ancilla Register qₐ]
+            A_Init["|0⟩"] --> A_Prep["H (|−⟩)"]
+        end
+
+        D_Ent --> PQC_Core{{Parameterized Interactions}}
+        A_Prep --> PQC_Core
+        
+        PQC_Core --> A_Post["H gate"]
+        A_Post --> A_Meas["Measure ⟨Z⟩"]
     end
 
-    subgraph Output_Layer [Post-Selection]
-        J --> K[<b>Measure < Z ></b><br/>Expectation Value calculation]
-        K --> L[<b>Hinge Loss Function</b><br/>&#91;-1, 1&#93; Range Classification]
-    end
+    A_Meas --> Loss[Hinge Loss Classification]
 
-    style Quantum_Circuit fill:#e1f5fe,stroke:#01579b
-    style PQC_Layers fill:#fff3e0,stroke:#e65100
-    style Classical_Preprocessing fill:#f5f5f5,stroke:#333
-    style Output_Layer fill:#f1f8e9,stroke:#33691e
+    style Data_Register fill:#e1f5fe,stroke:#01579b
+    style Ancilla_Register fill:#f1f8e9,stroke:#33691e
+    style PQC_Core fill:#fff3e0,stroke:#e65100
 ```
 
 *   **Data Encoding (Angle Encoding):** Instead of binary thresholding ($x > 0.5$), we now use Angle Encoding. Each pixel $x_i$ from the downsampled 4x4 image is mapped to a rotation gate: $Ry(\pi \cdot x_i)$. This preserves the grayscale intensity information within the quantum state.
