@@ -21,64 +21,51 @@ Done. We have tested the quantum mnist colab and confirmed it works as described
 Done. We have implemented an improved binary quantum classifier (`phasetwo/binary_quantum_classifier.py`) using **Angle Encoding** and an expressive PQC with entanglement. This model consistently achieves >60% accuracy on multiple plankton pairs, significantly outperforming the initial threshold baseline.
 
 ### 1. Quantum Architecture: Expressive PQC with Angle Encoding
-The model utilizes a hybrid classical-quantum pipeline designed to preserve grayscale morphological features while maximizing qubit interaction expressivity.
+The model utilizes a hybrid classical-quantum pipeline. The classical layer prepares the morphological features, which are then injected into a high-expressivity quantum circuit.
 
 ```mermaid
-graph LR
-    %% Classical Pipeline
-    subgraph Preprocessing [Classical Preprocessing]
-        direction TB
-        A["<br/>16x16 Grayscale Image<br/><br/>"] --> B["<br/>Downsample to 4x4<br/><br/>"]
-        B --> C["<br/>Normalize Pixels<br/>(0.0 to 1.0)<br/><br/>"]
-        C --> D["<br/>Flatten to 16-Feature<br/>Vector x<br/><br/>"]
+graph TD
+    %% Classical Layer
+    subgraph Classical_Layer [STRATEGY 1: CLASSICAL PREPROCESSING]
+        direction LR
+        A["<br/>16x16 Grayscale<br/>Plankton Image<br/><br/>"] --> B["<br/>Downsample<br/>to 4x4<br/><br/>"]
+        B --> C["<br/>Min-Max<br/>Normalization<br/><br/>"]
+        C --> D["<br/>Feature Vector<br/>(16 dimensions)<br/><br/>"]
     end
 
-    %% Quantum Circuit
-    subgraph QPU [Quantum Circuit Architecture - Phase 2]
+    %% Data Handover
+    D ==> Interface{{"<br/>Classical-Quantum Handover<br/>(θ = π · x)<br/><br/>"}}
+
+    %% Quantum Layer
+    subgraph Quantum_Layer [STRATEGY 2: QUANTUM CIRCUIT - PHASE 2]
         direction LR
         
-        subgraph Init [Initialization]
-            Q_d["<br/>Data Qubits<br/>|0⟩₁₆<br/><br/>"]
-            Q_a["<br/>Readout Qubit<br/>|0⟩<br/><br/>"]
-        end
-
-        subgraph Encoding [Feature Mapping]
+        subgraph Register_Init [Register Init]
             direction TB
-            E1["<br/>Angle Encoding:<br/>Ry(π·xᵢ)<br/><br/>"]
-            E2["<br/>Entanglement:<br/>Linear CZ Chain<br/><br/>"]
-            E1 --> E2
+            Q_Data["<br/>Data Qubits<br/>|00...0⟩₁₆<br/><br/>"]
+            Q_Anc["<br/>Ancilla Qubit<br/>|0⟩<br/><br/>"]
         end
 
-        subgraph PQC [Parameterized Interactions]
+        subgraph PQC_Flow [Quantum Processing Unit]
             direction LR
-            I1["<br/>XX(θ)<br/><br/>"] --> I2["<br/>ZZ(γ)<br/><br/>"] --> I3["<br/>YY(φ)<br/><br/>"]
+            E["<br/>Angle Encoding<br/>(Ry Gates)<br/><br/>"] --> F["<br/>Entanglement<br/>(CZ Chain)<br/><br/>"]
+            F --> G["<br/>Parameterized<br/>Interactions<br/>(XX, ZZ, YY)<br/><br/>"]
         end
-
-        subgraph Readout [Measurement]
-            M1["<br/>Hadamard Gate<br/><br/>"]
-            M2["<br/>Measure ⟨Z⟩<br/><br/>"]
-            M1 --> M2
-        end
-
-        %% Data Flow
-        Q_d --> Encoding
-        Q_a --> Prep["<br/>Hadamard Prep<br/>(|−⟩ State)<br/><br/>"]
         
-        Encoding --> PQC
-        Prep --> PQC
-        
-        PQC --> M1
+        Register_Init ==> PQC_Flow
+        PQC_Flow --> H["<br/>Interference<br/>(Hadamard)<br/><br/>"]
+        H --> I["<br/>Measurement<br/>(⟨Z⟩ Expectation)<br/><br/>"]
     end
 
-    %% External Connections
-    D -.-> E1
-    M2 --> Result["<br/>Binary<br/>Classification<br/><br/>"]
+    %% Final Output
+    I ==> J["<br/>Binary Classification<br/>Result<br/><br/>"]
 
-    style Preprocessing fill:#f5f5f5,stroke:#333,stroke-width:1px
-    style QPU fill:#fff,stroke:#01579b,stroke-width:2px
-    style Encoding fill:#e1f5fe,stroke:#01579b
-    style PQC fill:#fff3e0,stroke:#e65100
-    style Readout fill:#f1f8e9,stroke:#33691e
+    %% Styling
+    style Classical_Layer fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5
+    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px
 ```
 
 *   **Data Encoding (Angle Encoding):** Instead of binary thresholding ($x > 0.5$), we now use Angle Encoding. Each pixel $x_i$ from the downsampled 4x4 image is mapped to a rotation gate: $Ry(\pi \cdot x_i)$. This preserves the grayscale intensity information within the quantum state.
