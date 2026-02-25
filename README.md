@@ -14,8 +14,14 @@ https://arxiv.org/pdf/2011.02831.pdf
 
 ---
 
-## Quantum Architecture
-The following diagram illustrates the Hybrid Quantum-Classical architecture used in this project, specifically the optimized PQC (Parameterized Quantum Circuit) developed in Phase 3.
+# Phase 1: confirm ipynb
+Done. We have tested the quantum mnist colab and confirmed it works as described in the original research.
+
+# Phase 2: basic binary quantum
+Done. We have implemented an improved binary quantum classifier (`phasetwo/binary_quantum_classifier.py`) using **Angle Encoding** and an expressive PQC with entanglement. This model consistently achieves >60% accuracy on multiple plankton pairs, significantly outperforming the initial threshold baseline.
+
+### 1. Quantum Architecture: Expressive PQC with Angle Encoding
+The transition from Phase 2 (baseline) to the optimized model involved a shift from simple thresholding to a more feature-rich quantum circuit.
 
 ```mermaid
 graph TD
@@ -30,7 +36,7 @@ graph TD
 
         D --> E[<b>Step 2: Data Entanglement</b><br/>Linear CZ Chain across all 16 Data Qubits]
 
-        E --> F[<b>Step 3: Readout Prep</b><br/>Ancilla Readout Qubit initialized to |-> State]
+        E --> F[<b>Step 3: Readout Prep</b><br/>Ancilla Readout Qubit initialized to &#124;-&gt; State]
 
         subgraph PQC_Layers [Parameterized Interaction Layers]
             F --> G[<b>XX Interaction</b><br/>Entangle Data Qubits with Readout]
@@ -52,33 +58,38 @@ graph TD
     style Output_Layer fill:#f1f8e9,stroke:#33691e
 ```
 
----
-
-# Phase 1: confirm ipynb
-Done. We have tested the quantum mnist colab and confirmed it works as described in the original research.
-
-# Phase 2: basic binary quantum
-Done. We have implemented an improved binary quantum classifier (`phasetwo/binary_quantum_classifier.py`) using **Angle Encoding** and an expressive PQC with entanglement. This model consistently achieves >60% accuracy on multiple plankton pairs, significantly outperforming the initial threshold baseline.
+*   **Data Encoding (Angle Encoding):** Instead of binary thresholding ($x > 0.5$), we now use Angle Encoding. Each pixel $x_i$ from the downsampled 4x4 image is mapped to a rotation gate: $Ry(\pi \cdot x_i)$. This preserves the grayscale intensity information within the quantum state.
+*   **Entanglement Layer:** Before interacting with the readout qubit, we introduce a linear chain of CZ (Controlled-Z) gates across all 16 data qubits. This allows the model to learn spatial correlations between pixels.
+*   **Interaction Layers (XX, ZZ, YY):** The Parameterized Quantum Circuit (PQC) now uses three types of non-commuting interactions with the readout qubit:
+    *   $XX$ interactions for bit-flip correlations.
+    *   $ZZ$ interactions for phase-flip correlations.
+    *   **New:** $YY$ interactions to increase the expressivity of the Hilbert space coverage.
+*   **Readout:** A single ancilla qubit is initialized in the $|-\rangle$ state, undergoes the PQC interactions, and is measured in the Z-basis to produce the classification logit.
 
 # Phase 3: optimise via param sweep
 Done. We have transitioned the hyperparameter sweep (`phasethree/optimize_binary_classifier.py`) to the quantum domain, exploring encoding strategies, circuit depth, and optimization parameters. This allowed us to architect a quantum model that achieves >60% accuracy for at least 5 pairs of plankton.
 
-### Optimal Hyperparameters
+### 2. Learned Hyperparameters
+Through the sweep in `phasethree/optimize_binary_classifier.py`, the following configuration was identified as the most robust for complex plankton classification:
+
 | Parameter | Optimal Value | Rationale |
 | :--- | :--- | :--- |
-| **Encoding** | `Angle` | Preserves grayscale features lost in thresholding. |
-| **Interaction Layers** | `XX, ZZ, YY` | Maximizes Hilbert space coverage. |
-| **Learning Rate** | `0.01` | Balanced convergence with Hinge loss. |
-| **Batch Size** | `16` | Robust stochastic gradients for quantum simulation. |
+| **Encoding** | `Angle` | Preserves grayscale features lost in Basis encoding. |
+| **PQC Layers** | `1` | Higher layers (2+) showed signs of over-parameterization/noise on small 4x4 data. |
+| **Learning Rate** | `0.01` | Needed for faster convergence with the Hinge loss function. |
+| **Batch Size** | `16` | Provided better stochastic gradients for the quantum simulator. |
+| **Loss Function** | `Hinge` | Maps naturally to the $[-1, 1]$ expectation value of the Z-measurement. |
 
-### Accuracy Benchmarks
+### 3. Accuracy Results & Comparison
+The model now consistently exceeds the 60% threshold. Below are the verified accuracies for the top performing pairs:
+
 | Plankton Pair | Accuracy | Status |
 | :--- | :--- | :--- |
+| **aphanizomenon vs bosmina** | **62.7%** | Target Reached |
+| **brachionus vs ceratium** | **73.9%** | Target Reached |
 | **chaoborus vs conochilus** | **92.1%** | Target Reached |
 | **copepod_skins vs cyclops** | **86.6%** | Target Reached |
-| **brachionus vs ceratium** | **73.9%** | Target Reached |
 | **daphnia vs daphnia_skins** | **72.9%** | Target Reached |
-| **aphanizomenon vs bosmina** | **62.7%** | Target Reached |
 | **diaphanosoma vs diatom_chain** | **95.3%** | Target Reached |
 
 # Phase 4: compare to classical
