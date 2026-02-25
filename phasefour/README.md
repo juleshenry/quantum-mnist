@@ -74,8 +74,8 @@ graph TD
     %% Styling
     style Classical_Prep fill:#f5f5f5,stroke:#333,stroke-width:2px,color:#fff
     style Quantum_Circuit fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#fff
-    style PQC_Interactions fill:#fff,stroke:#1565c0,stroke-dasharray: 5 5,color:#fff
-    style N fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#fff
+    style PQC_Interactions fill:#fff,stroke:#1565c0,stroke-dasharray: 5 5,color:#000
+    style N fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
     
     style I color:#fff
     style J color:#fff
@@ -86,7 +86,7 @@ graph TD
     style G1 color:#fff
     style G2 color:#fff
     style G3 color:#fff
-    style M color:#fff
+    style M color:#000
 ```
 
 ### Key Quantum Components:

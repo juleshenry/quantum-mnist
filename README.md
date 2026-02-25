@@ -64,8 +64,8 @@ graph TD
     style Classical_Layer fill:#f0f0f0,stroke:#000,stroke-width:2px,color:#fff
     style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#fff
     style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#fff
-    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5,color:#fff
-    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#fff
+    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5,color:#000
+    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
     
     %% Node-specific high contrast
     style A color:#fff
