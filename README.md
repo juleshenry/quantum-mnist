@@ -63,7 +63,7 @@ graph TD
     %% Styling with High Contrast
     style Classical_Layer fill:#f0f0f0,stroke:#000,stroke-width:2px,color:#fff
     style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#fff
-    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#fff
+    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
     style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5,color:#000
     style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
     
@@ -150,9 +150,9 @@ Visual examples of the morphological differences the model successfully distingu
 
 | Class A | Class B | Distinction |
 | :--- | :--- | :--- |
-| **Aphanizomenon** (Filamentous) | **Bosmina** (Water Flea) | Linear strands vs. rounded bodies. |
+| **Aphanizomenon** (Filamentous) | **Bosmina** (Water Flea) | Linear strands vs. rounded bodies. <br> **Linear vs. Circular** |
 | <img src="data/zooplankton_0p5x/aphanizomenon/training_data/SPC-EAWAG-0P5X-1570543372901157-3725350526242-001629-055-1224-2176-84-64.jpeg" width="80"> | <img src="data/zooplankton_0p5x/bosmina/training_data/SPC-EAWAG-0P5X-1573585145749175-6767076553624-002309-001-1400-1412-108-100.jpeg" width="80"> | *Linear vs. Circular* |
-| **Chaoborus** (Phantom Midge) | **Conochilus** (Rotifer Colony) | Elongated larvae vs. radial colonies. |
+| **Chaoborus** (Phantom Midge) | **Conochilus** (Rotifer Colony) | Elongated larvae vs. radial colonies. <br> **Elongated vs. Radial** |
 | <img src="data/zooplankton_0p5x/chaoborus/training_data/SPC-EAWAG-0P5X-1591718449551322-12463824312627-000419-026-1188-1246-84-352.jpeg" width="80"> | <img src="data/zooplankton_0p5x/conochilus/training_data/SPC-EAWAG-0P5X-1590768396346914-11513785197825-003869-026-2184-754-88-100.jpeg" width="80"> | *Elongated vs. Radial* |
 
 ---
