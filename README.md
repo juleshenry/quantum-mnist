@@ -61,24 +61,24 @@ graph TD
     I ==> J["<br/><b>Binary Classification</b><br/><b>Result</b><br/><br/>"]
 
     %% Styling with High Contrast
-    style Classical_Layer fill:#f0f0f0,stroke:#000,stroke-width:2px,color:#000
-    style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
-    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5,color:#000
-    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    style Classical_Layer fill:#f0f0f0,stroke:#000,stroke-width:2px,color:#fff
+    style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#fff
+    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#fff
+    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5,color:#fff
+    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#fff
     
     %% Node-specific high contrast
-    style A color:#000
-    style B color:#000
-    style C color:#000
-    style D color:#000
-    style E color:#000
-    style F color:#000
-    style G color:#000
-    style H color:#000
-    style I color:#000
-    style Q_Data color:#000
-    style Q_Anc color:#000
+    style A color:#fff
+    style B color:#fff
+    style C color:#fff
+    style D color:#fff
+    style E color:#fff
+    style F color:#fff
+    style G color:#fff
+    style H color:#fff
+    style I color:#fff
+    style Q_Data color:#fff
+    style Q_Anc color:#fff
 ```
 
 *   **Data Encoding (Angle Encoding):** Instead of binary thresholding ($x > 0.5$), we now use Angle Encoding. Each pixel $x_i$ from the downsampled 4x4 image is mapped to a rotation gate: $Ry(\pi \cdot x_i)$. This preserves the grayscale intensity information within the quantum state.
