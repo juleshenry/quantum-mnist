@@ -97,7 +97,19 @@ graph TD
 
 ---
 
-## 3. Comparison Metrics
+## 3. Image Resolution & Normalization
+
+Unlike Phase 2, which primarily used a consistent 16x16 resolution for both classical and quantum models, Phase 4 employs a multi-resolution strategy to evaluate models at their intended scale:
+
+*   **128x128 RGB:** Used for high-capacity classical models (**MobileNetV2** and **SmallCNN**). This preserves color information and fine morphological details (e.g., cilia, vacuoles) that are lost at lower resolutions.
+*   **28x28 Grayscale:** Used for the standard custom **CNN** baseline to provide a middle-ground benchmark.
+*   **4x4 Grayscale:** Used for both the **Fair Classical** MLP and the **QNN**. 
+    *   For the QNN, this resolution is a technical constraint of simulating 16 qubits.
+    *   For the Fair Classical model, this ensures a "fair" comparison by forcing the classical model to learn from the exact same information density as the quantum model.
+
+All resolutions utilize **Bilinear Interpolation** for resizing to minimize aliasing artifacts during downsampling.
+
+## 4. Comparison Metrics
 
 | Model | Input Size | Params (Approx) | Data Format |
 | :--- | :--- | :--- | :--- |
