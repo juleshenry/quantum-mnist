@@ -28,9 +28,9 @@ graph LR
     %% Classical Pipeline
     subgraph Preprocessing [Classical Preprocessing]
         direction TB
-        A[16x16 Grayscale Image] --> B[Downsample to 4x4]
-        B --> C[Normalize Pixels 0.0 to 1.0]
-        C --> D[Flatten to 16-Feature Vector x]
+        A["<br/>16x16 Grayscale Image<br/><br/>"] --> B["<br/>Downsample to 4x4<br/><br/>"]
+        B --> C["<br/>Normalize Pixels<br/>(0.0 to 1.0)<br/><br/>"]
+        C --> D["<br/>Flatten to 16-Feature<br/>Vector x<br/><br/>"]
     end
 
     %% Quantum Circuit
@@ -38,31 +38,31 @@ graph LR
         direction LR
         
         subgraph Init [Initialization]
-            Q_d["Data Qubits |0⟩₁₆"]
-            Q_a["Readout Qubit |0⟩"]
+            Q_d["<br/>Data Qubits<br/>|0⟩₁₆<br/><br/>"]
+            Q_a["<br/>Readout Qubit<br/>|0⟩<br/><br/>"]
         end
 
         subgraph Encoding [Feature Mapping]
             direction TB
-            E1["Angle Encoding: Ry(π·xᵢ)"]
-            E2["Entanglement: Linear CZ Chain"]
+            E1["<br/>Angle Encoding:<br/>Ry(π·xᵢ)<br/><br/>"]
+            E2["<br/>Entanglement:<br/>Linear CZ Chain<br/><br/>"]
             E1 --> E2
         end
 
         subgraph PQC [Parameterized Interactions]
             direction LR
-            I1["XX(θ)"] --> I2["ZZ(γ)"] --> I3["YY(φ)"]
+            I1["<br/>XX(θ)<br/><br/>"] --> I2["<br/>ZZ(γ)<br/><br/>"] --> I3["<br/>YY(φ)<br/><br/>"]
         end
 
         subgraph Readout [Measurement]
-            M1["Hadamard Gate"]
-            M2["Measure ⟨Z⟩"]
+            M1["<br/>Hadamard Gate<br/><br/>"]
+            M2["<br/>Measure ⟨Z⟩<br/><br/>"]
             M1 --> M2
         end
 
         %% Data Flow
         Q_d --> Encoding
-        Q_a --> Prep["H (|−⟩ State)"]
+        Q_a --> Prep["<br/>Hadamard Prep<br/>(|−⟩ State)<br/><br/>"]
         
         Encoding --> PQC
         Prep --> PQC
@@ -72,7 +72,7 @@ graph LR
 
     %% External Connections
     D -.-> E1
-    M2 --> Result[Binary Classification]
+    M2 --> Result["<br/>Binary<br/>Classification<br/><br/>"]
 
     style Preprocessing fill:#f5f5f5,stroke:#333,stroke-width:1px
     style QPU fill:#fff,stroke:#01579b,stroke-width:2px
