@@ -21,39 +21,64 @@ Done. We have tested the quantum mnist colab and confirmed it works as described
 Done. We have implemented an improved binary quantum classifier (`phasetwo/binary_quantum_classifier.py`) using **Angle Encoding** and an expressive PQC with entanglement. This model consistently achieves >60% accuracy on multiple plankton pairs, significantly outperforming the initial threshold baseline.
 
 ### 1. Quantum Architecture: Expressive PQC with Angle Encoding
-The transition from Phase 2 (baseline) to the optimized model involved a shift from simple thresholding to a more feature-rich quantum circuit.
+The model utilizes a hybrid classical-quantum pipeline designed to preserve grayscale morphological features while maximizing qubit interaction expressivity.
 
 ```mermaid
 graph LR
-    subgraph Classical_Prep [Classical Input]
-        A[16x16 Image] --> B[4x4 Downsample]
-        B --> C[Flatten Vector x]
+    %% Classical Pipeline
+    subgraph Preprocessing [Classical Preprocessing]
+        direction TB
+        A[16x16 Grayscale Image] --> B[Downsample to 4x4]
+        B --> C[Normalize Pixels 0.0 to 1.0]
+        C --> D[Flatten to 16-Feature Vector x]
     end
 
-    subgraph Quantum_Circuit [Quantum Circuit - PQC]
+    %% Quantum Circuit
+    subgraph QPU [Quantum Circuit Architecture - Phase 2]
         direction LR
         
-        subgraph Data_Register [Data Register q₀...q₁₅]
-            D_Init["|0⟩"] --> D_Enc["Ry(π·x)"]
-            D_Enc --> D_Ent["CZ Entanglement"]
+        subgraph Init [Initialization]
+            Q_d["Data Qubits |0⟩₁₆"]
+            Q_a["Readout Qubit |0⟩"]
         end
 
-        subgraph Ancilla_Register [Ancilla Register qₐ]
-            A_Init["|0⟩"] --> A_Prep["H (|−⟩)"]
+        subgraph Encoding [Feature Mapping]
+            direction TB
+            E1["Angle Encoding: Ry(π·xᵢ)"]
+            E2["Entanglement: Linear CZ Chain"]
+            E1 --> E2
         end
 
-        D_Ent --> PQC_Core{{Parameterized Interactions}}
-        A_Prep --> PQC_Core
+        subgraph PQC [Parameterized Interactions]
+            direction LR
+            I1["XX(θ)"] --> I2["ZZ(γ)"] --> I3["YY(φ)"]
+        end
+
+        subgraph Readout [Measurement]
+            M1["Hadamard Gate"]
+            M2["Measure ⟨Z⟩"]
+            M1 --> M2
+        end
+
+        %% Data Flow
+        Q_d --> Encoding
+        Q_a --> Prep["H (|−⟩ State)"]
         
-        PQC_Core --> A_Post["H gate"]
-        A_Post --> A_Meas["Measure ⟨Z⟩"]
+        Encoding --> PQC
+        Prep --> PQC
+        
+        PQC --> M1
     end
 
-    A_Meas --> Loss[Hinge Loss Classification]
+    %% External Connections
+    D -.-> E1
+    M2 --> Result[Binary Classification]
 
-    style Data_Register fill:#e1f5fe,stroke:#01579b
-    style Ancilla_Register fill:#f1f8e9,stroke:#33691e
-    style PQC_Core fill:#fff3e0,stroke:#e65100
+    style Preprocessing fill:#f5f5f5,stroke:#333,stroke-width:1px
+    style QPU fill:#fff,stroke:#01579b,stroke-width:2px
+    style Encoding fill:#e1f5fe,stroke:#01579b
+    style PQC fill:#fff3e0,stroke:#e65100
+    style Readout fill:#f1f8e9,stroke:#33691e
 ```
 
 *   **Data Encoding (Angle Encoding):** Instead of binary thresholding ($x > 0.5$), we now use Angle Encoding. Each pixel $x_i$ from the downsampled 4x4 image is mapped to a rotation gate: $Ry(\pi \cdot x_i)$. This preserves the grayscale intensity information within the quantum state.
