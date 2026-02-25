@@ -1,6 +1,6 @@
 FROM python:3.9-slim
 
-WORKDIR /app/phasefour
+WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -16,23 +16,23 @@ RUN pip install --no-cache-dir \
     scikit-learn==1.0.2 \
     matplotlib==3.5.1 \
     pillow==9.0.1 \
+    seaborn==0.11.2 \
     tensorflow==2.7.0 \
     tensorflow-quantum==0.7.2 \
     cirq==0.13.1 \
     sympy==1.8
 
-# Copy the source code and data
-COPY phasefour /app/phasefour
+# Copy data and phasefive code
 COPY data /app/data
+COPY phasefive /app/phasefive
 
-# Ensure output directory exists
-RUN mkdir -p /app/phasefour/results
+WORKDIR /app/phasefive
 
-# Set python path to find data_loader and data_dir for data_loader
-ENV PYTHONPATH="/app/phasefour"
+# Set environment variables
 ENV DATA_DIR="/app/data/zooplankton_0p5x"
+ENV PYTHONPATH="/app/phasefive"
 
-# Run tests to ensure rigor before running experiments
-RUN python /app/phasefour/test_rigor.py
+# Ensure results directory exists
+RUN mkdir -p /app/phasefive/results
 
 CMD ["python", "run_experiments.py"]

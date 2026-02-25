@@ -3,8 +3,10 @@ import numpy as np
 from PIL import Image
 from sklearn.model_selection import train_test_split
 
-def load_plankton_data(img_size=(128, 128), data_dir='data/zooplankton_0p5x', test_size=0.15, val_size=0.15):
+def load_plankton_data(img_size=(128, 128), data_dir=None, test_size=0.15, val_size=0.15):
     """Loads all classes from the data directory."""
+    if data_dir is None:
+        data_dir = os.environ.get('DATA_DIR', 'data/zooplankton_0p5x')
     classes = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
     classes.sort()
     class_to_idx = {cls: i for i, cls in enumerate(classes)}
@@ -40,7 +42,9 @@ def load_plankton_data(img_size=(128, 128), data_dir='data/zooplankton_0p5x', te
     
     return X_train, X_val, X_test, y_train, y_val, y_test, classes
 
-def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir='data/zooplankton_0p5x'):
+def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir=None):
+    if data_dir is None:
+        data_dir = os.environ.get('DATA_DIR', 'data/zooplankton_0p5x')
     def get_images(class_name):
         path = os.path.join(data_dir, class_name, 'training_data')
         images = []
@@ -50,7 +54,8 @@ def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir='data/z
             if img_name.lower().endswith(('.jpeg', '.jpg', '.png')):
                 img_path = os.path.join(path, img_name)
                 try:
-                    img = Image.open(img_path).convert('RGB')
+                    # Convert to grayscale for both classical and quantum consistency
+                    img = Image.open(img_path).convert('L')
                     img = img.resize(img_size)
                     images.append(np.array(img))
                 except Exception as e:
@@ -66,11 +71,8 @@ def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir='data/z
     X = np.concatenate([imgs_a, imgs_b], axis=0).astype('float32') / 255.0
     y = np.concatenate([np.ones(len(imgs_a)), np.zeros(len(imgs_b))], axis=0)
 
-    # Shuffle
-    idx = np.random.permutation(len(X))
-    X, y = X[idx], y[idx]
-
-    return train_test_split(X, y, test_size=0.2, random_state=42)
+    # Use stratified split for better rigor
+    return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
 if __name__ == "__main__":
     # Test loading

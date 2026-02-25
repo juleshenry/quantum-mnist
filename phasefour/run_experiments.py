@@ -11,9 +11,10 @@ from data_loader import load_plankton_binary
 # --- Models ---
 
 def create_fair_classical_model(input_shape=(4, 4, 1)):
+    # 3 hidden units gives approx 55 parameters, matching QNN's ~48 parameters more closely
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(input_shape=input_shape),
-        tf.keras.layers.Dense(2, activation='relu'),
+        tf.keras.layers.Dense(3, activation='relu'),
         tf.keras.layers.Dense(1)
     ])
     model.compile(
@@ -73,6 +74,7 @@ def create_quantum_model():
     return circuit, cirq.Z(readout)
 
 def convert_to_circuit(image):
+    # Flatten the image (expects H, W or H, W, 1)
     values = np.ndarray.flatten(image)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
@@ -101,32 +103,33 @@ def create_qnn_model():
 
 # --- Experiment Execution ---
 
-def run_experiment(class_a, class_b):
-    print(f"
---- Running Experiment: {class_a} vs {class_b} ---")
-    results = {'pair': f"{class_a}_vs_{class_b}"}
+def run_single_trial(class_a, class_b, trial_id, q_samples=200):
+    print(f"  Trial {trial_id+1}...")
+    trial_results = {}
 
     # 1. Classical CNN (28x28)
     X_train, X_test, y_train, y_test = load_plankton_binary(class_a, class_b, img_size=(28, 28))
-    X_train = X_train[..., np.newaxis]
-    X_test = X_test[..., np.newaxis]
+    if len(X_train.shape) == 3:
+        X_train = X_train[..., np.newaxis]
+        X_test = X_test[..., np.newaxis]
     
     cnn = create_cnn_model()
     start = time.time()
     cnn.fit(X_train, y_train, epochs=5, batch_size=32, verbose=0)
-    results['cnn_time'] = time.time() - start
-    results['cnn_acc'] = cnn.evaluate(X_test, y_test, verbose=0)[1]
+    trial_results['cnn_time'] = time.time() - start
+    trial_results['cnn_acc'] = cnn.evaluate(X_test, y_test, verbose=0)[1]
     
     # 2. Fair Classical (4x4)
     X_train_4, X_test_4, y_train_4, y_test_4 = load_plankton_binary(class_a, class_b, img_size=(4, 4))
-    X_train_4 = X_train_4[..., np.newaxis]
-    X_test_4 = X_test_4[..., np.newaxis]
+    if len(X_train_4.shape) == 3:
+        X_train_4 = X_train_4[..., np.newaxis]
+        X_test_4 = X_test_4[..., np.newaxis]
     
     fair_nn = create_fair_classical_model()
     start = time.time()
     fair_nn.fit(X_train_4, y_train_4, epochs=10, batch_size=32, verbose=0)
-    results['fair_time'] = time.time() - start
-    results['fair_acc'] = fair_nn.evaluate(X_test_4, y_test_4, verbose=0)[1]
+    trial_results['fair_time'] = time.time() - start
+    trial_results['fair_acc'] = fair_nn.evaluate(X_test_4, y_test_4, verbose=0)[1]
 
     # 3. Quantum Model (4x4)
     x_train_circ = [convert_to_circuit(x) for x in X_train_4]
@@ -138,13 +141,32 @@ def run_experiment(class_a, class_b):
 
     qnn = create_qnn_model()
     start = time.time()
-    # Increased samples and epochs for better accuracy
-    qnn.fit(x_train_tfcirc[:200], y_train_hinge[:200], epochs=10, batch_size=32, verbose=0)
-    results['qnn_time'] = time.time() - start
-    results['qnn_acc'] = qnn.evaluate(x_test_tfcirc, y_test_hinge, verbose=0)[1]
+    # Use specified number of samples for QNN training
+    q_limit = min(len(x_train_tfcirc), q_samples)
+    qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=10, batch_size=32, verbose=0)
+    trial_results['qnn_time'] = time.time() - start
+    trial_results['qnn_acc'] = qnn.evaluate(x_test_tfcirc, y_test_hinge, verbose=0)[1]
 
-    print(f"Results: {results}")
-    return results
+    return trial_results
+
+def run_experiment(class_a, class_b, num_trials=3):
+    print(f"\n--- Running Experiment: {class_a} vs {class_b} ({num_trials} trials) ---")
+    
+    all_trials = []
+    for i in range(num_trials):
+        res = run_single_trial(class_a, class_b, i)
+        all_trials.append(res)
+    
+    # Aggregate results
+    df_trials = pd.DataFrame(all_trials)
+    summary = {'pair': f"{class_a}_vs_{class_b}"}
+    
+    for col in df_trials.columns:
+        summary[f"{col}_mean"] = df_trials[col].mean()
+        summary[f"{col}_std"] = df_trials[col].std()
+    
+    print(f"Summary Results: {summary}")
+    return summary
 
 if __name__ == "__main__":
     pairs = [
@@ -154,15 +176,16 @@ if __name__ == "__main__":
         ('cyclops', 'ceratium')
     ]
     
+    NUM_TRIALS = 3
     all_results = []
     for a, b in pairs:
         try:
-            res = run_experiment(a, b)
+            res = run_experiment(a, b, num_trials=NUM_TRIALS)
             all_results.append(res)
         except Exception as e:
             print(f"Failed experiment {a} vs {b}: {e}")
 
+    os.makedirs('results', exist_ok=True)
     df = pd.DataFrame(all_results)
-    df.to_csv('/app/phasefour/results/experiment_results.csv', index=False)
-    print("
-All experiments completed. Results saved to /app/phasefour/results/experiment_results.csv")
+    df.to_csv('results/experiment_results.csv', index=False)
+    print(f"\nAll experiments completed. Results saved to results/experiment_results.csv")
