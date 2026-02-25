@@ -49,7 +49,7 @@ graph TD
 
     subgraph Output_Layer [Post-Selection]
         J --> K[<b>Measure < Z ></b><br/>Expectation Value calculation]
-        K --> L[<b>Hinge Loss Function</b><br/>[-1, 1] Range Classification]
+        K --> L[<b>Hinge Loss Function</b><br/>&#91;-1, 1&#93; Range Classification]
     end
 
     style Quantum_Circuit fill:#e1f5fe,stroke:#01579b
