@@ -56,12 +56,18 @@ def create_quantum_model():
     data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
+    
+    # Add entanglement between data qubits
+    for i in range(len(data_qubits) - 1):
+        circuit.append(cirq.CZ(data_qubits[i], data_qubits[i+1]))
+        
     circuit.append(cirq.X(readout))
     circuit.append(cirq.H(readout))
     
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
     builder.add_layer(circuit, cirq.XX, "xx1")
     builder.add_layer(circuit, cirq.ZZ, "zz1")
+    builder.add_layer(circuit, cirq.YY, "yy1")
     circuit.append(cirq.H(readout))
     
     return circuit, cirq.Z(readout)
@@ -71,8 +77,8 @@ def convert_to_circuit(image):
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):
-        if value > 0.5:
-            circuit.append(cirq.X(qubits[i]))
+        # Angle encoding
+        circuit.append(cirq.ry(np.pi * value)(qubits[i]))
     return circuit
 
 def hinge_accuracy(y_true, y_pred):
@@ -132,8 +138,8 @@ def run_experiment(class_a, class_b):
 
     qnn = create_qnn_model()
     start = time.time()
-    # Limit to 100 samples for QNN speed during this validation
-    qnn.fit(x_train_tfcirc[:100], y_train_hinge[:100], epochs=3, batch_size=32, verbose=0)
+    # Increased samples and epochs for better accuracy
+    qnn.fit(x_train_tfcirc[:200], y_train_hinge[:200], epochs=10, batch_size=32, verbose=0)
     results['qnn_time'] = time.time() - start
     results['qnn_acc'] = qnn.evaluate(x_test_tfcirc, y_test_hinge, verbose=0)[1]
 

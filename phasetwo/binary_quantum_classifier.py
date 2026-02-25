@@ -25,23 +25,27 @@ class CircuitLayerBuilder():
             circuit.append(gate(qubit, self.readout)**symbol)
 
 def convert_to_circuit(image):
-    """Encode downsampled classical image into quantum datapoint."""
+    """Encode classical image into quantum datapoint using angle encoding."""
     # Downsample from 16x16 to 4x4 for simulation feasibility
     image_4x4 = tf.image.resize(image[..., np.newaxis], (4, 4)).numpy().squeeze()
     
-    values = np.ndarray.flatten(image_4x4 > 0.5) # Thresholding encoder
+    values = np.ndarray.flatten(image_4x4)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):
-        if value:
-            circuit.append(cirq.X(qubits[i]))
+        # Use Angle Encoding (Ry rotation)
+        circuit.append(cirq.ry(np.pi * value)(qubits[i]))
     return circuit
 
 def create_quantum_model():
-    """Create a QNN model circuit and readout operation."""
+    """Create a QNN model circuit with improved expressivity."""
     data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
+    
+    # Add entanglement between data qubits
+    for i in range(len(data_qubits) - 1):
+        circuit.append(cirq.CZ(data_qubits[i], data_qubits[i+1]))
     
     circuit.append(cirq.X(readout))
     circuit.append(cirq.H(readout))
@@ -49,6 +53,7 @@ def create_quantum_model():
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
     builder.add_layer(circuit, cirq.XX, "xx1")
     builder.add_layer(circuit, cirq.ZZ, "zz1")
+    builder.add_layer(circuit, cirq.YY, "yy1") # Added YY layer for more expressivity
     
     circuit.append(cirq.H(readout))
     return circuit, cirq.Z(readout)
@@ -56,7 +61,7 @@ def create_quantum_model():
 def run_quantum_classification(class_a, class_b):
     import tensorflow_quantum as tfq
     
-    (x_train, y_train), (x_test, y_test) = prepare_binary_dataset(class_a, class_b, limit=50)
+    (x_train, y_train), (x_test, y_test) = prepare_binary_dataset(class_a, class_b, limit=150)
     
     # Convert labels to hinge loss format [-1, 1]
     y_train_hinge = 2.0 * y_train - 1.0
@@ -91,7 +96,7 @@ def run_quantum_classification(class_a, class_b):
     model.fit(
         x_train_tfq, y_train_hinge,
         batch_size=16,
-        epochs=10,
+        epochs=15,
         verbose=1,
         validation_data=(x_test_tfq, y_test_hinge)
     )
