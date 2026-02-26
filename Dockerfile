@@ -32,10 +32,10 @@ COPY . .
 
 # Environment setup
 ENV DATA_DIR="/app/data/zooplankton_0p5x"
-ENV PYTHONPATH="/app:/app/phaseone:/app/phasetwo:/app/phasethree:/app/phasefour:/app/phasefive"
+ENV PYTHONPATH="/app:/app/phaseone:/app/phasetwo:/app/phasethree:/app/phasefour:/app/phasefive:/app/phasesix"
 
 # Ensure results directories exist
-RUN mkdir -p /app/phasefour/results /app/phasefive/results
+RUN mkdir -p /app/phasefour/results /app/phasefive/results /app/phasesix/results
 
 # Run tests to ensure rigor before running experiments
 RUN python /app/phasefour/test_rigor.py

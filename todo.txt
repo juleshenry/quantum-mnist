@@ -28,3 +28,8 @@ Phase 2: Basic Binary Verification
 
 
    1 docker run -it --rm -e THERMAL_SLEEP=60 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
+
+  Phase 6: Quantum Interpretability (Saliency Maps)
+  Calculates gradients of the QNN output with respect to input features and maps them back to the original image space to visualize what the quantum model "sees".
+
+   1 docker run --rm -v $(pwd)/phasesix/results:/app/phasesix/results quantum-plankton python phasesix/quantum_saliency.py
