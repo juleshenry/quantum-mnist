@@ -256,7 +256,7 @@ Pauses the CPU for a few seconds after every training epoch. This is highly effe
 ```
 
 ### 3. Thread Limiting (`TF_THREADS`)
-Limits the number of CPU cores used by TensorFlow. The default is `1`. Increasing this will speed up training but will dramatically increase heat.
+Limits the number of CPU cores used by TensorFlow. The default is `1`. This is mapped to `TF_NUM_INTRA_OP_THREADS` inside the script to ensure it is set before initialization.
 ```bash
 -e TF_THREADS=1
 ```
@@ -278,6 +278,17 @@ docker run -it --rm \
   -v $(pwd)/phasefive/results:/app/phasefive/results \
   quantum-plankton python phasefive/run_experiments.py
 ```
+
+## Performance & Thermal Tips
+
+If you are running on an ARM64 Mac (M1/M2/M3), the AMD64 emulation can be CPU-intensive. Use this **Maximum Cooling One-Liner** to run experiments without overheating:
+
+```bash
+docker run -it --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=3.0 -e THERMAL_SLEEP=60 -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
+```
+
+- **Reduce Heat:** Increase `EPOCH_COOL` (e.g., to `5.0`) or `THERMAL_SLEEP`.
+- **Increase Speed:** If your thermal headroom allows, increase `TF_THREADS` to `2` or `4`, and set `EPOCH_COOL=0`.
 
 ## Results Analysis
 After running the experiments, you can find the generated graphs and raw data in the `results/` folders of each phase. Phase 5 specifically produces `scientific_scaling_plot.png`, which provides the primary visualization for the quantum vs. classical scaling performance.

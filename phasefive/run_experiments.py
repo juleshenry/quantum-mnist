@@ -1,4 +1,12 @@
 import os
+
+# Set threading limits via environment variables BEFORE any imports
+os.environ['TF_NUM_INTRA_OP_THREADS'] = os.environ.get('TF_THREADS', '1')
+os.environ['TF_NUM_INTER_OP_THREADS'] = os.environ.get('TF_THREADS', '1')
+os.environ['OMP_NUM_THREADS'] = os.environ.get('TF_THREADS', '1')
+
+print("--- System: Warming up Scaling Pipeline (Thread Limit: {}) ---".format(os.environ['TF_NUM_INTRA_OP_THREADS']))
+
 import time
 import numpy as np
 import pandas as pd
@@ -21,7 +29,6 @@ BATCH_SIZE = 32
 Q_SAMPLES = 400 
 
 class CoolingCallback(tf.keras.callbacks.Callback):
-    """Sleeps between epochs to allow CPU to cool."""
     def __init__(self, seconds=1.0):
         super().__init__()
         self.seconds = seconds
@@ -31,18 +38,12 @@ class CoolingCallback(tf.keras.callbacks.Callback):
 
 def run_k_experiment(k):
     categories = get_top_k_categories(k)
-    
-    # Configure Pacing
     epoch_cool = float(os.environ.get('EPOCH_COOL', 1.0))
     breathe_sleep = float(os.environ.get('BREATHE_SLEEP', 0.05))
 
-    # Load high-res data (28x28) for PCA and CNN
     X_train_raw, X_test_raw, y_train, y_test = load_plankton_k_categories(categories, img_size=(28, 28))
-    
-    # Apply PCA to reduce to 25 optimized features (for 5x5 QNN and Fair Classical)
     X_train_pca, X_test_pca, _ = apply_pca_reduction(X_train_raw, X_test_raw, n_components=25)
     
-    # Pre-convert PCA features to circuits with breathing
     x_train_circ_list = []
     for x in X_train_pca:
         x_train_circ_list.append(convert_to_circuit(x))
@@ -55,8 +56,6 @@ def run_k_experiment(k):
 
     x_train_circ = tfq.convert_to_tensor(x_train_circ_list)
     x_test_circ = tfq.convert_to_tensor(x_test_circ_list)
-    
-    # Sub-sample if necessary for QNN
     q_limit = min(len(x_train_circ), Q_SAMPLES)
     
     k_results = []
@@ -97,60 +96,30 @@ def run_k_experiment(k):
         if thermal_sleep > 0 and trial < NUM_TRIALS - 1:
             trial_pbar.set_postfix(step=f"Pacing {thermal_sleep}s")
             time.sleep(thermal_sleep)
-        
     return k_results
 
 def plot_results(df_summary):
     plt.figure(figsize=(12, 6))
-    
-    # Accuracy Plot
     plt.subplot(1, 2, 1)
     for model in ['qnn', 'fair', 'cnn']:
-        plt.errorbar(df_summary['k'], df_summary[f'{model}_acc_mean'], 
-                     yerr=df_summary[f'{model}_acc_std'], label=model.upper(), marker='o', capsize=5)
-    plt.xlabel('Number of Categories (K)')
-    plt.ylabel('Test Accuracy')
-    plt.title('Accuracy vs Number of Categories (5x5 PCA)')
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.7)
-    
-    # F1 Plot
+        plt.errorbar(df_summary['k'], df_summary[f'{model}_acc_mean'], yerr=df_summary[f'{model}_acc_std'], label=model.upper(), marker='o', capsize=5)
+    plt.xlabel('Number of Categories (K)'); plt.ylabel('Test Accuracy'); plt.legend(); plt.grid(True, linestyle='--', alpha=0.7)
     plt.subplot(1, 2, 2)
     for model in ['qnn', 'fair', 'cnn']:
-        plt.errorbar(df_summary['k'], df_summary[f'{model}_f1_mean'], 
-                     yerr=df_summary[f'{model}_f1_std'], label=model.upper(), marker='s', capsize=5)
-    plt.xlabel('Number of Categories (K)')
-    plt.ylabel('Macro F1-Score')
-    plt.title('F1-Score vs Number of Categories (5x5 PCA)')
-    plt.legend()
-    plt.grid(True, linestyle='--', alpha=0.7)
-    
-    plt.tight_layout()
-    plt.savefig('phasefive/results/k_scaling_comparison.png')
-    print("Scaling plot saved to phasefive/results/k_scaling_comparison.png")
+        plt.errorbar(df_summary['k'], df_summary[f'{model}_f1_mean'], yerr=df_summary[f'{model}_f1_std'], label=model.upper(), marker='s', capsize=5)
+    plt.xlabel('Number of Categories (K)'); plt.ylabel('Macro F1-Score'); plt.legend(); plt.grid(True, linestyle='--', alpha=0.7)
+    plt.tight_layout(); plt.savefig('phasefive/results/k_scaling_comparison.png')
 
 if __name__ == "__main__":
-    # Limit number of threads to prevent slamming all cores (vital for emulation/Macs)
-    tf.config.threading.set_intra_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
-    tf.config.threading.set_inter_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
-
     os.makedirs('phasefive/results', exist_ok=True)
     all_results = []
-    
     main_pbar = tqdm(K_VALUES, desc="Scaling Study Progress")
     for k in main_pbar:
         main_pbar.set_description(f"Scaling Study K={k}")
         res = run_k_experiment(k)
         all_results.extend(res)
-    
-    df = pd.DataFrame(all_results)
-    df.to_csv('phasefive/results/comprehensive_k_results.csv', index=False)
-    
+    df = pd.DataFrame(all_results); df.to_csv('phasefive/results/comprehensive_k_results.csv', index=False)
     summary = df.groupby('k').agg(['mean', 'std']).reset_index()
     summary.columns = [f'{col[0]}_{col[1]}' if col[1] else col[0] for col in summary.columns]
     summary.to_csv('phasefive/results/comprehensive_k_summary.csv', index=False)
-    
-    print("\n--- Final Summary (5x5 PCA) ---")
-    print(summary[['k', 'qnn_acc_mean', 'fair_acc_mean', 'cnn_acc_mean']])
-    
     plot_results(summary)
