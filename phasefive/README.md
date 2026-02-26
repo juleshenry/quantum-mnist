@@ -23,11 +23,11 @@ This phase extends the previous binary classification work to a multi-class ($k$
 
 ## Running the Experiment
 
-To run the full scaling experiment using Docker:
+To run the full scaling experiment using the consolidated Dockerfile:
 
 ```bash
-docker build -t phasefive -f phasefive/Dockerfile .
-docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results phasefive
+docker build -t quantum-plankton .
+docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
 ```
 
 ## Results

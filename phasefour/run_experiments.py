@@ -176,16 +176,41 @@ if __name__ == "__main__":
         ('cyclops', 'ceratium')
     ]
     
-    NUM_TRIALS = 3
+    # Allow overriding via environment variables for faster runs in CI/Emulated environments
+    NUM_TRIALS = int(os.environ.get('NUM_TRIALS', 3))
+    Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 200))
+    
+    print(f"Starting experiments with NUM_TRIALS={NUM_TRIALS}, Q_SAMPLES={Q_SAMPLES}")
+    
     all_results = []
-    for a, b in pairs:
+    # If we are in a "smoke test" mode, just run the first pair
+    run_pairs = pairs if os.environ.get('FULL_RUN', 'true') == 'true' else pairs[:1]
+    
+    for a, b in run_pairs:
         try:
-            res = run_experiment(a, b, num_trials=NUM_TRIALS)
+            # Pass Q_SAMPLES to run_experiment if needed, but run_experiment calls run_single_trial
+            # Let's modify run_experiment to accept q_samples
+            def run_experiment_with_params(ca, cb, n_trials, q_samps):
+                print(f"\n--- Running Experiment: {ca} vs {cb} ({n_trials} trials, {q_samps} q_samples) ---")
+                all_trials = []
+                for i in range(n_trials):
+                    res = run_single_trial(ca, cb, i, q_samples=q_samps)
+                    all_trials.append(res)
+                
+                df_trials = pd.DataFrame(all_trials)
+                summary = {'pair': f"{ca}_vs_{cb}"}
+                for col in df_trials.columns:
+                    summary[f"{col}_mean"] = df_trials[col].mean()
+                    summary[f"{col}_std"] = df_trials[col].std()
+                print(f"Summary Results: {summary}")
+                return summary
+
+            res = run_experiment_with_params(a, b, NUM_TRIALS, Q_SAMPLES)
             all_results.append(res)
         except Exception as e:
             print(f"Failed experiment {a} vs {b}: {e}")
 
-    os.makedirs('results', exist_ok=True)
+    os.makedirs('phasefour/results', exist_ok=True)
     df = pd.DataFrame(all_results)
-    df.to_csv('results/experiment_results.csv', index=False)
-    print(f"\nAll experiments completed. Results saved to results/experiment_results.csv")
+    df.to_csv('phasefour/results/experiment_results.csv', index=False)
+    print(f"\nAll experiments completed. Results saved to phasefour/results/experiment_results.csv")

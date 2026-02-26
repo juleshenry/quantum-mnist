@@ -11,6 +11,7 @@ https://arxiv.org/pdf/2011.02831.pdf
 2. **basic binary quantum**: Apply a basic binary quantum classifier to the plankton dataset and compare with a "fair" classical neural net.
 3. **optimise via param sweep**: Optimize the binary classifier through a hyperparameter sweep on neural architectures.
 4. **compare to classical**: Perform the generalized quantum algorithm on the plankton dataset and compare results to established classical deep learning approaches.
+5. **k-category scaling**: Scale the quantum algorithm to multi-class classification (k=2, 3, 5, 8, 16) and measure performance vs. parameter efficiency as task complexity increases.
 
 ---
 
@@ -122,6 +123,11 @@ We evaluate three levels of classical models (MobileNetV2, Custom CNN, and a "Fa
 
 **Detailed Documentation:** [Phase 4 Neural Architectures & Comparison](phasefour/README.md)
 
+# Phase 5: k-category scaling
+In this phase, we scale the quantum algorithm to handle multi-class classification. We evaluate the model's performance as the number of categories ($k$) increases from 2 to 16, comparing it against classical baselines with matched parameter counts.
+
+**Detailed Documentation:** [Phase 5 Scaling Study](phasefive/README.md)
+
 ### 1. Hybrid Comparison Pipeline
 The phase 4 implementation (`phasefour/run_experiments.py`) compares models across different input resolutions and parameter scales:
 
@@ -208,23 +214,29 @@ A diverse 5x5 grid showing unique samples from 25 different plankton classes:
 First, build the unified Docker image:
 
 ```bash
-docker build -t quantum-mnist .
+docker build -t quantum-plankton .
 ```
 
 ### Run Phase 2: Basic Binary Quantum (Data Ingress)
 To verify the plankton data loading and class pairs:
 ```bash
-docker run --rm quantum-mnist python phasetwo/plankton_ingress.py
+docker run --rm quantum-plankton python phasetwo/plankton_ingress.py
 ```
 
 ### Run Phase 3: Optimise via Param Sweep
 To see the hyperparameter sweep configuration:
 ```bash
-docker run --rm quantum-mnist python phasethree/optimize_binary_classifier.py
+docker run --rm quantum-plankton python phasethree/optimize_binary_classifier.py
 ```
 
 ### Run Phase 4: Compare to Classical (Full Experiments)
 To run the full experiment suite and save results to your local machine:
 ```bash
-docker run --rm -v $(pwd)/phasefour/results:/app/phasefour/results quantum-mnist python phasefour/run_experiments.py
+docker run --rm -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
+```
+
+### Run Phase 5: K-Category Scaling
+To run the multi-class scaling experiments:
+```bash
+docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
 ```
