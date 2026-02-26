@@ -42,7 +42,7 @@ def load_plankton_data(img_size=(128, 128), data_dir=None, test_size=0.15, val_s
     
     return X_train, X_val, X_test, y_train, y_val, y_test, classes
 
-def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir=None):
+def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir=None, random_state=42):
     if data_dir is None:
         data_dir = os.environ.get('DATA_DIR', 'data/zooplankton_0p5x')
     def get_images(class_name):
@@ -72,7 +72,7 @@ def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir=None):
     y = np.concatenate([np.ones(len(imgs_a)), np.zeros(len(imgs_b))], axis=0)
 
     # Use stratified split for better rigor
-    return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+    return train_test_split(X, y, test_size=0.2, random_state=random_state, stratify=y)
 
 if __name__ == "__main__":
     # Test loading

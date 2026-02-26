@@ -51,14 +51,14 @@ class MultiClassPQC(tf.keras.layers.Layer):
         expectations = self.pqc(inputs)
         return self.softmax(expectations)
 
-def create_qnn_multiclass_model(k, n_layers=1):
+def create_qnn_multiclass_model(k, n_layers=1, learning_rate=0.01):
     circuit, observables = create_k_category_quantum_model(k, n_layers)
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(), dtype=tf.string),
         MultiClassPQC(circuit, observables)
     ])
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=0.01),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         loss=tf.keras.losses.SparseCategoricalCrossentropy(),
         metrics=['accuracy']
     )

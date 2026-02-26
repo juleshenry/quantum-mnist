@@ -13,7 +13,7 @@ from quantum_k_classifier import create_qnn_multiclass_model, convert_to_circuit
 from classical_k_classifier import create_fair_classical_k_model, create_cnn_k_model
 
 # Configuration
-K_VALUES = [2, 3, 5, 8, 16]
+K_VALUES = [2, 3, 4, 5, 8, 12, 16]
 NUM_TRIALS = 3
 EPOCHS = 10
 BATCH_SIZE = 32

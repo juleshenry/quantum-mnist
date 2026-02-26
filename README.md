@@ -61,25 +61,14 @@ graph TD
     %% Final Output
     I ==> J["<br/><b>Binary Classification</b><br/><b>Result</b><br/><br/>"]
 
-    %% Styling with High Contrast
-    style Classical_Layer fill:#f0f0f0,stroke:#000,stroke-width:2px,color:#fff
-    style Quantum_Layer fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#fff
-    style Interface fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
-    style PQC_Flow fill:#fff,stroke:#01579b,stroke-dasharray: 5 5,color:#000
-    style J fill:#f1f8e9,stroke:#33691e,stroke-width:2px,color:#000
+    %% Styling for Light/Dark Compatibility
+    style Classical_Layer fill:none,stroke:#666,stroke-width:2px
+    style Quantum_Layer fill:none,stroke:#03a9f4,stroke-width:2px
+    style Interface fill:none,stroke:#ff9800,stroke-width:2px
+    style PQC_Flow fill:none,stroke:#03a9f4,stroke-dasharray: 5 5
+    style J fill:none,stroke:#4caf50,stroke-width:2px
     
-    %% Node-specific high contrast
-    style A color:#fff
-    style B color:#fff
-    style C color:#fff
-    style D color:#fff
-    style E color:#fff
-    style F color:#fff
-    style G color:#fff
-    style H color:#fff
-    style I color:#fff
-    style Q_Data color:#fff
-    style Q_Anc color:#fff
+    %% Node-specific styles removed for theme compatibility
 ```
 
 *   **Data Encoding (Angle Encoding):** Instead of binary thresholding ($x > 0.5$), we now use Angle Encoding. Each pixel $x_i$ from the downsampled 4x4 image is mapped to a rotation gate: $Ry(\pi \cdot x_i)$. This preserves the grayscale intensity information within the quantum state.
@@ -236,7 +225,13 @@ docker run --rm -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plank
 ```
 
 ### Run Phase 5: K-Category Scaling
-To run the multi-class scaling experiments:
+To run the standard multi-class scaling experiments:
 ```bash
 docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
+```
+
+### Run Phase 5: Scientific Swept Comparison (K=2,3,4,5)
+To run the high-rigor comparison with hyperparameter sweeps for both regimes:
+```bash
+docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
 ```

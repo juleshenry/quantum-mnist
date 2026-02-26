@@ -6,6 +6,7 @@ import cirq
 import sympy
 import time
 import pandas as pd
+from scipy import stats
 from data_loader import load_plankton_binary
 
 # --- Models ---
@@ -58,7 +59,6 @@ def create_quantum_model():
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
     
-    # Add entanglement between data qubits
     for i in range(len(data_qubits) - 1):
         circuit.append(cirq.CZ(data_qubits[i], data_qubits[i+1]))
         
@@ -74,12 +74,10 @@ def create_quantum_model():
     return circuit, cirq.Z(readout)
 
 def convert_to_circuit(image):
-    # Flatten the image (expects H, W or H, W, 1)
     values = np.ndarray.flatten(image)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):
-        # Angle encoding
         circuit.append(cirq.ry(np.pi * value)(qubits[i]))
     return circuit
 
@@ -105,10 +103,15 @@ def create_qnn_model():
 
 def run_single_trial(class_a, class_b, trial_id, q_samples=200):
     print(f"  Trial {trial_id+1}...")
+    # Set unique but reproducible seed for this trial
+    trial_seed = 42 + trial_id
+    np.random.seed(trial_seed)
+    tf.random.set_seed(trial_seed)
+    
     trial_results = {}
 
     # 1. Classical CNN (28x28)
-    X_train, X_test, y_train, y_test = load_plankton_binary(class_a, class_b, img_size=(28, 28))
+    X_train, X_test, y_train, y_test = load_plankton_binary(class_a, class_b, img_size=(28, 28), random_state=trial_seed)
     if len(X_train.shape) == 3:
         X_train = X_train[..., np.newaxis]
         X_test = X_test[..., np.newaxis]
@@ -120,7 +123,7 @@ def run_single_trial(class_a, class_b, trial_id, q_samples=200):
     trial_results['cnn_acc'] = cnn.evaluate(X_test, y_test, verbose=0)[1]
     
     # 2. Fair Classical (4x4)
-    X_train_4, X_test_4, y_train_4, y_test_4 = load_plankton_binary(class_a, class_b, img_size=(4, 4))
+    X_train_4, X_test_4, y_train_4, y_test_4 = load_plankton_binary(class_a, class_b, img_size=(4, 4), random_state=trial_seed)
     if len(X_train_4.shape) == 3:
         X_train_4 = X_train_4[..., np.newaxis]
         X_test_4 = X_test_4[..., np.newaxis]
@@ -141,7 +144,6 @@ def run_single_trial(class_a, class_b, trial_id, q_samples=200):
 
     qnn = create_qnn_model()
     start = time.time()
-    # Use specified number of samples for QNN training
     q_limit = min(len(x_train_tfcirc), q_samples)
     qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=10, batch_size=32, verbose=0)
     trial_results['qnn_time'] = time.time() - start
@@ -149,15 +151,14 @@ def run_single_trial(class_a, class_b, trial_id, q_samples=200):
 
     return trial_results
 
-def run_experiment(class_a, class_b, num_trials=3):
-    print(f"\n--- Running Experiment: {class_a} vs {class_b} ({num_trials} trials) ---")
+def run_experiment(class_a, class_b, num_trials=3, q_samples=200):
+    print(f"\n--- Running Experiment: {class_a} vs {class_b} ({num_trials} trials, {q_samples} q_samples) ---")
     
     all_trials = []
     for i in range(num_trials):
-        res = run_single_trial(class_a, class_b, i)
+        res = run_single_trial(class_a, class_b, i, q_samples=q_samples)
         all_trials.append(res)
     
-    # Aggregate results
     df_trials = pd.DataFrame(all_trials)
     summary = {'pair': f"{class_a}_vs_{class_b}"}
     
@@ -165,6 +166,12 @@ def run_experiment(class_a, class_b, num_trials=3):
         summary[f"{col}_mean"] = df_trials[col].mean()
         summary[f"{col}_std"] = df_trials[col].std()
     
+    # Perform Welch's T-test between QNN accuracy and Fair Classical accuracy
+    # (Using Welch's because we don't assume equal variance)
+    t_stat, p_val = stats.ttest_ind(df_trials['qnn_acc'], df_trials['fair_acc'], equal_var=False)
+    summary['p_value_qnn_vs_fair'] = p_val
+    summary['significant_05'] = p_val < 0.05
+
     print(f"Summary Results: {summary}")
     return summary
 
@@ -176,41 +183,29 @@ if __name__ == "__main__":
         ('cyclops', 'ceratium')
     ]
     
-    # Allow overriding via environment variables for faster runs in CI/Emulated environments
     NUM_TRIALS = int(os.environ.get('NUM_TRIALS', 3))
     Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 200))
+    IS_SMOKE = os.environ.get('SMOKE_TEST', 'false').lower() == 'true'
     
+    if IS_SMOKE:
+        print("!!! SMOKE TEST MODE ENABLED !!!")
+        pairs = pairs[:1]
+        NUM_TRIALS = 2
+        Q_SAMPLES = 10
+
     print(f"Starting experiments with NUM_TRIALS={NUM_TRIALS}, Q_SAMPLES={Q_SAMPLES}")
     
     all_results = []
-    # If we are in a "smoke test" mode, just run the first pair
-    run_pairs = pairs if os.environ.get('FULL_RUN', 'true') == 'true' else pairs[:1]
-    
-    for a, b in run_pairs:
+    for a, b in pairs:
         try:
-            # Pass Q_SAMPLES to run_experiment if needed, but run_experiment calls run_single_trial
-            # Let's modify run_experiment to accept q_samples
-            def run_experiment_with_params(ca, cb, n_trials, q_samps):
-                print(f"\n--- Running Experiment: {ca} vs {cb} ({n_trials} trials, {q_samps} q_samples) ---")
-                all_trials = []
-                for i in range(n_trials):
-                    res = run_single_trial(ca, cb, i, q_samples=q_samps)
-                    all_trials.append(res)
-                
-                df_trials = pd.DataFrame(all_trials)
-                summary = {'pair': f"{ca}_vs_{cb}"}
-                for col in df_trials.columns:
-                    summary[f"{col}_mean"] = df_trials[col].mean()
-                    summary[f"{col}_std"] = df_trials[col].std()
-                print(f"Summary Results: {summary}")
-                return summary
-
-            res = run_experiment_with_params(a, b, NUM_TRIALS, Q_SAMPLES)
+            res = run_experiment(a, b, num_trials=NUM_TRIALS, q_samples=Q_SAMPLES)
             all_results.append(res)
         except Exception as e:
             print(f"Failed experiment {a} vs {b}: {e}")
 
-    os.makedirs('phasefour/results', exist_ok=True)
+    # Use path relative to script if possible, or fixed container path
+    output_dir = os.environ.get('RESULTS_DIR', 'results')
+    os.makedirs(output_dir, exist_ok=True)
     df = pd.DataFrame(all_results)
-    df.to_csv('phasefour/results/experiment_results.csv', index=False)
-    print(f"\nAll experiments completed. Results saved to phasefour/results/experiment_results.csv")
+    df.to_csv(os.path.join(output_dir, 'experiment_results.csv'), index=False)
+    print(f"\nAll experiments completed. Results saved to {output_dir}/experiment_results.csv")

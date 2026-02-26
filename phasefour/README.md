@@ -54,14 +54,14 @@ graph TD
     Metrics["<b>METRICS:</b><br/>- Binary Accuracy<br/>- Parameter Efficiency<br/>- Training Latency"]
     Analysis ==> Metrics
 
-    %% Styling
-    style Data fill:#fff,stroke:#333,stroke-width:4px
-    style Preprocessing fill:#f9f9f9,stroke:#666,stroke-dasharray: 5 5
-    style High_Capacity fill:#e1f5fe,stroke:#01579b
-    style Standard fill:#fff3e0,stroke:#e65100
-    style Parameter_Matched fill:#e8f5e9,stroke:#2e7d32
-    style Analysis fill:#f3e5f5,stroke:#7b1fa2
-    style Metrics fill:#fff,stroke:#333,stroke-width:2px
+    %% Styling for Light/Dark Compatibility
+    style Data fill:none,stroke:#333,stroke-width:4px
+    style Preprocessing fill:none,stroke:#666,stroke-dasharray: 5 5
+    style High_Capacity fill:none,stroke:#01579b,stroke-width:2px
+    style Standard fill:none,stroke:#e65100,stroke-width:2px
+    style Parameter_Matched fill:none,stroke:#2e7d32,stroke-width:2px
+    style Analysis fill:none,stroke:#7b1fa2,stroke-width:2px
+    style Metrics fill:none,stroke:#333,stroke-width:2px
 ```
 
 ## 1. Classical Neural Architectures
@@ -133,22 +133,13 @@ graph TD
     PQC_Interactions --> M["<br/><b>Hadamard +</b><br/><b>Z-Readout</b><br/><br/>"]
     M ==> N["<br/><b>Classification</b><br/><b>Logit (Hinge)</b><br/><br/>"]
 
-    %% Styling
-    style Classical_Prep fill:#f5f5f5,stroke:#333,stroke-width:2px,color:#fff
-    style Quantum_Circuit fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#fff
-    style PQC_Interactions fill:#fff,stroke:#1565c0,stroke-dasharray: 5 5,color:#000
-    style N fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    %% Styling for Light/Dark Compatibility
+    style Classical_Prep fill:none,stroke:#666,stroke-width:2px
+    style Quantum_Circuit fill:none,stroke:#1565c0,stroke-width:2px
+    style PQC_Interactions fill:none,stroke:#1565c0,stroke-dasharray: 5 5
+    style N fill:none,stroke:#2e7d32,stroke-width:2px
     
-    style I color:#fff
-    style J color:#fff
-    style K color:#fff
-    style L color:#fff
-    style E1 color:#fff
-    style F1 color:#fff
-    style G1 color:#fff
-    style G2 color:#fff
-    style G3 color:#fff
-    style M color:#000
+    %% Node-specific styles removed for theme compatibility
 ```
 
 ### Key Quantum Components:
