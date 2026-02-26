@@ -30,7 +30,17 @@ C_SWEEP = {
     'learning_rate': [0.01, 0.05]
 }
 
+class CoolingCallback(tf.keras.callbacks.Callback):
+    """Sleeps between epochs to allow CPU to cool."""
+    def __init__(self, seconds=1.0):
+        super().__init__()
+        self.seconds = seconds
+    def on_epoch_end(self, epoch, logs=None):
+        if self.seconds > 0:
+            time.sleep(self.seconds)
+
 def run_sweep(k, model_type, x_train, y_train, x_val, y_val):
+    epoch_cool = float(os.environ.get('EPOCH_COOL', 1.0))
     print(f"  Sweeping {model_type} for K={k}...")
     best_acc = -1
     best_params = None
@@ -42,7 +52,7 @@ def run_sweep(k, model_type, x_train, y_train, x_val, y_val):
             params = dict(zip(keys, v))
             print(f"    - [{i+1}/{len(combinations)}] Testing {params}...")
             model = create_qnn_multiclass_model(k, **params)
-            model.fit(x_train, y_train, epochs=3, batch_size=BATCH_SIZE, verbose=0)
+            model.fit(x_train, y_train, epochs=3, batch_size=BATCH_SIZE, verbose=0, callbacks=[CoolingCallback(epoch_cool)])
             acc = model.evaluate(x_val, y_val, verbose=0)[1]
             if acc > best_acc:
                 best_acc = acc
@@ -54,7 +64,7 @@ def run_sweep(k, model_type, x_train, y_train, x_val, y_val):
             params = dict(zip(keys, v))
             print(f"    - [{i+1}/{len(combinations)}] Testing {params}...")
             model = create_fair_classical_k_model(k, **params)
-            model.fit(x_train, y_train, epochs=3, batch_size=BATCH_SIZE, verbose=0)
+            model.fit(x_train, y_train, epochs=3, batch_size=BATCH_SIZE, verbose=0, callbacks=[CoolingCallback(epoch_cool)])
             acc = model.evaluate(x_val, y_val, verbose=0)[1]
             if acc > best_acc:
                 best_acc = acc
@@ -64,9 +74,16 @@ def run_sweep(k, model_type, x_train, y_train, x_val, y_val):
     return best_params
 
 def perform_comparison():
+    # Limit number of threads to prevent slamming all cores
+    tf.config.threading.set_intra_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
+    tf.config.threading.set_inter_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
+
     os.makedirs('phasefive/results', exist_ok=True)
     all_trial_results = []
     
+    epoch_cool = float(os.environ.get('EPOCH_COOL', 1.0))
+    breathe_sleep = float(os.environ.get('BREATHE_SLEEP', 0.05))
+
     for k in K_VALUES:
         print(f"\n--- Scientific Comparison for K={k} (5x5 PCA) ---")
         categories = get_top_k_categories(k)
@@ -83,8 +100,18 @@ def perform_comparison():
         
         # Prepare Quantum Circuits
         print("  Converting circuits...")
-        X_tr_q = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_tr[:Q_SAMPLES]])
-        X_val_q = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_val])
+        X_tr_q_list = []
+        for x in X_tr[:Q_SAMPLES]:
+            X_tr_q_list.append(convert_to_circuit(x))
+            if breathe_sleep > 0: time.sleep(breathe_sleep / 100.0)
+            
+        X_val_q_list = []
+        for x in X_val:
+            X_val_q_list.append(convert_to_circuit(x))
+            if breathe_sleep > 0: time.sleep(breathe_sleep / 100.0)
+
+        X_tr_q = tfq.convert_to_tensor(X_tr_q_list)
+        X_val_q = tfq.convert_to_tensor(X_val_q_list)
         X_test_q = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_test_pca])
         y_tr_q = y_tr[:Q_SAMPLES]
         
@@ -98,11 +125,10 @@ def perform_comparison():
             print(f"  Trial {t+1}/{NUM_TRIALS}...")
             trial_res = {'k': k, 'trial': t+1}
             
-            # ... training logic ...
             # Quantum Trial
             print("    Training Quantum...")
             q_model = create_qnn_multiclass_model(k, **best_q_params)
-            q_model.fit(X_tr_q, y_tr_q, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0)
+            q_model.fit(X_tr_q, y_tr_q, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0, callbacks=[CoolingCallback(epoch_cool)])
             q_pred = np.argmax(q_model.predict(X_test_q), axis=1)
             trial_res['q_acc'] = np.mean(q_pred == y_test)
             trial_res['q_f1'] = f1_score(y_test, q_pred, average='macro')
@@ -110,7 +136,7 @@ def perform_comparison():
             # Classical Trial
             print("    Training Classical...")
             c_model = create_fair_classical_k_model(k, **best_c_params)
-            c_model.fit(X_tr[:Q_SAMPLES], y_tr_q, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0)
+            c_model.fit(X_tr[:Q_SAMPLES], y_tr_q, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0, callbacks=[CoolingCallback(epoch_cool)])
             c_pred = np.argmax(c_model.predict(X_test_pca), axis=1)
             trial_res['c_acc'] = np.mean(c_pred == y_test)
             trial_res['c_f1'] = f1_score(y_test, c_pred, average='macro')

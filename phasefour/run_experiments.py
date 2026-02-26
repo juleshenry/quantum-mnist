@@ -7,6 +7,7 @@ import sympy
 import time
 import pandas as pd
 from scipy import stats
+from tqdm import tqdm
 from data_loader import load_plankton_binary, apply_pca_reduction
 
 # --- Models ---
@@ -102,13 +103,27 @@ def create_qnn_model():
     )
     return model
 
+class CoolingCallback(tf.keras.callbacks.Callback):
+    """Sleeps between epochs to allow CPU to cool."""
+    def __init__(self, seconds=1.0):
+        super().__init__()
+        self.seconds = seconds
+    def on_epoch_end(self, epoch, logs=None):
+        if self.seconds > 0:
+            time.sleep(self.seconds)
+
 # --- Experiment Execution ---
 
-def run_single_trial(class_a, class_b, trial_id, q_samples=200):
-    print(f"  Trial {trial_id+1}...")
+def run_single_trial(class_a, class_b, trial_id, q_samples=200, pbar=None):
+    if pbar: pbar.set_postfix(step="Data Load")
     trial_seed = 42 + trial_id
     np.random.seed(trial_seed)
     tf.random.set_seed(trial_seed)
+    
+    # Configure Pacing
+    thermal_sleep = float(os.environ.get('THERMAL_SLEEP', 0))
+    breathe_sleep = float(os.environ.get('BREATHE_SLEEP', 0.05)) # Sleep between batches/circuit convs
+    epoch_cool = float(os.environ.get('EPOCH_COOL', 1.0)) # Sleep between epochs
     
     trial_results = {}
 
@@ -118,49 +133,64 @@ def run_single_trial(class_a, class_b, trial_id, q_samples=200):
     X_train_cnn = X_train_raw[..., np.newaxis]
     X_test_cnn = X_test_raw[..., np.newaxis]
     
+    if pbar: pbar.set_postfix(step="Train CNN")
     cnn = create_cnn_model()
     start = time.time()
-    cnn.fit(X_train_cnn, y_train, epochs=5, batch_size=32, verbose=0)
+    cnn.fit(X_train_cnn, y_train, epochs=5, batch_size=32, verbose=0, callbacks=[CoolingCallback(epoch_cool)])
     trial_results['cnn_time'] = time.time() - start
     trial_results['cnn_acc'] = cnn.evaluate(X_test_cnn, y_test, verbose=0)[1]
     
     # 2. PCA Reduction (5x5 / 25 components)
+    if pbar: pbar.set_postfix(step="PCA")
     X_train_pca, X_test_pca, _ = apply_pca_reduction(X_train_raw, X_test_raw, n_components=25)
     
     # 3. Fair Classical (Matched to 25 inputs)
+    if pbar: pbar.set_postfix(step="Train Fair")
     fair_nn = create_fair_classical_model()
     start = time.time()
-    fair_nn.fit(X_train_pca, y_train, epochs=10, batch_size=32, verbose=0)
+    fair_nn.fit(X_train_pca, y_train, epochs=10, batch_size=32, verbose=0, callbacks=[CoolingCallback(epoch_cool)])
     trial_results['fair_time'] = time.time() - start
     trial_results['fair_acc'] = fair_nn.evaluate(X_test_pca, y_test, verbose=0)[1]
 
     # 4. Quantum Model (5x5 grid PCA)
-    x_train_circ = [convert_to_circuit(x) for x in X_train_pca]
-    x_test_circ = [convert_to_circuit(x) for x in X_test_pca]
-    x_train_tfcirc = tfq.convert_to_tensor(x_train_circ)
-    x_test_tfcirc = tfq.convert_to_tensor(x_test_circ)
+    if pbar: pbar.set_postfix(step="Circuit Conv")
+    x_train_circ_list = []
+    for x in X_train_pca:
+        x_train_circ_list.append(convert_to_circuit(x))
+        if breathe_sleep > 0: time.sleep(breathe_sleep / 10.0) # Tiny breather
+        
+    x_test_circ_list = []
+    for x in X_test_pca:
+        x_test_circ_list.append(convert_to_circuit(x))
+        if breathe_sleep > 0: time.sleep(breathe_sleep / 10.0)
+
+    x_train_tfcirc = tfq.convert_to_tensor(x_train_circ_list)
+    x_test_tfcirc = tfq.convert_to_tensor(x_test_circ_list)
     y_train_hinge = 2.0 * y_train - 1.0
     y_test_hinge = 2.0 * y_test - 1.0
 
+    if pbar: pbar.set_postfix(step="Train QNN")
     qnn = create_qnn_model()
     start = time.time()
     q_limit = min(len(x_train_tfcirc), q_samples)
-    qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=10, batch_size=32, verbose=0)
+    qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=10, batch_size=32, verbose=0, callbacks=[CoolingCallback(epoch_cool)])
     trial_results['qnn_time'] = time.time() - start
     trial_results['qnn_acc'] = qnn.evaluate(x_test_tfcirc, y_test_hinge, verbose=0)[1]
 
     return trial_results
 
 def run_experiment(class_a, class_b, num_trials=3, q_samples=200):
-    print(f"\n--- Running Experiment: {class_a} vs {class_b} ({num_trials} trials, {q_samples} q_samples) ---")
+    print(f"\n--- Running Experiment: {class_a} vs {class_b} ---")
     
     all_trials = []
     thermal_sleep = float(os.environ.get('THERMAL_SLEEP', 0))
-    for i in range(num_trials):
-        res = run_single_trial(class_a, class_b, i, q_samples=q_samples)
+    
+    trial_pbar = tqdm(range(num_trials), desc=f"  Trials", leave=False)
+    for i in trial_pbar:
+        res = run_single_trial(class_a, class_b, i, q_samples=q_samples, pbar=trial_pbar)
         all_trials.append(res)
         if thermal_sleep > 0 and i < num_trials - 1:
-            print(f"  Pacing... sleeping for {thermal_sleep}s to prevent overheating.")
+            trial_pbar.set_postfix(step=f"Pacing {thermal_sleep}s")
             time.sleep(thermal_sleep)
     
     df_trials = pd.DataFrame(all_trials)
@@ -174,10 +204,14 @@ def run_experiment(class_a, class_b, num_trials=3, q_samples=200):
     summary['p_value_qnn_vs_fair'] = p_val
     summary['significant_05'] = p_val < 0.05
 
-    print(f"Summary Results: {summary}")
+    print(f"Summary Results: QNN_Acc={summary['qnn_acc_mean']:.4f}, Fair_Acc={summary['fair_acc_mean']:.4f}")
     return summary
 
 if __name__ == "__main__":
+    # --- Thermal Protection Configuration ---
+    # Limit number of threads to prevent slamming all cores (vital for emulation/Macs)
+    tf.config.threading.set_intra_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
+    tf.config.threading.set_inter_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
     pairs = [
         ('dinobryon', 'nauplius'),
         ('maybe_cyano', 'diaphanosoma'),
@@ -198,7 +232,9 @@ if __name__ == "__main__":
     print(f"Starting experiments with NUM_TRIALS={NUM_TRIALS}, Q_SAMPLES={Q_SAMPLES}")
     
     all_results = []
-    for a, b in pairs:
+    main_pbar = tqdm(pairs, desc="Overall Progress")
+    for a, b in main_pbar:
+        main_pbar.set_description(f"Experiment: {a} vs {b}")
         try:
             res = run_experiment(a, b, num_trials=NUM_TRIALS, q_samples=Q_SAMPLES)
             all_results.append(res)

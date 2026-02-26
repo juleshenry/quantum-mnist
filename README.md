@@ -203,52 +203,81 @@ A diverse 5x5 grid showing unique samples from 25 different plankton classes:
 First, build the unified Docker image:
 
 ```bash
-docker build -t quantum-plankton .
+docker build --platform linux/amd64 -t quantum-plankton .
 ```
 
 ### Run Phase 2: Basic Binary Quantum (Data Ingress)
 To verify the plankton data loading and class pairs:
 ```bash
-docker run --rm quantum-plankton python phasetwo/plankton_ingress.py
+docker run --rm --platform linux/amd64 quantum-plankton python phasetwo/plankton_ingress.py
 ```
 
 ### Run Phase 3: Optimise via Param Sweep
 To see the hyperparameter sweep configuration:
 ```bash
-docker run --rm quantum-plankton python phasethree/optimize_binary_classifier.py
+docker run --rm --platform linux/amd64 quantum-plankton python phasethree/optimize_binary_classifier.py
 ```
 
 ### Run Phase 4: Compare to Classical (Full Experiments)
 To run the full experiment suite and save results to your local machine:
 ```bash
-docker run --rm -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
+docker run --rm --platform linux/amd64 -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
 ```
 
 ### Run Phase 5: K-Category Scaling
 To run the standard multi-class scaling experiments:
 ```bash
-docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
+docker run --rm --platform linux/amd64 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
 ```
 
 ### Run Phase 5: Scientific Swept Comparison (K=2,3,4,5)
 To run the high-rigor comparison with hyperparameter sweeps for both regimes. This script uses `tqdm` to provide detailed progress bars for each phase of the computation:
 ```bash
-docker run -it --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
+docker run -it --rm --platform linux/amd64 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
 ```
 *Note: The `-it` flag is recommended to see the live progress bars.*
 
 ---
 
-## Heat Management & Pacing
+## Heat Management & Deep Pacing
 
-To prevent GPU/CPU overheating during long-running experiments, you can use the `THERMAL_SLEEP` environment variable to inject a cooling period (in seconds) between every trial.
+To prevent GPU/CPU overheating (especially on ARM64 Macs using AMD64 emulation), the following controls are available:
 
-Example: Sleep for 60 seconds between each trial in Phase 5:
+### 1. Inter-Trial Cooling (`THERMAL_SLEEP`)
+Injects a sleep period (in seconds) between every trial.
 ```bash
-docker run --rm -e THERMAL_SLEEP=60 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
+-e THERMAL_SLEEP=60
 ```
 
-This works for Phase 4 and Phase 5 experiment scripts.
+### 2. Inter-Epoch Cooling (`EPOCH_COOL`)
+Pauses the CPU for a few seconds after every training epoch. This is highly effective at lowering average temperature during active training. Default is `1.0`.
+```bash
+-e EPOCH_COOL=2.0
+```
+
+### 3. Thread Limiting (`TF_THREADS`)
+Limits the number of CPU cores used by TensorFlow. The default is `1`. Increasing this will speed up training but will dramatically increase heat.
+```bash
+-e TF_THREADS=1
+```
+
+### 4. Circuit Breathers (`BREATHE_SLEEP`)
+Adds micro-sleeps during heavy data processing (like quantum circuit conversion). Default is `0.05`.
+```bash
+-e BREATHE_SLEEP=0.1
+```
+
+### Example: Maximum Cooling Run
+```bash
+docker run -it --rm \
+  --platform linux/amd64 \
+  -e TF_THREADS=1 \
+  -e EPOCH_COOL=5.0 \
+  -e THERMAL_SLEEP=120 \
+  -e BREATHE_SLEEP=0.2 \
+  -v $(pwd)/phasefive/results:/app/phasefive/results \
+  quantum-plankton python phasefive/run_experiments.py
+```
 
 ## Results Analysis
 After running the experiments, you can find the generated graphs and raw data in the `results/` folders of each phase. Phase 5 specifically produces `scientific_scaling_plot.png`, which provides the primary visualization for the quantum vs. classical scaling performance.

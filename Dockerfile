@@ -32,7 +32,7 @@ COPY . .
 
 # Environment setup
 ENV DATA_DIR="/app/data/zooplankton_0p5x"
-ENV PYTHONPATH="${PYTHONPATH}:/app:/app/phaseone:/app/phasetwo:/app/phasethree:/app/phasefour:/app/phasefive"
+ENV PYTHONPATH="/app:/app/phaseone:/app/phasetwo:/app/phasethree:/app/phasefour:/app/phasefive"
 
 # Ensure results directories exist
 RUN mkdir -p /app/phasefour/results /app/phasefive/results

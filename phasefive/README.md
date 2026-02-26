@@ -23,13 +23,13 @@ This phase extends the previous work to a multi-class ($k$-category) setting, up
 
 To run the standard multi-class scaling experiments:
 ```bash
-docker build -t quantum-plankton .
-docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
+docker build --platform linux/amd64 -t quantum-plankton .
+docker run --rm --platform linux/amd64 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
 ```
 
 To run the high-rigor swept comparison:
 ```bash
-docker run -it --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
+docker run -it --rm --platform linux/amd64 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
 ```
 
 ## Results

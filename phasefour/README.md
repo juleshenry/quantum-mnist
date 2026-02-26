@@ -190,10 +190,10 @@ To reproduce these results using the rigorous Docker environment:
 
 ```bash
 # Build the image (includes automated rigor tests)
-docker build -t quantum-plankton .
+docker build --platform linux/amd64 -t quantum-plankton .
 
 # Run the experiments and extract results
-docker run --rm -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
+docker run --rm --platform linux/amd64 -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
 ```
 
 ---
