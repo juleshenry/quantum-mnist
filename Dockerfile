@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pandas==1.3.5 \
     matplotlib==3.5.1 \
     seaborn==0.11.2 \
+    tqdm==4.64.0 \
     scikit-learn==1.0.2
 
 WORKDIR /app
@@ -39,5 +40,5 @@ RUN mkdir -p /app/phasefour/results /app/phasefive/results
 # Run tests to ensure rigor before running experiments
 RUN python /app/phasefour/test_rigor.py
 
-# Default to running Phase Four
-CMD ["python", "phasefour/run_experiments.py"]
+# Default to running the latest phase (Phase Five)
+CMD ["python", "phasefive/run_experiments.py"]

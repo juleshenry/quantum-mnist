@@ -113,7 +113,7 @@ We evaluate three levels of classical models (MobileNetV2, Custom CNN, and a "Fa
 **Detailed Documentation:** [Phase 4 Neural Architectures & Comparison](phasefour/README.md)
 
 # Phase 5: k-category scaling
-In this phase, we scale the quantum algorithm to handle multi-class classification. We evaluate the model's performance as the number of categories ($k$) increases from 2 to 16, comparing it against classical baselines with matched parameter counts.
+Done. We have scaled the quantum algorithm to handle multi-class classification. This phase introduces a **5x5 grid (25 qubits)** and utilizes **PCA-based Dimensionality Reduction** to overcome the information bottleneck of raw downsampling. We evaluate performance across $k \in \{2, 3, 5, 8, 12, 16\}$ categories.
 
 **Detailed Documentation:** [Phase 5 Scaling Study](phasefive/README.md)
 
@@ -231,7 +231,24 @@ docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plank
 ```
 
 ### Run Phase 5: Scientific Swept Comparison (K=2,3,4,5)
-To run the high-rigor comparison with hyperparameter sweeps for both regimes:
+To run the high-rigor comparison with hyperparameter sweeps for both regimes. This script uses `tqdm` to provide detailed progress bars for each phase of the computation:
 ```bash
-docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
+docker run -it --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
 ```
+*Note: The `-it` flag is recommended to see the live progress bars.*
+
+---
+
+## Heat Management & Pacing
+
+To prevent GPU/CPU overheating during long-running experiments, you can use the `THERMAL_SLEEP` environment variable to inject a cooling period (in seconds) between every trial.
+
+Example: Sleep for 60 seconds between each trial in Phase 5:
+```bash
+docker run --rm -e THERMAL_SLEEP=60 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
+```
+
+This works for Phase 4 and Phase 5 experiment scripts.
+
+## Results Analysis
+After running the experiments, you can find the generated graphs and raw data in the `results/` folders of each phase. Phase 5 specifically produces `scientific_scaling_plot.png`, which provides the primary visualization for the quantum vs. classical scaling performance.

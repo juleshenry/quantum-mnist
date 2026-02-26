@@ -1,0 +1,30 @@
+Phase 2: Basic Binary Verification
+  Verifies data loading and basic quantum circuit logic.
+
+
+   1 docker run --rm quantum-plankton python phasetwo/plankton_ingress.py
+
+  Phase 3: Architecture Optimization
+  Runs the hyperparameter sweep to identify the best quantum encoding and circuit depth.
+
+
+   1 docker run --rm quantum-plankton python phasethree/optimize_binary_classifier.py
+
+  Phase 4: Generalized Binary Comparison (5x5 PCA)
+  Compares the 25-qubit QNN against a parameter-matched Classical MLP and a 28x28 CNN.
+
+
+   1 docker run --rm -e THERMAL_SLEEP=30 -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
+
+
+  Phase 5: K-Category Scaling Study (5x5 PCA)
+  Evaluates how the quantum model scales as you increase the number of plankton classes ($k=2, 3, 5, 8, 16$).
+
+
+   1 docker run --rm -e THERMAL_SLEEP=45 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
+
+  Phase 5: High-Rigor Scientific Comparison
+  The most intensive script; it performs a full grid-search "sweep" for both Quantum and Classical models to ensure the comparison is as fair as possible.
+
+
+   1 docker run -it --rm -e THERMAL_SLEEP=60 -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
