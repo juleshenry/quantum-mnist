@@ -5,8 +5,8 @@ import sympy
 import numpy as np
 
 def create_k_category_quantum_model(k, n_layers=1):
-    # Total 26 qubits: 25 data + 1 readout
-    data_qubits = cirq.GridQubit.rect(5, 5)
+    # Total 17 qubits: 16 data + 1 readout
+    data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     
     circuit = cirq.Circuit()
@@ -35,11 +35,11 @@ def create_k_category_quantum_model(k, n_layers=1):
 
 def convert_to_circuit(pca_features):
     """
-    Expects 25 PCA features scaled to [0, 1].
-    Converts them to a 5x5 grid of qubits.
+    Expects 16 PCA features scaled to [0, 1].
+    Converts them to a 4x4 grid of qubits.
     """
     values = np.ndarray.flatten(pca_features)
-    qubits = cirq.GridQubit.rect(5, 5)
+    qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):
         # Map [0, 1] to [0, pi] for Ry rotations

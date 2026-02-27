@@ -20,7 +20,7 @@ from data_loader import load_plankton_binary, apply_pca_reduction
 
 # --- Models ---
 
-def create_fair_classical_model(input_shape=(25,)):
+def create_fair_classical_model(input_shape=(16,)):
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=input_shape),
         tf.keras.layers.Dense(2, activation='relu'),
@@ -63,7 +63,7 @@ class CircuitLayerBuilder():
             circuit.append(gate(qubit, self.readout)**symbol)
 
 def create_quantum_model():
-    data_qubits = cirq.GridQubit.rect(5, 5)
+    data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
     
@@ -83,7 +83,7 @@ def create_quantum_model():
 
 def convert_to_circuit(pca_features):
     values = np.ndarray.flatten(pca_features)
-    qubits = cirq.GridQubit.rect(5, 5)
+    qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):
         circuit.append(cirq.ry(np.pi * value)(qubits[i]))
@@ -108,32 +108,33 @@ def create_qnn_model():
     return model
 
 class CoolingCallback(tf.keras.callbacks.Callback):
-    """Sleeps between epochs and updates a sub-progress bar."""
-    def __init__(self, seconds=1.0, pbar=None, total_epochs=10):
+    """Aggressive cooling: sleeps after batches and epochs."""
+    def __init__(self, epoch_sec=1.0, batch_sec=0.0, pbar=None):
         super().__init__()
-        self.seconds = seconds
+        self.epoch_sec = epoch_sec
+        self.batch_sec = batch_sec
         self.pbar = pbar
-        self.total_epochs = total_epochs
-        self.current_epoch = 0
 
-    def on_epoch_end(self, epoch, logs=None):
-        self.current_epoch += 1
+    def on_train_batch_end(self, batch, logs=None):
         if self.pbar:
             self.pbar.update(1)
-            acc_key = 'accuracy' if 'accuracy' in logs else 'hinge_accuracy'
-            self.pbar.set_postfix(acc=f"{logs.get(acc_key, 0):.4f}")
-        if self.seconds > 0:
-            time.sleep(self.seconds)
+        if self.batch_sec > 0:
+            time.sleep(self.batch_sec)
+
+    def on_epoch_end(self, epoch, logs=None):
+        if self.epoch_sec > 0:
+            time.sleep(self.epoch_sec)
 
 # --- Experiment Execution ---
 
-def run_single_trial(class_a, class_b, trial_id, q_samples=200, trial_pbar=None):
+def run_single_trial(class_a, class_b, trial_id, q_samples=200):
     trial_seed = 42 + trial_id
     np.random.seed(trial_seed)
     tf.random.set_seed(trial_seed)
     
     breathe_sleep = float(os.environ.get('BREATHE_SLEEP', 0.05))
     epoch_cool = float(os.environ.get('EPOCH_COOL', 1.0))
+    batch_cool = float(os.environ.get('BATCH_COOL', 0.1)) # NEW: Cool after every batch
     
     trial_results = {}
 
@@ -143,35 +144,36 @@ def run_single_trial(class_a, class_b, trial_id, q_samples=200, trial_pbar=None)
     X_test_cnn = X_test_raw[..., np.newaxis]
     
     # 1. CNN Training
-    epochs_cnn = 5
-    with tqdm(total=epochs_cnn, desc="    CNN Epochs", leave=False) as epbar:
+    epochs_cnn = 5; batch_size = 32
+    steps_per_epoch = int(np.ceil(len(X_train_cnn) / batch_size))
+    with tqdm(total=epochs_cnn * steps_per_epoch, desc="    CNN Training", leave=False) as tpbar:
         cnn = create_cnn_model()
-        cnn.fit(X_train_cnn, y_train, epochs=epochs_cnn, batch_size=32, verbose=0, 
-                callbacks=[CoolingCallback(epoch_cool, epbar, epochs_cnn)])
-        trial_results['cnn_time'] = 0 # Placeholder as we are now tracking epochs
+        cnn.fit(X_train_cnn, y_train, epochs=epochs_cnn, batch_size=batch_size, verbose=0, 
+                callbacks=[CoolingCallback(epoch_cool, batch_cool, tpbar)])
         trial_results['cnn_acc'] = cnn.evaluate(X_test_cnn, y_test, verbose=0)[1]
     
     # 2. PCA
-    X_train_pca, X_test_pca, _ = apply_pca_reduction(X_train_raw, X_test_raw, n_components=25)
+    X_train_pca, X_test_pca, _ = apply_pca_reduction(X_train_raw, X_test_raw, n_components=16)
     
     # 3. Fair Classical Training
     epochs_fair = 10
-    with tqdm(total=epochs_fair, desc="    Fair Epochs", leave=False) as epbar:
+    steps_per_epoch = int(np.ceil(len(X_train_pca) / batch_size))
+    with tqdm(total=epochs_fair * steps_per_epoch, desc="    Fair Training", leave=False) as tpbar:
         fair_nn = create_fair_classical_model()
-        fair_nn.fit(X_train_pca, y_train, epochs=epochs_fair, batch_size=32, verbose=0,
-                    callbacks=[CoolingCallback(epoch_cool, epbar, epochs_fair)])
+        fair_nn.fit(X_train_pca, y_train, epochs=epochs_fair, batch_size=batch_size, verbose=0,
+                    callbacks=[CoolingCallback(epoch_cool, batch_cool, tpbar)])
         trial_results['fair_acc'] = fair_nn.evaluate(X_test_pca, y_test, verbose=0)[1]
 
     # 4. Quantum Circuit Conv
     x_train_circ_list = []
     for x in tqdm(X_train_pca, desc="    Circuit Conv (Train)", leave=False):
         x_train_circ_list.append(convert_to_circuit(x))
-        if breathe_sleep > 0: time.sleep(breathe_sleep / 100.0)
+        if breathe_sleep > 0: time.sleep(breathe_sleep / 10.0)
         
     x_test_circ_list = []
     for x in tqdm(X_test_pca, desc="    Circuit Conv (Test)", leave=False):
         x_test_circ_list.append(convert_to_circuit(x))
-        if breathe_sleep > 0: time.sleep(breathe_sleep / 100.0)
+        if breathe_sleep > 0: time.sleep(breathe_sleep / 10.0)
 
     x_train_tfcirc = tfq.convert_to_tensor(x_train_circ_list)
     x_test_tfcirc = tfq.convert_to_tensor(x_test_circ_list)
@@ -179,12 +181,12 @@ def run_single_trial(class_a, class_b, trial_id, q_samples=200, trial_pbar=None)
     y_test_hinge = 2.0 * y_test - 1.0
 
     # 5. QNN Training
-    epochs_qnn = 10
-    with tqdm(total=epochs_qnn, desc="    QNN Epochs", leave=False) as epbar:
+    epochs_qnn = 10; q_limit = min(len(x_train_tfcirc), q_samples)
+    steps_per_epoch = int(np.ceil(q_limit / batch_size))
+    with tqdm(total=epochs_qnn * steps_per_epoch, desc="    QNN Training", leave=False) as tpbar:
         qnn = create_qnn_model()
-        q_limit = min(len(x_train_tfcirc), q_samples)
-        qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=epochs_qnn, batch_size=32, verbose=0,
-                callbacks=[CoolingCallback(epoch_cool, epbar, epochs_qnn)])
+        qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=epochs_qnn, batch_size=batch_size, verbose=0,
+                callbacks=[CoolingCallback(epoch_cool, batch_cool, tpbar)])
         trial_results['qnn_acc'] = qnn.evaluate(x_test_tfcirc, y_test_hinge, verbose=0)[1]
 
     return trial_results
@@ -199,7 +201,7 @@ def run_experiment(class_a, class_b, num_trials=3, q_samples=200):
         res = run_single_trial(class_a, class_b, i, q_samples=q_samples)
         all_trials.append(res)
         if thermal_sleep > 0 and i < num_trials - 1:
-            print(f"  Pacing {thermal_sleep}s...")
+            print(f"  Cooling Down {thermal_sleep}s...")
             time.sleep(thermal_sleep)
     
     df_trials = pd.DataFrame(all_trials)
@@ -220,7 +222,7 @@ if __name__ == "__main__":
     if IS_SMOKE:
         pairs = pairs[:1]; NUM_TRIALS = 2; Q_SAMPLES = 10
 
-    print(f"Total Experiments: {len(pairs)} | Trials per Exp: {NUM_TRIALS}")
+    print(f"Total Experiments: {len(pairs)} | Trials per Exp: {NUM_TRIALS} | Q_SAMPLES: {Q_SAMPLES}")
     
     all_results = []
     for a, b in pairs:
@@ -230,6 +232,6 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"Failed experiment {a} vs {b}: {e}")
 
-    output_dir = os.environ.get('RESULTS_DIR', 'phasefour/results')
+    output_dir = os.environ.get('RESULTS_DIR', 'phase4/results')
     os.makedirs(output_dir, exist_ok=True)
     pd.DataFrame(all_results).to_csv(os.path.join(output_dir, 'experiment_results.csv'), index=False)

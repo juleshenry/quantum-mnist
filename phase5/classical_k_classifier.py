@@ -1,12 +1,12 @@
 import tensorflow as tf
 
-def create_fair_classical_k_model(k, hidden_units=1, learning_rate=0.01, input_shape=(25,)):
-    # 25-H-k architecture.
-    # Total parameters: 25*H (weights) + H (bias) + H*k (weights) + k (bias)
-    # H=1: 26 + 2k
-    # H=2: 52 + 3k
-    # QNN with 1 layer (25 data qubits): 50 params (25 XX, 25 ZZ).
-    # QNN with 2 layers (25 data qubits): 100 params.
+def create_fair_classical_k_model(k, hidden_units=1, learning_rate=0.01, input_shape=(16,)):
+    # 16-H-k architecture.
+    # Total parameters: 16*H (weights) + H (bias) + H*k (weights) + k (bias)
+    # H=1: 17 + 2k
+    # H=2: 34 + 3k
+    # QNN with 1 layer (16 data qubits): 32 params (16 XX, 16 ZZ).
+    # QNN with 2 layers (16 data qubits): 64 params.
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=input_shape),
         tf.keras.layers.Dense(hidden_units, activation='relu'),

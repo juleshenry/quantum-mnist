@@ -49,7 +49,7 @@ def load_plankton_k_categories(categories, img_size=(28, 28), data_dir=None):
     
     return train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
 
-def apply_pca_reduction(X_train, X_test, n_components=25):
+def apply_pca_reduction(X_train, X_test, n_components=16):
     """
     Applies PCA to reduce dimensionality of images and scales to [0, 1].
     Expects X to be (N, H, W) or (N, D).

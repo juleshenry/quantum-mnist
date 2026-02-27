@@ -9,7 +9,7 @@ import tensorflow as tf
 
 # Import local data loader
 try:
-    from phasetwo.plankton_ingress import prepare_binary_dataset, get_plankton_names
+    from phase2.plankton_ingress import prepare_binary_dataset, get_plankton_names
 except ImportError:
     # Fallback for colab if needed
     pass
@@ -26,10 +26,8 @@ class CircuitLayerBuilder():
 
 def convert_to_circuit(image):
     """Encode classical image into quantum datapoint using angle encoding."""
-    # Downsample from 16x16 to 4x4 for simulation feasibility
-    image_4x4 = tf.image.resize(image[..., np.newaxis], (4, 4)).numpy().squeeze()
-    
-    values = np.ndarray.flatten(image_4x4)
+    # Input image is now already 4x4 from plankton_ingress
+    values = np.ndarray.flatten(image)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):

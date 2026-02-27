@@ -1,0 +1,14 @@
+Phase 7: Expressibility & Entanglement Analysis
+Architecture: PQC from Phase 5 (Subsystem of 4 qubits)
+--------------------------------------------------
+Layers: 1, Expressibility: 0.8363, Entanglement: 0.5690
+Layers: 2, Expressibility: 0.4693, Entanglement: 0.7471
+Layers: 3, Expressibility: 0.3741, Entanglement: 0.7944
+Layers: 4, Expressibility: 0.4042, Entanglement: 0.8256
+Layers: 5, Expressibility: 0.4289, Entanglement: 0.8406
+
+Analysis:
+As the number of layers increases, the Expressibility value (KL divergence) should decrease,
+indicating that the PQC is approaching the Haar distribution and can explore the Hilbert space more uniformly.
+Similarly, the Meyer-Wallach entanglement measure should increase, showing that the circuit is capable
+of generating more global entanglement.

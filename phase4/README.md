@@ -193,7 +193,7 @@ To reproduce these results using the rigorous Docker environment:
 docker build --platform linux/amd64 -t quantum-plankton .
 
 # Run the experiments and extract results
-docker run --rm --platform linux/amd64 -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
+docker run --rm --platform linux/amd64 -v $(pwd)/phase4/results:/app/phase4/results quantum-plankton python phase4/run_experiments.py
 ```
 
 ---
@@ -220,5 +220,5 @@ The Phase 4 evaluation bridged the gap between quantum optimizations and classic
 ### Conclusion:
 Phase 4 confirms that the **Quantum Neural Network (QNN)** exhibits superior feature extraction capabilities and parameter efficiency at extremely low resolutions (4x4). This suggests that quantum circuits, through multi-axis interactions and entanglement, can capture biological signatures that simple classical networks of the same scale fail to resolve.
 
-Full experimental data is archived in `phasefour/results/experiment_results.csv`.
+Full experimental data is archived in `phase4/results/experiment_results.csv`.
 

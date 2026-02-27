@@ -10,13 +10,13 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
 from tqdm import tqdm
 
-# Import components from phasefive
+# Import components from phase5
 import sys
-sys.path.append('phasefive')
+sys.path.append('phase5')
 from data_loader import load_plankton_k_categories, get_top_k_categories, apply_pca_reduction
 
-def create_saliency_circuit(n_features, n_layers=1):
-    data_qubits = cirq.GridQubit.rect(5, 5)
+def create_saliency_circuit(n_features, k, n_layers=1):
+    data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     
     # Use names that sort predictably: f00, f01, ... and w00, w01, ...
@@ -40,7 +40,11 @@ def create_saliency_circuit(n_features, n_layers=1):
             circuit.append(cirq.XX(q, readout)**model_symbols[idx])
             circuit.append(cirq.ZZ(q, readout)**model_symbols[idx+1])
             
-    return circuit, feat_symbols, model_symbols, [cirq.Z(readout), cirq.Z(data_qubits[0])]
+    # We need k observables for k-class classification
+    all_qubits = [readout] + data_qubits
+    observables = [cirq.Z(all_qubits[i]) for i in range(k)]
+            
+    return circuit, feat_symbols, model_symbols, observables
 
 class QuantumSaliencyModel(tf.keras.Model):
     def __init__(self, circuit, n_feat, n_model, observables):
@@ -69,20 +73,20 @@ class QuantumSaliencyModel(tf.keras.Model):
         return self.softmax(expectations)
 
 def run_saliency_demo():
-    print("--- Phase Six: Quantum Interpretability ---")
-    os.makedirs('phasesix/results', exist_ok=True)
+    print("--- Phase 6: Quantum Interpretability ---")
+    os.makedirs('phase6/results', exist_ok=True)
     
     # 1. Load Data
     k = 2
     categories = get_top_k_categories(k)
     print(f"Categories: {categories}")
     X_train_raw, X_test_raw, y_train, y_test = load_plankton_k_categories(categories, img_size=(28, 28))
-    X_train_pca, X_test_pca, pca = apply_pca_reduction(X_train_raw, X_test_raw, n_components=25)
+    X_train_pca, X_test_pca, pca = apply_pca_reduction(X_train_raw, X_test_raw, n_components=16)
     
     # 2. Build Model
-    n_features = 25
+    n_features = 16
     n_layers = 1
-    circuit, f_syms, w_syms, observables = create_saliency_circuit(n_features, n_layers)
+    circuit, f_syms, w_syms, observables = create_saliency_circuit(n_features, k, n_layers)
     model = QuantumSaliencyModel(circuit, len(f_syms), len(w_syms), observables)
     
     model.compile(
@@ -149,10 +153,10 @@ def run_saliency_demo():
         plt.axis('off')
         
         plt.tight_layout()
-        plt.savefig(f'phasesix/results/saliency_example_{i}.png')
+        plt.savefig(f'phase6/results/saliency_example_{i}.png')
         plt.close()
         
-    print(f"Saved saliency maps to phasesix/results/")
+    print(f"Saved saliency maps to phase6/results/")
 
 if __name__ == "__main__":
     run_saliency_demo()

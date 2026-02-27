@@ -66,7 +66,7 @@ def perform_comparison():
     tf.config.threading.set_intra_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
     tf.config.threading.set_inter_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
 
-    os.makedirs('phasefive/results', exist_ok=True)
+    os.makedirs('phase5/results', exist_ok=True)
     all_trial_results = []
     epoch_cool = float(os.environ.get('EPOCH_COOL', 1.0))
     breathe_sleep = float(os.environ.get('BREATHE_SLEEP', 0.05))
@@ -76,7 +76,7 @@ def perform_comparison():
         main_pbar.set_description(f"Scientific K={k}")
         categories = get_top_k_categories(k)
         X_train_raw, X_test_raw, y_train, y_test = load_plankton_k_categories(categories, img_size=(28, 28))
-        X_train_pca, X_test_pca, _ = apply_pca_reduction(X_train_raw, X_test_raw, n_components=25)
+        X_train_pca, X_test_pca, _ = apply_pca_reduction(X_train_raw, X_test_raw, n_components=16)
         
         split = int(len(X_train_pca) * 0.8)
         X_tr, X_val = X_train_pca[:split], X_train_pca[split:]
@@ -123,10 +123,10 @@ def perform_comparison():
                 trial_pbar.set_postfix(step=f"Pacing {thermal_sleep}s")
                 time.sleep(thermal_sleep)
             
-    df = pd.DataFrame(all_trial_results); df.to_csv('phasefive/results/scientific_k_comparison.csv', index=False)
+    df = pd.DataFrame(all_trial_results); df.to_csv('phase5/results/scientific_k_comparison.csv', index=False)
     summary = df.groupby('k').agg(['mean', 'std']).reset_index()
     summary.columns = [f'{col[0]}_{col[1]}' if col[1] else col[0] for col in summary.columns]
-    summary.to_csv('phasefive/results/scientific_k_summary.csv', index=False)
+    summary.to_csv('phase5/results/scientific_k_summary.csv', index=False)
 
 if __name__ == "__main__":
     perform_comparison()

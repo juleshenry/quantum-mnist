@@ -76,7 +76,7 @@ def load_plankton_binary(class_a, class_b, img_size=(128, 128), data_dir=None, r
     # Use stratified split for better rigor
     return train_test_split(X, y, test_size=0.2, random_state=random_state, stratify=y)
 
-def apply_pca_reduction(X_train, X_test, n_components=25):
+def apply_pca_reduction(X_train, X_test, n_components=16):
     """Applies PCA to reduce dimensionality and scales to [0, 1]."""
     n_train = X_train.shape[0]
     n_test = X_test.shape[0]
@@ -97,5 +97,5 @@ def apply_pca_reduction(X_train, X_test, n_components=25):
 if __name__ == "__main__":
     # Test loading
     X_train, X_test, y_train, y_test = load_plankton_binary('dinobryon', 'nauplius', img_size=(28, 28))
-    X_train_p, X_test_p, _ = apply_pca_reduction(X_train, X_test, n_components=25)
+    X_train_p, X_test_p, _ = apply_pca_reduction(X_train, X_test, n_components=16)
     print(f"Train size: {len(X_train_p)}, Features: {X_train_p.shape[1]}")
