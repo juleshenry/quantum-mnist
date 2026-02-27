@@ -162,15 +162,13 @@ Unlike Phase 2, which primarily used a consistent 16x16 resolution for both clas
 
 All resolutions utilize **Bilinear Interpolation** for resizing to minimize aliasing artifacts during downsampling.
 
-## 4. Comparison Metrics
+## 4. Swiss Paper Benchmark (EAWAG Greifensee)
+The dataset used in this project originated from the research by **Kyathanahally et al. (2021)**. Their state-of-the-art models (DenseNet, ResNet, and MobileNet ensembles) achieved **98% accuracy** on 35 classes using 128x128 resolution.
 
-| Model | Input Size | Params (Approx) | Data Format | Accuracy (Binary) |
-| :--- | :--- | :--- | :--- | :--- |
-| **MobileNetV2** | 128x128 | ~45K (Head) | RGB | 84.5% (Multiclass) |
-| **SmallCNN** | 128x128 | ~2.3M | RGB | 86.6% (Multiclass) |
-| **Standard CNN** | 28x28 | ~1.2M | Grayscale | 91.7% - 100% |
-| **Fair Classical**| 4x4 | 55 | Grayscale | 52.6% - 79.6% |
-| **QNN (Phase 4)** | 4x4 | 48 | Quantum | **51.7% - 88.3%** |
+Phase 4 compares our binary QNN results against their feature-based MLP results (91.2%) to evaluate the efficiency of quantum feature extraction on a restricted 4x4 input space.
+
+## 5. Performance Comparison (Binary)
+We conduct head-to-head trials on specific plankton pairs (e.g., *dinobryon* vs. *nauplius*) to establish the baseline performance of the QNN against its classical counterparts.
 
 ---
 
@@ -182,6 +180,7 @@ To ensure the validity of these results, Phase 4 incorporates several rigorous m
 *   **Multiple Trials:** Each experiment pair is run for **3 independent trials**. The results reported in `experiment_results.csv` include both the `mean` and `standard deviation` of accuracy and training time.
 *   **Stratified Data Splitting:** We use stratified random sampling to ensure that the train/test split maintains the original class distribution, preventing bias from class imbalance.
 *   **Automated Verification:** A `test_rigor.py` suite is executed during the Docker build process to verify data loading integrity, parameter counts, and quantum circuit encoding before any experiments begin.
+*   **Statistical Significance:** Every experiment run in `phase4/run_experiments.py` now includes a **Welch's t-test** between the QNN and the Fair Classical model to determine if observed gains are statistically significant ($p < 0.05$).
 *   **Parameter Alignment:** The "Fair Classical" model was specifically tuned (3 hidden units) to align its parameter count (~55) as closely as possible with the QNN (~48), providing a statistically sound comparison of model capacity.
 
 ### Running the Experiments
@@ -198,18 +197,20 @@ docker run --rm --platform linux/amd64 -v $(pwd)/phase4/results:/app/phase4/resu
 
 ---
 
-## 6. Results & Analysis
+## 6. Results & Analysis (Binary)
 
-The Phase 4 evaluation bridged the gap between quantum optimizations and classical benchmarks by conducting a direct, head-to-head comparison across 3 independent trials per pair.
+The Phase 4 evaluation bridged the gap between quantum optimizations and classical benchmarks by conducting a direct, head-to-head comparison across 5 independent trials per pair.
 
 ### Experimental Results Summary
 
+<!-- P4_RESULTS_START -->
 | Plankton Pair | Standard CNN (28x28) | Fair Classical (4x4) | QNN (4x4) | Quantum vs. Fair Classical |
 | :--- | :---: | :---: | :---: | :---: |
 | **dinobryon vs nauplius** | 94.1% (±0.1) | 69.1% (±0.7) | 68.6% (±0.0) | Comparable |
 | **maybe_cyano vs diaphanosoma** | 98.0% (±0.5) | 70.6% (±22.7) | **81.8% (±1.7)** | **+11.2% Gain** |
 | **asterionella vs uroglena** | 99.2% (±0.0) | 57.6% (±8.7) | **78.2% (±10.5)** | **+20.6% Gain** |
 | **cyclops vs ceratium** | 98.2% (±0.0) | 49.2% (±0.7) | 50.5% (±1.4) | Comparable |
+<!-- P4_RESULTS_END -->
 
 ### Key Observations:
 

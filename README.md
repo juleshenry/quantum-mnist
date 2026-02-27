@@ -11,10 +11,10 @@ https://arxiv.org/pdf/2011.02831.pdf
 
 ### Project Phases
 1. **confirm ipynb**: Confirm research conclusions in google colab using the MNIST dataset.
-2. **basic binary quantum**: Apply a basic binary quantum classifier to the plankton dataset and compare with a "fair" classical neural net.
-3. **optimise via param sweep**: Optimize the binary classifier through a hyperparameter sweep on neural architectures.
-4. **compare to classical**: Perform the generalized quantum algorithm on the plankton dataset and compare results to established classical deep learning approaches.
-5. **k-category scaling**: Scale the quantum algorithm to multi-class classification (k=2, 3, 5, 8, 16) and measure performance vs. parameter efficiency as task complexity increases.
+2. **basic binary quantum**: Show viability of QNN on binary plankton classification.
+3. **optimise via param sweep**: Seek to optimize hyperparameters against a Phase 2 type experiment through multi-trial random sweeps.
+4. **compare to classical**: High-rigor comparison (5-trial avg + P-value testing) of binary quantum classification against classical benchmarks and the **Swiss Paper (EAWAG)**.
+5. **k-category scaling**: Multi-class scaling study (k=2 to 8) with hyperparameter sweeping and benchmarks against EAWAG state-of-the-art results.
 6. **quantum saliency**: Implement quantum saliency maps to explain the model's decision-making process.
 7. **expressibility & entanglement**: Analyze the theoretical rigor of the QNN architecture using Meyer-Wallach and KL divergence metrics.
 
@@ -110,15 +110,26 @@ The model now consistently exceeds the 60% threshold. Below are the verified acc
 | **daphnia vs daphnia_skins** | <img src="data/zooplankton_0p5x/daphnia/training_data/SPC-EAWAG-0P5X-1526947464531326-1089318119146-002549-019-2166-472-240-216.jpeg" width="40"> | <img src="data/zooplankton_0p5x/daphnia_skins/training_data/SPC-EAWAG-0P5X-1563876012798986-10781374001834-000029-064-1496-1116-124-56.jpeg" width="40"> | **72.9%** | Target Reached |
 | **diaphanosoma vs diatom_chain** | <img src="data/zooplankton_0p5x/diaphanosoma/training_data/SPC-EAWAG-0P5X-1529021007771870-735003526491-001979-103-2846-1084-304-344.jpeg" width="40"> | <img src="data/zooplankton_0p5x/diatom_chain/training_data/SPC-EAWAG-0P5X-1580983255524793-1728789601675-000459-052-1312-604-36-96.jpeg" width="40"> | **95.3%** | Target Reached |
 
-# Phase 4: compare to classical
-In this phase, we perform the generalized quantum algorithm on the plankton dataset and compare its performance to established classical deep learning approaches. 
+### Experimental Results Summary (Binary)
 
-We evaluate three levels of classical models (MobileNetV2, Custom CNN, and a "Fair" MLP) against our expressive Quantum Neural Network to determine the presence of a quantum advantage in parameter efficiency.
+<!-- P4_RESULTS_START -->
+*No results yet. Run `python phase4/run_experiments.py` and then `python tools/publish_results.py` to update this table.*
+<!-- P4_RESULTS_END -->
+
+### Swiss Paper Benchmark
+The EAWAG research team achieved **98% accuracy** on their 35-class task using ensembled CNNs. In Phase 4, we evaluate how our binary QNN (constrained to a 4x4 input) compares to their classical feature-based MLP results (91.2%) when restricted to the same binary pairs.
 
 **Detailed Documentation:** [Phase 4 Neural Architectures & Comparison](phase4/README.md)
 
 # Phase 5: k-category scaling
-Done. We have scaled the quantum algorithm to handle multi-class classification. This phase introduces a **4x4 grid (16 qubits)** and utilizes **PCA-based Dimensionality Reduction** to overcome the information bottleneck of raw downsampling. We evaluate performance across $k \in \{2, 3, 5, 8, 12, 16\}$ categories.
+Done. We have scaled the quantum algorithm to handle multi-class classification ($k \in \{2, 3, 4, 8\}$). This phase introduces a **4x4 grid (16 qubits)** and demonstrates the inherent limitations and strengths of QNNs as task complexity increases.
+
+### N-Category Scaling Study
+We evaluate the QNN's ability to handle increasing classification complexity, benchmarked against parameter-matched classical nets ("Fair" MLP) and standard CNNs.
+
+<!-- P5_RESULTS_START -->
+*No scaling results yet. Run `python phase5/scientific_comparison.py` and then `python tools/publish_results.py` to update this table.*
+<!-- P5_RESULTS_END -->
 
 **Detailed Documentation:** [Phase 5 Scaling Study](phase5/README.md)
 

@@ -23,11 +23,15 @@ from quantum_k_classifier import create_qnn_multiclass_model, convert_to_circuit
 from classical_k_classifier import create_fair_classical_k_model
 
 # Constants
-K_VALUES = [2, 3, 4, 5]
-NUM_TRIALS = 3
+K_VALUES = [2, 3, 4, 8]
+NUM_TRIALS = 5
 EPOCHS = 10
 BATCH_SIZE = 32
 Q_SAMPLES = 400
+
+# Benchmarks from Kyathanahally et al. (2021)
+SWISS_MLP_ACC = 0.912 # 111 features
+SWISS_CNN_ACC = 0.979 # Ensemble
 
 # Sweep Spaces
 Q_SWEEP = {'n_layers': [1, 2], 'learning_rate': [0.01, 0.05]}
@@ -127,6 +131,22 @@ def perform_comparison():
     summary = df.groupby('k').agg(['mean', 'std']).reset_index()
     summary.columns = [f'{col[0]}_{col[1]}' if col[1] else col[0] for col in summary.columns]
     summary.to_csv('phase5/results/scientific_k_summary.csv', index=False)
+
+    # Scientific Plotting
+    plt.figure(figsize=(10, 6))
+    plt.errorbar(summary['k'], summary['q_acc_mean'], yerr=summary['q_acc_std'], label='QNN (4x4 PCA)', marker='o', capsize=5)
+    plt.errorbar(summary['k'], summary['c_acc_mean'], yerr=summary['c_acc_std'], label='Fair Classical (4x4 PCA)', marker='s', capsize=5, linestyle='--')
+    
+    # Benchmarks from Swiss Paper
+    plt.axhline(y=SWISS_MLP_ACC, color='r', linestyle=':', label='Swiss MLP (111 Morpho features)')
+    plt.axhline(y=SWISS_CNN_ACC, color='g', linestyle='-.', label='Swiss CNN (128x128 RGB)')
+    
+    plt.xlabel('Number of Categories (K)'); plt.ylabel('Test Accuracy')
+    plt.title('Quantum vs Classical Scaling Study (High Rigor)')
+    plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig('phase5/results/scientific_scaling_plot.png')
 
 if __name__ == "__main__":
     perform_comparison()

@@ -1,6 +1,10 @@
 # Note: This script requires tensorflow_quantum (TFQ) and cirq.
 # It is designed to be run in a Google Colab environment or a local setup with TFQ.
 
+# --- Phase 2: Viability of QNN on Binary Plankton Classification ---
+# This script demonstrates the core feasibility of using a Parameterized 
+# Quantum Circuit (PQC) for real-world biological image identification.
+
 import cirq
 import sympy
 import numpy as np

@@ -94,7 +94,7 @@ def hinge_accuracy(y_true, y_pred):
     y_pred = tf.squeeze(y_pred) > 0.0
     return tf.reduce_mean(tf.cast(y_true == y_pred, tf.float32))
 
-def create_qnn_model():
+def create_qnn_model(learning_rate=0.01):
     model_circuit, model_readout = create_quantum_model()
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(), dtype=tf.string),
@@ -102,7 +102,7 @@ def create_qnn_model():
     ])
     model.compile(
         loss=tf.keras.losses.Hinge(),
-        optimizer=tf.keras.optimizers.Adam(),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
         metrics=[hinge_accuracy]
     )
     return model
@@ -182,10 +182,11 @@ def run_single_trial(class_a, class_b, trial_id, q_samples=200):
 
     # 5. QNN Training
     epochs_qnn = 10; q_limit = min(len(x_train_tfcirc), q_samples)
-    steps_per_epoch = int(np.ceil(q_limit / batch_size))
+    q_batch_size = 16 # Optimized in Phase 3
+    steps_per_epoch = int(np.ceil(q_limit / q_batch_size))
     with tqdm(total=epochs_qnn * steps_per_epoch, desc="    QNN Training", leave=False) as tpbar:
         qnn = create_qnn_model()
-        qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=epochs_qnn, batch_size=batch_size, verbose=0,
+        qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=epochs_qnn, batch_size=q_batch_size, verbose=0,
                 callbacks=[CoolingCallback(epoch_cool, batch_cool, tpbar)])
         trial_results['qnn_acc'] = qnn.evaluate(x_test_tfcirc, y_test_hinge, verbose=0)[1]
 
@@ -210,12 +211,20 @@ def run_experiment(class_a, class_b, num_trials=3, q_samples=200):
         summary[f"{col}_mean"] = df_trials[col].mean()
         summary[f"{col}_std"] = df_trials[col].std()
     
+    # Statistical Rigor: Welch's t-test (Equal variance not assumed)
+    # Testing if QNN accuracy is significantly different from Fair Classical
+    t_stat, p_val = stats.ttest_ind(df_trials['qnn_acc'], df_trials['fair_acc'], equal_var=False)
+    summary['t_stat'] = t_stat
+    summary['p_value'] = p_val
+    summary['significant'] = p_val < 0.05
+    
     print(f"  Results: QNN={summary['qnn_acc_mean']:.4f}, Fair={summary['fair_acc_mean']:.4f}")
+    print(f"  P-Value: {p_val:.4f} ({'SIGNIFICANT' if summary['significant'] else 'NOT SIGNIFICANT'})")
     return summary
 
 if __name__ == "__main__":
     pairs = [('dinobryon', 'nauplius'), ('maybe_cyano', 'diaphanosoma'), ('asterionella', 'uroglena'), ('cyclops', 'ceratium')]
-    NUM_TRIALS = int(os.environ.get('NUM_TRIALS', 3))
+    NUM_TRIALS = int(os.environ.get('NUM_TRIALS', 5))
     Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 200))
     IS_SMOKE = os.environ.get('SMOKE_TEST', 'false').lower() == 'true'
     

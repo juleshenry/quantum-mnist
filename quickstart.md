@@ -10,15 +10,15 @@ docker run --rm --platform linux/amd64 quantum-plankton python phase2/binary_qua
 ## Phase 3: Architecture Optimization
 docker run --rm --platform linux/amd64 quantum-plankton python phase3/optimize_binary_classifier.py
 
-## Phase 4: Generalized Binary Comparison (4x4 PCA) - LOW POWER MODE
+## Phase 4: Generalized Binary Comparison (Classical vs. Quantum)
 docker run -it --rm --platform linux/amd64 \
   -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=3.0 -e THERMAL_SLEEP=60 \
   -v $(pwd)/phase4/results:/app/phase4/results \
   quantum-plankton python phase4/run_experiments.py
 
-## Phase 5: K-Category Scaling Study (4x4 PCA) - LOW POWER MODE
+## Phase 5: K-Category Scaling Benchmarks (2, 3, 4, 8)
 docker run -it --rm --platform linux/amd64 \
-  -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=3.0 -e THERMAL_SLEEP=60 \
+  -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=2.0 \
   -v $(pwd)/phase5/results:/app/phase5/results \
   quantum-plankton python phase5/run_experiments.py
 
@@ -27,6 +27,12 @@ docker run -it --rm --platform linux/amd64 \
   -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=3.0 -e THERMAL_SLEEP=60 \
   -v $(pwd)/phase5/results:/app/phase5/results \
   quantum-plankton python phase5/scientific_comparison.py
+
+## 6. Final Result Synchronization (Update READMEs)
+After running the experiments above, sync the CSV data into the Markdown tables:
+```bash
+python tools/publish_results.py
+```
 
 ## Performance & Thermal Tips
 - TF_THREADS=1: Limits CPU to a single core to prevent "flooding".

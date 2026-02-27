@@ -1,4 +1,3 @@
-
 import os
 import numpy as np
 import tensorflow as tf
@@ -7,6 +6,9 @@ import sympy
 import itertools
 from phase2.plankton_ingress import prepare_binary_dataset, get_plankton_names
 import tensorflow_quantum as tfq
+
+print("--- Phase 3: Hyperparameter Optimization for Quantum Plankton ---")
+print("Seeking optimal encoding, depth, and learning rates for binary classification.\n")
 
 # Configuration
 QUBIT_DIMS = (4, 4)
