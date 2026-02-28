@@ -115,10 +115,10 @@ The model now consistently exceeds the 60% threshold. Below are the verified acc
 <!-- P4_RESULTS_START -->
 | Pair | QNN Accuracy | Fair Classical | P-Value | Significant? |
 | --- | --- | --- | --- | --- |
-| dinobryon_vs_nauplius | 68.8% | 72.7% | 0.0048 | True |
-| maybe_cyano_vs_diaphanosoma | 61.4% | 54.5% | 0.3654 | False |
-| asterionella_vs_uroglena | 73.8% | 59.0% | 0.1055 | False |
-| cyclops_vs_ceratium | 58.2% | 48.9% | 0.0007 | True |
+| dinobryon_vs_nauplius | 68.5% | 72.7% | 0.0032 | True |
+| maybe_cyano_vs_diaphanosoma | 59.9% | 54.5% | 0.4553 | False |
+| asterionella_vs_uroglena | 87.0% | 59.0% | 0.0202 | True |
+| cyclops_vs_ceratium | 55.5% | 48.9% | 0.0447 | True |
 <!-- P4_RESULTS_END -->
 
 ### Swiss Paper Benchmark
