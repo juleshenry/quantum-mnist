@@ -133,7 +133,15 @@ Done. We have scaled the quantum algorithm to handle multi-class classification 
 We evaluate the QNN's ability to handle increasing classification complexity, benchmarked against parameter-matched classical nets ("Fair" MLP) and standard CNNs.
 
 <!-- P5_RESULTS_START -->
-*No scaling results yet. Run `python phase5/scientific_comparison.py` and then `python tools/publish_results.py` to update this table.*
+| K (Categories) | QNN (4x4 PCA) | Fair Classical (4x4) |
+| --- | --- | --- |
+| 2 | 73.1% | 68.7% |
+| 3 | 53.7% | 53.6% |
+| 4 | 43.8% | 45.6% |
+| 5 | 40.4% | 39.9% |
+| 8 | 32.5% | 30.8% |
+| 12 | 25.4% | 24.5% |
+| 16 | 21.2% | 21.6% |
 <!-- P5_RESULTS_END -->
 
 **Detailed Documentation:** [Phase 5 Scaling Study](phase5/README.md)

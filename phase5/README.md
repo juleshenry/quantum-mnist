@@ -41,12 +41,15 @@ Results are saved in the `results/` directory:
 We evaluate the QNN's ability to handle increasing classification complexity (k=2, 3, 4, 8). As the number of categories grows, the information bottleneck of the 16-qubit (4x4) architecture becomes more apparent.
 
 <!-- P5_RESULTS_START -->
-| K | QNN (4x4) | Fair Classical (4x4) | Swiss Paper (128x128) |
-| :--- | :---: | :---: | :---: |
-| **2** | ~88% | ~79% | 98%+ |
-| **3** | ~65% | ~55% | 98%+ |
-| **4** | ~52% | ~42% | 98%+ |
-| **8** | ~28% | ~18% | 98%+ |
+| K (Categories) | QNN (4x4 PCA) | Fair Classical (4x4) |
+| --- | --- | --- |
+| 2 | 73.1% | 68.7% |
+| 3 | 53.7% | 53.6% |
+| 4 | 43.8% | 45.6% |
+| 5 | 40.4% | 39.9% |
+| 8 | 32.5% | 30.8% |
+| 12 | 25.4% | 24.5% |
+| 16 | 21.2% | 21.6% |
 <!-- P5_RESULTS_END -->
 
 *Note: Results are representative of small-scale trials. The QNN consistently outperforms the parameter-matched classical net at these scales.*

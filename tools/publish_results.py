@@ -55,13 +55,13 @@ def publish_phase4():
     update_markdown_table('phase4/README.md', '<!-- P4_RESULTS_START -->', '<!-- P4_RESULTS_END -->', table_md)
 
 def publish_phase5():
-    csv_path = 'phase5/results/scientific_k_summary.csv'
+    csv_path = 'phase5/results/comprehensive_k_summary.csv'
     if not os.path.exists(csv_path):
         print("No Phase 5 results found.")
         return
     
     df = pd.read_csv(csv_path)
-    cols = ['k', 'q_acc_mean', 'c_acc_mean']
+    cols = ['k', 'qnn_acc_mean', 'fair_acc_mean']
     df_sub = df[cols].copy()
     df_sub.columns = ['K (Categories)', 'QNN (4x4 PCA)', 'Fair Classical (4x4)']
     
