@@ -44,3 +44,36 @@ def create_transfer_mobilenet(num_classes=35):
         nn.Linear(in_features, num_classes)
     )
     return model
+
+# TensorFlow models for direct comparison in run_experiments
+import tensorflow as tf
+
+def create_fair_classical_k_model(k, hidden_units=2, learning_rate=0.01):
+    """Parameter-matched MLP to compare against QNN."""
+    model = tf.keras.Sequential([
+        tf.keras.layers.Input(shape=(16,)),
+        tf.keras.layers.Dense(hidden_units, activation='relu'),
+        tf.keras.layers.Dense(k, activation='softmax')
+    ])
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=learning_rate),
+        loss=tf.keras.losses.SparseCategoricalCrossentropy(),
+        metrics=['accuracy']
+    )
+    return model
+
+def create_cnn_k_model(k, input_shape=(28, 28, 1)):
+    """Standard CNN benchmark."""
+    model = tf.keras.Sequential([
+        tf.keras.layers.Conv2D(16, (3, 3), activation='relu', input_shape=input_shape),
+        tf.keras.layers.MaxPooling2D((2, 2)),
+        tf.keras.layers.Flatten(),
+        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(k, activation='softmax')
+    ])
+    model.compile(
+        optimizer='adam',
+        loss='sparse_categorical_cross_entropy',
+        metrics=['accuracy']
+    )
+    return model

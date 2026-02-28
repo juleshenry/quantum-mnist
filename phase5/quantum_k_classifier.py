@@ -33,11 +33,16 @@ def create_k_category_quantum_model(k, n_layers=1):
         
     return circuit, observables
 
-def convert_to_circuit(image):
-    values = np.ndarray.flatten(image)
+def convert_to_circuit(pca_features):
+    """
+    Expects 16 PCA features scaled to [0, 1].
+    Converts them to a 4x4 grid of qubits.
+    """
+    values = np.ndarray.flatten(pca_features)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):
+        # Map [0, 1] to [0, pi] for Ry rotations
         circuit.append(cirq.ry(np.pi * value)(qubits[i]))
     return circuit
 

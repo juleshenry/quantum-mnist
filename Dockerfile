@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pandas==1.3.5 \
     matplotlib==3.5.1 \
     seaborn==0.11.2 \
+    tqdm==4.64.0 \
     scikit-learn==1.0.2
 
 WORKDIR /app
@@ -31,13 +32,13 @@ COPY . .
 
 # Environment setup
 ENV DATA_DIR="/app/data/zooplankton_0p5x"
-ENV PYTHONPATH="${PYTHONPATH}:/app:/app/phaseone:/app/phasetwo:/app/phasethree:/app/phasefour:/app/phasefive"
+ENV PYTHONPATH="/app:/app/phase1:/app/phase2:/app/phase3:/app/phase4:/app/phase5:/app/phase6"
 
 # Ensure results directories exist
-RUN mkdir -p /app/phasefour/results /app/phasefive/results
+RUN mkdir -p /app/phase4/results /app/phase5/results /app/phase6/results
 
 # Run tests to ensure rigor before running experiments
-RUN python /app/phasefour/test_rigor.py
+RUN python /app/phase4/test_rigor.py
 
-# Default to running Phase Four
-CMD ["python", "phasefour/run_experiments.py"]
+# Default to running the latest phase (Phase 5)
+CMD ["python", "phase5/run_experiments.py"]

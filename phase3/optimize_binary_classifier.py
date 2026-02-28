@@ -1,12 +1,14 @@
-
 import os
 import numpy as np
 import tensorflow as tf
 import cirq
 import sympy
 import itertools
-from phasetwo.plankton_ingress import prepare_binary_dataset, get_plankton_names
+from phase2.plankton_ingress import prepare_binary_dataset, get_plankton_names
 import tensorflow_quantum as tfq
+
+print("--- Phase 3: Hyperparameter Optimization for Quantum Plankton ---")
+print("Seeking optimal encoding, depth, and learning rates for binary classification.\n")
 
 # Configuration
 QUBIT_DIMS = (4, 4)
@@ -22,9 +24,8 @@ class CircuitLayerBuilder():
             circuit.append(gate(qubit, self.readout)**symbol)
 
 def convert_to_circuit(image, encoding='angle'):
-    # Downsample from 16x16 to 4x4
-    image_4x4 = tf.image.resize(image[..., np.newaxis], (4, 4)).numpy().squeeze()
-    values = np.ndarray.flatten(image_4x4)
+    # Input image is now already 4x4 from plankton_ingress
+    values = np.ndarray.flatten(image)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     

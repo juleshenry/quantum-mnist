@@ -18,4 +18,4 @@ To account for the diverse morphological characteristics and varying dimensions 
 ## Key Files
 - `plankton_ingress.py`: Handles the automated discovery of plankton classes and batch loading of images.
 - `binary_quantum_classifier.py`: Implementation of the expressive PQC and the training loop.
-- `PhaseTwo.ipynb`: A comprehensive notebook for experimentation and visualization of the preprocessing steps.
+- `Phase2.ipynb`: A comprehensive notebook for experimentation and visualization of the preprocessing steps.
