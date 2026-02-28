@@ -15,12 +15,22 @@ def update_markdown_table(file_path, marker_start, marker_end, table_md):
         print(f"Markers not found in {file_path}")
         return
     
-    new_content = pattern.sub(f"{marker_start}
+    new_content = pattern.sub(f"""{marker_start}
 {table_md}
-{marker_end}", content)
+{marker_end}""", content)
     with open(file_path, 'w') as f:
         f.write(new_content)
     print(f"Updated {file_path}")
+
+def df_to_markdown(df):
+    """Simple replacement for df.to_markdown() that doesn't need tabulate."""
+    cols = df.columns.tolist()
+    header = "| " + " | ".join(map(str, cols)) + " |"
+    sep = "| " + " | ".join(["---"] * len(cols)) + " |"
+    rows = []
+    for _, row in df.iterrows():
+        rows.append("| " + " | ".join(map(str, row.tolist())) + " |")
+    return "\n".join([header, sep] + rows)
 
 def publish_phase4():
     csv_path = 'phase4/results/experiment_results.csv'
@@ -39,7 +49,7 @@ def publish_phase4():
     df_sub['Fair Classical'] = df_sub['Fair Classical'].map(lambda x: f"{x*100:.1f}%")
     df_sub['P-Value'] = df_sub['P-Value'].map(lambda x: f"{x:.4f}")
     
-    table_md = df_sub.to_markdown(index=False)
+    table_md = df_to_markdown(df_sub)
     
     update_markdown_table('README.md', '<!-- P4_RESULTS_START -->', '<!-- P4_RESULTS_END -->', table_md)
     update_markdown_table('phase4/README.md', '<!-- P4_RESULTS_START -->', '<!-- P4_RESULTS_END -->', table_md)
@@ -59,7 +69,7 @@ def publish_phase5():
     df_sub['QNN (4x4 PCA)'] = df_sub['QNN (4x4 PCA)'].map(lambda x: f"{x*100:.1f}%")
     df_sub['Fair Classical (4x4)'] = df_sub['Fair Classical (4x4)'].map(lambda x: f"{x*100:.1f}%")
     
-    table_md = df_sub.to_markdown(index=False)
+    table_md = df_to_markdown(df_sub)
     
     update_markdown_table('README.md', '<!-- P5_RESULTS_START -->', '<!-- P5_RESULTS_END -->', table_md)
     update_markdown_table('phase5/README.md', '<!-- P5_RESULTS_START -->', '<!-- P5_RESULTS_END -->', table_md)

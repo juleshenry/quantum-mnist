@@ -204,12 +204,12 @@ The Phase 4 evaluation bridged the gap between quantum optimizations and classic
 ### Experimental Results Summary
 
 <!-- P4_RESULTS_START -->
-| Plankton Pair | Standard CNN (28x28) | Fair Classical (4x4) | QNN (4x4) | Quantum vs. Fair Classical |
-| :--- | :---: | :---: | :---: | :---: |
-| **dinobryon vs nauplius** | 94.1% (±0.1) | 69.1% (±0.7) | 68.6% (±0.0) | Comparable |
-| **maybe_cyano vs diaphanosoma** | 98.0% (±0.5) | 70.6% (±22.7) | **81.8% (±1.7)** | **+11.2% Gain** |
-| **asterionella vs uroglena** | 99.2% (±0.0) | 57.6% (±8.7) | **78.2% (±10.5)** | **+20.6% Gain** |
-| **cyclops vs ceratium** | 98.2% (±0.0) | 49.2% (±0.7) | 50.5% (±1.4) | Comparable |
+| Pair | QNN Accuracy | Fair Classical | P-Value | Significant? |
+| --- | --- | --- | --- | --- |
+| dinobryon_vs_nauplius | 68.8% | 72.7% | 0.0048 | True |
+| maybe_cyano_vs_diaphanosoma | 61.4% | 54.5% | 0.3654 | False |
+| asterionella_vs_uroglena | 73.8% | 59.0% | 0.1055 | False |
+| cyclops_vs_ceratium | 58.2% | 48.9% | 0.0007 | True |
 <!-- P4_RESULTS_END -->
 
 ### Key Observations:

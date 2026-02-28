@@ -113,7 +113,12 @@ The model now consistently exceeds the 60% threshold. Below are the verified acc
 ### Experimental Results Summary (Binary)
 
 <!-- P4_RESULTS_START -->
-*No results yet. Run `python phase4/run_experiments.py` and then `python tools/publish_results.py` to update this table.*
+| Pair | QNN Accuracy | Fair Classical | P-Value | Significant? |
+| --- | --- | --- | --- | --- |
+| dinobryon_vs_nauplius | 68.8% | 72.7% | 0.0048 | True |
+| maybe_cyano_vs_diaphanosoma | 61.4% | 54.5% | 0.3654 | False |
+| asterionella_vs_uroglena | 73.8% | 59.0% | 0.1055 | False |
+| cyclops_vs_ceratium | 58.2% | 48.9% | 0.0007 | True |
 <!-- P4_RESULTS_END -->
 
 ### Swiss Paper Benchmark

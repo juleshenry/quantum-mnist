@@ -66,10 +66,6 @@ def run_sweep(k, model_type, x_train, y_train, x_val, y_val):
     return best_params
 
 def perform_comparison():
-    # Limit number of threads to prevent slamming all cores
-    tf.config.threading.set_intra_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
-    tf.config.threading.set_inter_op_parallelism_threads(int(os.environ.get('TF_THREADS', 1)))
-
     os.makedirs('phase5/results', exist_ok=True)
     all_trial_results = []
     epoch_cool = float(os.environ.get('EPOCH_COOL', 1.0))
