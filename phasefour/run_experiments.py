@@ -1,31 +1,75 @@
+"""Phase 4: Rigorous binary quantum vs. classical comparison.
+
+Uses stratified K-fold cross-validation, equal sample budgets across
+all models, early stopping, majority/random baselines, comprehensive
+metrics (accuracy, F1, precision, recall, confusion matrices), and
+paired statistical tests with multiple-comparison correction.
+"""
+
 import os
+import sys
+import time
+import json
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import tensorflow_quantum as tfq
 import cirq
 import sympy
-import time
-import pandas as pd
-from scipy import stats
-from data_loader import load_plankton_binary
+from sklearn.model_selection import StratifiedShuffleSplit
 
-# --- Models ---
+from data_loader import load_plankton_binary_all, get_kfold_splitter
+from experiment_utils import (
+    set_seed, majority_baseline, random_baseline, compute_metrics,
+    paired_significance_test, holm_bonferroni, log_experiment_metadata,
+    save_confusion_matrix,
+)
+
+
+# ===================================================================
+# Configuration (overridable via environment variables)
+# ===================================================================
+
+N_FOLDS = int(os.environ.get('N_FOLDS', 5))
+Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 200))
+IS_SMOKE = os.environ.get('SMOKE_TEST', 'false').lower() == 'true'
+RESULTS_DIR = os.environ.get('RESULTS_DIR', 'results')
+
+PLANKTON_PAIRS = [
+    ('dinobryon', 'nauplius'),
+    ('maybe_cyano', 'diaphanosoma'),
+    ('asterionella', 'uroglena'),
+    ('cyclops', 'ceratium'),
+]
+
+if IS_SMOKE:
+    print("!!! SMOKE TEST MODE ENABLED !!!")
+    PLANKTON_PAIRS = PLANKTON_PAIRS[:1]
+    N_FOLDS = 2
+    Q_SAMPLES = 10
+
+
+# ===================================================================
+# Model Definitions (unchanged architectures)
+# ===================================================================
 
 def create_fair_classical_model(input_shape=(4, 4, 1)):
-    # 3 hidden units gives approx 55 parameters, matching QNN's ~48 parameters more closely
+    """~55-parameter MLP matching QNN parameter budget."""
     model = tf.keras.Sequential([
         tf.keras.layers.Flatten(input_shape=input_shape),
         tf.keras.layers.Dense(3, activation='relu'),
-        tf.keras.layers.Dense(1)
+        tf.keras.layers.Dense(1),
     ])
     model.compile(
         loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
         optimizer=tf.keras.optimizers.Adam(),
-        metrics=['accuracy']
+        metrics=['accuracy'],
     )
     return model
 
+
 def create_cnn_model(input_shape=(28, 28, 1)):
+    """Standard CNN baseline for 28x28 inputs."""
     model = tf.keras.Sequential([
         tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
         tf.keras.layers.MaxPooling2D((2, 2)),
@@ -33,45 +77,50 @@ def create_cnn_model(input_shape=(28, 28, 1)):
         tf.keras.layers.MaxPooling2D((2, 2)),
         tf.keras.layers.Flatten(),
         tf.keras.layers.Dense(64, activation='relu'),
-        tf.keras.layers.Dense(1, activation='sigmoid')
+        tf.keras.layers.Dense(1, activation='sigmoid'),
     ])
     model.compile(
         optimizer='adam',
         loss='binary_crossentropy',
-        metrics=['accuracy']
+        metrics=['accuracy'],
     )
     return model
 
-# --- Quantum Model Setup ---
+
+# ===================================================================
+# Quantum Model (unchanged architecture)
+# ===================================================================
 
 class CircuitLayerBuilder():
     def __init__(self, data_qubits, readout):
         self.data_qubits = data_qubits
         self.readout = readout
-    
+
     def add_layer(self, circuit, gate, prefix):
         for i, qubit in enumerate(self.data_qubits):
             symbol = sympy.Symbol(prefix + '-' + str(i))
             circuit.append(gate(qubit, self.readout)**symbol)
 
+
 def create_quantum_model():
     data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
-    
+
     for i in range(len(data_qubits) - 1):
-        circuit.append(cirq.CZ(data_qubits[i], data_qubits[i+1]))
-        
+        circuit.append(cirq.CZ(data_qubits[i], data_qubits[i + 1]))
+
     circuit.append(cirq.X(readout))
     circuit.append(cirq.H(readout))
-    
+
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
     builder.add_layer(circuit, cirq.XX, "xx1")
     builder.add_layer(circuit, cirq.ZZ, "zz1")
     builder.add_layer(circuit, cirq.YY, "yy1")
     circuit.append(cirq.H(readout))
-    
+
     return circuit, cirq.Z(readout)
+
 
 def convert_to_circuit(image):
     values = np.ndarray.flatten(image)
@@ -81,10 +130,12 @@ def convert_to_circuit(image):
         circuit.append(cirq.ry(np.pi * value)(qubits[i]))
     return circuit
 
+
 def hinge_accuracy(y_true, y_pred):
     y_true = tf.squeeze(y_true) > 0.0
     y_pred = tf.squeeze(y_pred) > 0.0
     return tf.reduce_mean(tf.cast(y_true == y_pred, tf.float32))
+
 
 def create_qnn_model():
     model_circuit, model_readout = create_quantum_model()
@@ -95,117 +146,253 @@ def create_qnn_model():
     model.compile(
         loss=tf.keras.losses.Hinge(),
         optimizer=tf.keras.optimizers.Adam(),
-        metrics=[hinge_accuracy]
+        metrics=[hinge_accuracy],
     )
     return model
 
-# --- Experiment Execution ---
 
-def run_single_trial(class_a, class_b, trial_id, q_samples=200):
-    print(f"  Trial {trial_id+1}...")
-    # Set unique but reproducible seed for this trial
-    trial_seed = 42 + trial_id
-    np.random.seed(trial_seed)
-    tf.random.set_seed(trial_seed)
-    
-    trial_results = {}
+# ===================================================================
+# Early-Stopping Callback
+# ===================================================================
 
-    # 1. Classical CNN (28x28)
-    X_train, X_test, y_train, y_test = load_plankton_binary(class_a, class_b, img_size=(28, 28), random_state=trial_seed)
-    if len(X_train.shape) == 3:
-        X_train = X_train[..., np.newaxis]
-        X_test = X_test[..., np.newaxis]
-    
+def _early_stopping():
+    return tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss', patience=3, restore_best_weights=True, verbose=0)
+
+
+# ===================================================================
+# Single Fold Execution
+# ===================================================================
+
+def run_single_fold(X_4, y_binary, X_28, train_idx, test_idx, fold_id):
+    """Run all three models on one CV fold.
+
+    All models train on the *same* sample budget (``Q_SAMPLES``).
+    The CNN gets 28x28 resolution; Fair Classical and QNN get 4x4.
+
+    Parameters
+    ----------
+    X_4 : ndarray (N, 4, 4)  -- 4x4 grayscale images for all samples
+    y_binary : ndarray (N,)  -- binary labels {0, 1}
+    X_28 : ndarray (N, 28, 28) -- 28x28 grayscale images (same samples)
+    train_idx, test_idx : array of int -- fold indices
+    fold_id : int
+
+    Returns
+    -------
+    dict of per-model metrics for this fold
+    """
+    fold_seed = 42 + fold_id
+    set_seed(fold_seed)
+
+    # --- Subsample training data to Q_SAMPLES for fairness ---
+    train_limit = min(len(train_idx), Q_SAMPLES)
+    if train_limit < len(train_idx):
+        # Stratified subsample of training indices
+        ss = StratifiedShuffleSplit(n_splits=1, train_size=train_limit, random_state=fold_seed)
+        sub_idx, _ = next(ss.split(train_idx, y_binary[train_idx]))
+        train_idx_limited = train_idx[sub_idx]
+    else:
+        train_idx_limited = train_idx
+
+    # --- Prepare data splits ---
+    X_train_4 = X_4[train_idx_limited][..., np.newaxis]
+    X_test_4 = X_4[test_idx][..., np.newaxis]
+    y_train = y_binary[train_idx_limited]
+    y_test = y_binary[test_idx]
+
+    X_train_28 = X_28[train_idx_limited][..., np.newaxis]
+    X_test_28 = X_28[test_idx][..., np.newaxis]
+
+    # Hold out 20% of training fold for early-stopping validation
+    val_split = 0.2
+
+    fold_results = {'fold': fold_id, 'n_train': len(y_train), 'n_test': len(y_test)}
+
+    # ---- 1. CNN (28x28) ----
     cnn = create_cnn_model()
+    log_experiment_metadata('CNN_28x28', cnn, len(y_train), len(y_test))
     start = time.time()
-    cnn.fit(X_train, y_train, epochs=5, batch_size=32, verbose=0)
-    trial_results['cnn_time'] = time.time() - start
-    trial_results['cnn_acc'] = cnn.evaluate(X_test, y_test, verbose=0)[1]
-    
-    # 2. Fair Classical (4x4)
-    X_train_4, X_test_4, y_train_4, y_test_4 = load_plankton_binary(class_a, class_b, img_size=(4, 4), random_state=trial_seed)
-    if len(X_train_4.shape) == 3:
-        X_train_4 = X_train_4[..., np.newaxis]
-        X_test_4 = X_test_4[..., np.newaxis]
-    
-    fair_nn = create_fair_classical_model()
-    start = time.time()
-    fair_nn.fit(X_train_4, y_train_4, epochs=10, batch_size=32, verbose=0)
-    trial_results['fair_time'] = time.time() - start
-    trial_results['fair_acc'] = fair_nn.evaluate(X_test_4, y_test_4, verbose=0)[1]
+    cnn.fit(X_train_28, y_train, epochs=20, batch_size=32, verbose=0,
+            validation_split=val_split, callbacks=[_early_stopping()])
+    fold_results['cnn_time'] = time.time() - start
+    cnn_pred = (cnn.predict(X_test_28, verbose=0) > 0.5).astype(int).flatten()
+    cnn_metrics = compute_metrics(y_test.astype(int), cnn_pred, k=2)
+    fold_results['cnn_acc'] = cnn_metrics['accuracy']
+    fold_results['cnn_f1'] = cnn_metrics['macro_f1']
+    fold_results['cnn_cm'] = cnn_metrics['confusion_matrix']
 
-    # 3. Quantum Model (4x4)
-    x_train_circ = [convert_to_circuit(x) for x in X_train_4]
-    x_test_circ = [convert_to_circuit(x) for x in X_test_4]
+    # ---- 2. Fair Classical (4x4) ----
+    fair_nn = create_fair_classical_model()
+    log_experiment_metadata('FairMLP_4x4', fair_nn, len(y_train), len(y_test))
+    start = time.time()
+    fair_nn.fit(X_train_4, y_train, epochs=20, batch_size=32, verbose=0,
+                validation_split=val_split, callbacks=[_early_stopping()])
+    fold_results['fair_time'] = time.time() - start
+    fair_pred = (fair_nn.predict(X_test_4, verbose=0) > 0.0).astype(int).flatten()
+    fair_metrics = compute_metrics(y_test.astype(int), fair_pred, k=2)
+    fold_results['fair_acc'] = fair_metrics['accuracy']
+    fold_results['fair_f1'] = fair_metrics['macro_f1']
+    fold_results['fair_cm'] = fair_metrics['confusion_matrix']
+
+    # ---- 3. QNN (4x4) ----
+    X_train_4_flat = X_4[train_idx_limited]
+    X_test_4_flat = X_4[test_idx]
+    x_train_circ = [convert_to_circuit(x) for x in X_train_4_flat]
+    x_test_circ = [convert_to_circuit(x) for x in X_test_4_flat]
     x_train_tfcirc = tfq.convert_to_tensor(x_train_circ)
     x_test_tfcirc = tfq.convert_to_tensor(x_test_circ)
-    y_train_hinge = 2.0 * y_train_4 - 1.0
-    y_test_hinge = 2.0 * y_test_4 - 1.0
+    y_train_hinge = 2.0 * y_train - 1.0
+    y_test_hinge = 2.0 * y_test - 1.0
 
     qnn = create_qnn_model()
+    log_experiment_metadata('QNN_4x4', qnn, len(y_train), len(y_test))
     start = time.time()
-    q_limit = min(len(x_train_tfcirc), q_samples)
-    qnn.fit(x_train_tfcirc[:q_limit], y_train_hinge[:q_limit], epochs=10, batch_size=32, verbose=0)
-    trial_results['qnn_time'] = time.time() - start
-    trial_results['qnn_acc'] = qnn.evaluate(x_test_tfcirc, y_test_hinge, verbose=0)[1]
+    # QNN validation split via manual index to avoid tfq tensor issues
+    val_size = int(len(x_train_tfcirc) * val_split)
+    train_size = len(x_train_tfcirc) - val_size
+    qnn.fit(
+        x_train_tfcirc[:train_size], y_train_hinge[:train_size],
+        epochs=20, batch_size=32, verbose=0,
+        validation_data=(x_train_tfcirc[train_size:], y_train_hinge[train_size:]),
+        callbacks=[_early_stopping()],
+    )
+    fold_results['qnn_time'] = time.time() - start
+    qnn_raw = qnn.predict(x_test_tfcirc, verbose=0).flatten()
+    qnn_pred = (qnn_raw > 0.0).astype(int)
+    qnn_metrics = compute_metrics(y_test.astype(int), qnn_pred, k=2)
+    fold_results['qnn_acc'] = qnn_metrics['accuracy']
+    fold_results['qnn_f1'] = qnn_metrics['macro_f1']
+    fold_results['qnn_cm'] = qnn_metrics['confusion_matrix']
 
-    return trial_results
+    # ---- Baselines ----
+    fold_results['majority_baseline'] = majority_baseline(y_test.astype(int))
+    rb = random_baseline(y_test.astype(int), k=2)
+    fold_results['random_baseline'] = rb['analytical']
 
-def run_experiment(class_a, class_b, num_trials=3, q_samples=200):
-    print(f"\n--- Running Experiment: {class_a} vs {class_b} ({num_trials} trials, {q_samples} q_samples) ---")
-    
-    all_trials = []
-    for i in range(num_trials):
-        res = run_single_trial(class_a, class_b, i, q_samples=q_samples)
-        all_trials.append(res)
-    
-    df_trials = pd.DataFrame(all_trials)
+    print(f"  Fold {fold_id}: CNN={fold_results['cnn_acc']:.3f}  "
+          f"Fair={fold_results['fair_acc']:.3f}  QNN={fold_results['qnn_acc']:.3f}  "
+          f"majority={fold_results['majority_baseline']:.3f}")
+
+    return fold_results
+
+
+# ===================================================================
+# Full Experiment for One Pair
+# ===================================================================
+
+def run_experiment(class_a, class_b):
+    """Run K-fold CV experiment for a single plankton pair.
+
+    Returns a summary dict with aggregated metrics, p-values, and
+    a list of per-fold results.
+    """
+    print(f"\n{'='*60}")
+    print(f"Experiment: {class_a} vs {class_b}  ({N_FOLDS}-fold CV, Q_SAMPLES={Q_SAMPLES})")
+    print(f"{'='*60}")
+
+    # Load all data at both resolutions (same images, same order)
+    X_4, y = load_plankton_binary_all(class_a, class_b, img_size=(4, 4))
+    X_28, _ = load_plankton_binary_all(class_a, class_b, img_size=(28, 28))
+
+    kfold = get_kfold_splitter(n_folds=N_FOLDS)
+    fold_results = []
+
+    for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_4, y)):
+        res = run_single_fold(X_4, y, X_28, train_idx, test_idx, fold_id)
+        res['class_a'] = class_a
+        res['class_b'] = class_b
+
+        # Save confusion matrices
+        cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices',
+                              f'{class_a}_vs_{class_b}')
+        for model_key in ['cnn', 'fair', 'qnn']:
+            cm = res.pop(f'{model_key}_cm')
+            save_confusion_matrix(cm, os.path.join(cm_dir, f'{model_key}_fold{fold_id}.csv'))
+
+        fold_results.append(res)
+
+    # --- Aggregate ---
+    df_folds = pd.DataFrame(fold_results)
     summary = {'pair': f"{class_a}_vs_{class_b}"}
-    
-    for col in df_trials.columns:
-        summary[f"{col}_mean"] = df_trials[col].mean()
-        summary[f"{col}_std"] = df_trials[col].std()
-    
-    # Perform Welch's T-test between QNN accuracy and Fair Classical accuracy
-    # (Using Welch's because we don't assume equal variance)
-    t_stat, p_val = stats.ttest_ind(df_trials['qnn_acc'], df_trials['fair_acc'], equal_var=False)
-    summary['p_value_qnn_vs_fair'] = p_val
-    summary['significant_05'] = p_val < 0.05
 
-    print(f"Summary Results: {summary}")
-    return summary
+    for metric in ['cnn_acc', 'cnn_f1', 'fair_acc', 'fair_f1', 'qnn_acc', 'qnn_f1',
+                   'cnn_time', 'fair_time', 'qnn_time']:
+        summary[f'{metric}_mean'] = df_folds[metric].mean()
+        summary[f'{metric}_std'] = df_folds[metric].std()
+
+    summary['majority_baseline'] = df_folds['majority_baseline'].mean()
+    summary['random_baseline'] = df_folds['random_baseline'].mean()
+
+    # --- Statistical test: QNN vs Fair Classical (paired by fold) ---
+    sig = paired_significance_test(df_folds['qnn_acc'].values, df_folds['fair_acc'].values)
+    summary['qnn_vs_fair_pvalue'] = sig['p_value']
+    summary['qnn_vs_fair_test'] = sig['test_used']
+
+    print(f"\nSummary: QNN={summary['qnn_acc_mean']:.3f}+/-{summary['qnn_acc_std']:.3f}  "
+          f"Fair={summary['fair_acc_mean']:.3f}+/-{summary['fair_acc_std']:.3f}  "
+          f"p={summary['qnn_vs_fair_pvalue']:.4f} ({sig['test_used']})")
+
+    return summary, fold_results
+
+
+# ===================================================================
+# Main
+# ===================================================================
 
 if __name__ == "__main__":
-    pairs = [
-        ('dinobryon', 'nauplius'),
-        ('maybe_cyano', 'diaphanosoma'),
-        ('asterionella', 'uroglena'),
-        ('cyclops', 'ceratium')
-    ]
-    
-    NUM_TRIALS = int(os.environ.get('NUM_TRIALS', 3))
-    Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 200))
-    IS_SMOKE = os.environ.get('SMOKE_TEST', 'false').lower() == 'true'
-    
-    if IS_SMOKE:
-        print("!!! SMOKE TEST MODE ENABLED !!!")
-        pairs = pairs[:1]
-        NUM_TRIALS = 2
-        Q_SAMPLES = 10
+    print(f"Phase 4 Rigorous Experiments")
+    print(f"  N_FOLDS={N_FOLDS}  Q_SAMPLES={Q_SAMPLES}  SMOKE={IS_SMOKE}")
+    print(f"  Results -> {RESULTS_DIR}/")
 
-    print(f"Starting experiments with NUM_TRIALS={NUM_TRIALS}, Q_SAMPLES={Q_SAMPLES}")
-    
-    all_results = []
-    for a, b in pairs:
+    os.makedirs(RESULTS_DIR, exist_ok=True)
+
+    all_summaries = []
+    all_fold_results = []
+
+    for class_a, class_b in PLANKTON_PAIRS:
         try:
-            res = run_experiment(a, b, num_trials=NUM_TRIALS, q_samples=Q_SAMPLES)
-            all_results.append(res)
+            summary, fold_res = run_experiment(class_a, class_b)
+            all_summaries.append(summary)
+            all_fold_results.extend(fold_res)
         except Exception as e:
-            print(f"Failed experiment {a} vs {b}: {e}")
+            print(f"FAILED: {class_a} vs {class_b}: {e}")
+            import traceback; traceback.print_exc()
 
-    # Use path relative to script if possible, or fixed container path
-    output_dir = os.environ.get('RESULTS_DIR', 'results')
-    os.makedirs(output_dir, exist_ok=True)
-    df = pd.DataFrame(all_results)
-    df.to_csv(os.path.join(output_dir, 'experiment_results.csv'), index=False)
-    print(f"\nAll experiments completed. Results saved to {output_dir}/experiment_results.csv")
+    # --- Multiple-comparison correction across pairs ---
+    if len(all_summaries) > 1:
+        raw_pvals = {s['pair']: s['qnn_vs_fair_pvalue'] for s in all_summaries}
+        corrected = holm_bonferroni(raw_pvals)
+        for s in all_summaries:
+            pair = s['pair']
+            s['qnn_vs_fair_corrected_p'] = corrected[pair]['corrected_p']
+            s['significant_05'] = corrected[pair]['significant_05']
+        print(f"\nHolm-Bonferroni correction applied across {len(all_summaries)} pairs:")
+        for pair, vals in corrected.items():
+            print(f"  {pair}: raw_p={vals['raw_p']:.4f} -> corrected_p={vals['corrected_p']:.4f}"
+                  f"  {'*' if vals['significant_05'] else 'ns'}")
+    elif len(all_summaries) == 1:
+        s = all_summaries[0]
+        s['qnn_vs_fair_corrected_p'] = s['qnn_vs_fair_pvalue']
+        s['significant_05'] = s['qnn_vs_fair_pvalue'] < 0.05
+
+    # --- Save results ---
+    df_folds = pd.DataFrame(all_fold_results)
+    df_folds.to_csv(os.path.join(RESULTS_DIR, 'experiment_results.csv'), index=False)
+
+    df_summary = pd.DataFrame(all_summaries)
+    df_summary.to_csv(os.path.join(RESULTS_DIR, 'experiment_summary.csv'), index=False)
+
+    # Save config for reproducibility
+    config = {
+        'n_folds': N_FOLDS, 'q_samples': Q_SAMPLES, 'smoke_test': IS_SMOKE,
+        'pairs': [list(p) for p in PLANKTON_PAIRS],
+    }
+    with open(os.path.join(RESULTS_DIR, 'experiment_config.json'), 'w') as f:
+        json.dump(config, f, indent=2)
+
+    print(f"\nAll experiments completed.")
+    print(f"  Per-fold results: {RESULTS_DIR}/experiment_results.csv")
+    print(f"  Summary:          {RESULTS_DIR}/experiment_summary.csv")
+    print(f"  Config:           {RESULTS_DIR}/experiment_config.json")
+    print(f"  Confusion matrices: {RESULTS_DIR}/confusion_matrices/")

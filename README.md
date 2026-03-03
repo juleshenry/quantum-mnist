@@ -117,6 +117,53 @@ In this phase, we scale the quantum algorithm to handle multi-class classificati
 
 **Detailed Documentation:** [Phase 5 Scaling Study](phasefive/README.md)
 
+---
+
+## Methodology
+
+Phases 4 and 5 use the following scientifically rigorous experimental framework. (Phases 1-3 used simpler methodology and are retained for historical context.)
+
+### Cross-Validation
+All experiments use **stratified 5-fold cross-validation**. Metrics (accuracy, F1, precision, recall) are reported as mean +/- standard deviation across folds. This captures both model initialization variance and data-split variance, producing more reliable estimates than a single train/test split.
+
+### Sample Equalization
+All models -- CNN (28x28), Fair Classical MLP (4x4), and QNN (4x4) -- train on **identical sample budgets** per fold. The `Q_SAMPLES` parameter (default 200 for binary, 400 for multi-class) is applied uniformly. The CNN retains its resolution advantage (28x28 vs 4x4) but sees the same images. This eliminates data-access confounds from comparisons.
+
+### Statistical Testing
+- **Paired tests:** Wilcoxon signed-rank test (non-parametric, paired by fold) when n >= 6; paired t-test as fallback for smaller n.
+- **Multiple comparison correction:** Holm-Bonferroni correction applied across all tested pairs (Phase 4) or K values (Phase 5). A result is only claimed as significant if `significant_05 == True` after correction.
+
+### Baselines
+Every experiment reports **majority-class baseline** (always predicting the most common class) and **random baseline** (1/k) alongside model results, providing context for what constitutes meaningful performance.
+
+### Metrics
+- Accuracy and Macro F1-Score (primary)
+- Per-class precision, recall, and F1
+- Confusion matrices saved per fold per model
+
+### Early Stopping
+All models use `EarlyStopping(patience=3, restore_best_weights=True)` monitoring validation loss, with 20% of each training fold held out for validation. Maximum epoch count is 20 (up from the original fixed 5-10).
+
+### Reproducibility
+- **Sorted file listings:** `os.listdir()` results are sorted alphabetically, ensuring deterministic data ordering across operating systems.
+- **Per-fold seeding:** Each fold uses `seed = 42 + fold_id` for `numpy`, `tensorflow`, and Python's `random`.
+- **Pinned dependencies:** All package versions are locked in the Dockerfile.
+- **Automated verification:** A comprehensive test suite (`test_rigor.py`) runs during `docker build` and aborts the build if any test fails. Tests cover determinism, stratification, normalization, parameter counts, and circuit correctness.
+- **Config logging:** Each experiment run saves its full configuration as `experiment_config.json`.
+
+---
+
+## Limitations
+
+- **Quantum simulation only.** All quantum circuits run on a classical simulator (`tensorflow-quantum`), not real quantum hardware. No noise model is applied. Results may differ on actual NISQ devices.
+- **Extreme resolution constraint.** The 4x4 pixel input (16 qubits) is dictated by simulation cost. Whether performance trends hold at larger qubit counts is unknown.
+- **Small dataset sizes.** Some plankton classes have fewer than 20 images. Classes are selected by frequency to mitigate this, but statistical power is inherently limited.
+- **Limited hyperparameter search.** The sweep explores only 4 combinations per model type. A larger search space could improve both quantum and classical results.
+- **No data augmentation.** No augmentation is applied to any model. Augmentation could disproportionately benefit classical models with more parameters.
+- **Historical phases.** Results reported in Phases 1-3 used a single train/test split, unequal sample budgets, and looser statistical standards. They are retained as development history, not as rigorous findings.
+
+---
+
 ### 1. Hybrid Comparison Pipeline
 The phase 4 implementation (`phasefour/run_experiments.py`) compares models across different input resolutions and parameter scales:
 
@@ -198,40 +245,121 @@ A diverse 5x5 grid showing unique samples from 25 different plankton classes:
 
 ---
 
-## How to Run (Docker)
+## Quickstart: Reproducing Rigorous Experiments
 
-First, build the unified Docker image:
+### Prerequisites
+- Docker (tested on Docker 24.x+)
+- ~10 GB disk space (for data + image layers)
+- The plankton dataset must be present at `data/zooplankton_0p5x/`
+
+### 1. Build the Environment
+
+Building the image pins all dependencies and runs the automated verification test suite (`test_rigor.py`). The build **aborts** if any test fails.
 
 ```bash
 docker build -t quantum-plankton .
 ```
 
-### Run Phase 2: Basic Binary Quantum (Data Ingress)
-To verify the plankton data loading and class pairs:
+### 2. Phase 4 -- Binary Quantum vs. Classical (5-fold CV, 4 plankton pairs)
+
 ```bash
+docker run --rm \
+  -v $(pwd)/phasefour/results:/app/phasefour/results \
+  quantum-plankton \
+  python phasefour/run_experiments.py
+```
+
+**Outputs:**
+- `phasefour/results/experiment_results.csv` -- per-fold, per-pair metrics (accuracy, F1, timing)
+- `phasefour/results/experiment_summary.csv` -- aggregated stats with p-values and Holm-Bonferroni correction
+- `phasefour/results/experiment_config.json` -- full experiment configuration for reproducibility
+- `phasefour/results/confusion_matrices/` -- per-fold confusion matrices for each model and pair
+
+### 3. Phase 5 -- Multi-class K-Scaling (5-fold CV, K=2..16)
+
+```bash
+docker run --rm \
+  -v $(pwd)/phasefive/results:/app/phasefive/results \
+  quantum-plankton \
+  python phasefive/run_experiments.py
+```
+
+**Outputs:**
+- `phasefive/results/comprehensive_k_results.csv` -- per-fold, per-K metrics
+- `phasefive/results/comprehensive_k_summary.csv` -- aggregated with p-values
+- `phasefive/results/k_scaling_comparison.png` -- accuracy/F1 plots with error bars and baselines
+
+### 4. Phase 5 -- Scientific Swept Comparison (K=2,3,4,5 with hyperparameter sweep)
+
+```bash
+docker run --rm \
+  -v $(pwd)/phasefive/results:/app/phasefive/results \
+  quantum-plankton \
+  python phasefive/scientific_comparison.py
+```
+
+**Outputs:**
+- `phasefive/results/scientific_k_comparison.csv` -- per-fold, per-K metrics
+- `phasefive/results/scientific_k_summary.csv` -- aggregated with corrected p-values
+- `phasefive/results/scientific_scaling_plot.png` -- accuracy/F1 with significance markers
+
+### 5. Quick Smoke Test
+
+Verify the pipeline works without running full experiments (~2 min instead of ~2 hrs):
+
+```bash
+docker run --rm \
+  -e SMOKE_TEST=true \
+  -v $(pwd)/phasefour/results:/app/phasefour/results \
+  quantum-plankton \
+  python phasefour/run_experiments.py
+```
+
+### 6. Run the Verification Test Suite Standalone
+
+```bash
+docker run --rm quantum-plankton python -m pytest phasefour/test_rigor.py -v
+```
+
+### 7. Customize Experiment Parameters
+
+All experiment parameters can be overridden via environment variables:
+
+```bash
+docker run --rm \
+  -e N_FOLDS=10 \
+  -e Q_SAMPLES=500 \
+  -v $(pwd)/phasefour/results:/app/phasefour/results \
+  quantum-plankton \
+  python phasefour/run_experiments.py
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `N_FOLDS` | `5` | Number of cross-validation folds |
+| `Q_SAMPLES` | `200` (Phase 4) / `400` (Phase 5) | Max training samples (applied to **all** models equally) |
+| `SMOKE_TEST` | `false` | Reduce to 1 pair/K, 2 folds, 10 samples |
+| `DATA_DIR` | `/app/data/zooplankton_0p5x` | Path to plankton dataset |
+| `RESULTS_DIR` | `results` | Output directory (relative to phase dir) |
+
+### 8. Interpret Results
+
+The summary CSVs include:
+- **Mean/Std** accuracy and F1 across folds
+- **p-value** from Wilcoxon signed-rank test (quantum vs. fair classical, paired by fold)
+- **significant_05** flag (after Holm-Bonferroni correction for multiple comparisons)
+- **majority_baseline** and **random_baseline** accuracy for context
+
+A result is only claimed as statistically significant if `significant_05 == True`.
+
+### Legacy Phase Commands
+
+Phases 2 and 3 predate the rigorous framework and use simpler methodology:
+
+```bash
+# Phase 2: Data ingress verification
 docker run --rm quantum-plankton python phasetwo/plankton_ingress.py
-```
 
-### Run Phase 3: Optimise via Param Sweep
-To see the hyperparameter sweep configuration:
-```bash
+# Phase 3: Hyperparameter sweep
 docker run --rm quantum-plankton python phasethree/optimize_binary_classifier.py
-```
-
-### Run Phase 4: Compare to Classical (Full Experiments)
-To run the full experiment suite and save results to your local machine:
-```bash
-docker run --rm -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
-```
-
-### Run Phase 5: K-Category Scaling
-To run the standard multi-class scaling experiments:
-```bash
-docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/run_experiments.py
-```
-
-### Run Phase 5: Scientific Swept Comparison (K=2,3,4,5)
-To run the high-rigor comparison with hyperparameter sweeps for both regimes:
-```bash
-docker run --rm -v $(pwd)/phasefive/results:/app/phasefive/results quantum-plankton python phasefive/scientific_comparison.py
 ```

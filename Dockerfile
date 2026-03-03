@@ -22,7 +22,8 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pandas==1.3.5 \
     matplotlib==3.5.1 \
     seaborn==0.11.2 \
-    scikit-learn==1.0.2
+    scikit-learn==1.0.2 \
+    pytest==7.1.2
 
 WORKDIR /app
 
@@ -31,13 +32,14 @@ COPY . .
 
 # Environment setup
 ENV DATA_DIR="/app/data/zooplankton_0p5x"
-ENV PYTHONPATH="${PYTHONPATH}:/app:/app/phaseone:/app/phasetwo:/app/phasethree:/app/phasefour:/app/phasefive"
+ENV PYTHONPATH="${PYTHONPATH}:/app:/app/utils:/app/phaseone:/app/phasetwo:/app/phasethree:/app/phasefour:/app/phasefive"
 
 # Ensure results directories exist
-RUN mkdir -p /app/phasefour/results /app/phasefive/results
+RUN mkdir -p /app/phasefour/results /app/phasefive/results /app/utils
 
-# Run tests to ensure rigor before running experiments
-RUN python /app/phasefour/test_rigor.py
+# Run the comprehensive rigor test suite before experiments.
+# If any test fails, the build aborts.
+RUN python -m pytest /app/phasefour/test_rigor.py -v --tb=short
 
 # Default to running Phase Four
 CMD ["python", "phasefour/run_experiments.py"]
