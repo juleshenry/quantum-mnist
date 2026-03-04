@@ -94,7 +94,7 @@ from data_loader import load_plankton_binary_all, get_kfold_splitter
 from experiment_utils import (
     set_seed, majority_baseline, random_baseline, compute_metrics,
     paired_significance_test, holm_bonferroni, log_experiment_metadata,
-    save_confusion_matrix,
+    save_confusion_matrix, bootstrap_ci,
 )
 
 
@@ -420,6 +420,9 @@ def run_experiment(class_a, class_b):
                    'cnn_time', 'fair_time', 'qnn_time']:
         summary[f'{metric}_mean'] = df_folds[metric].mean()
         summary[f'{metric}_std'] = df_folds[metric].std()
+        ci = bootstrap_ci(df_folds[metric].values)
+        summary[f'{metric}_ci_lower'] = ci['ci_lower']
+        summary[f'{metric}_ci_upper'] = ci['ci_upper']
 
     summary['majority_baseline'] = df_folds['majority_baseline'].mean()
     summary['random_baseline'] = df_folds['random_baseline'].mean()
@@ -490,10 +493,13 @@ if __name__ == "__main__":
         from scipy.stats import ttest_1samp, wilcoxon as wilcoxon_1
         # One-sample t-test on pair-level mean differences
         t_stat, t_p = ttest_1samp(deltas, 0.0)
+        delta_ci = bootstrap_ci(deltas)
         aggregate_result = {
             'n_pairs': len(deltas),
             'mean_delta': float(np.mean(deltas)),
             'std_delta': float(np.std(deltas, ddof=1)),
+            'delta_ci_lower': delta_ci['ci_lower'],
+            'delta_ci_upper': delta_ci['ci_upper'],
             'effect_size_d': float(np.mean(deltas) / np.std(deltas, ddof=1)) if np.std(deltas, ddof=1) > 0 else 0.0,
             'ttest_statistic': float(t_stat),
             'ttest_p': float(t_p),
@@ -517,6 +523,8 @@ if __name__ == "__main__":
         print(f"{'='*60}")
         print(f"  Mean delta (QNN - Fair): {aggregate_result['mean_delta']:+.4f}")
         print(f"  Std delta:               {aggregate_result['std_delta']:.4f}")
+        print(f"  95% CI on delta:         [{aggregate_result['delta_ci_lower']:+.4f}, "
+              f"{aggregate_result['delta_ci_upper']:+.4f}]")
         print(f"  Effect size (Cohen's d): {aggregate_result['effect_size_d']:.2f}")
         print(f"  One-sample t-test:       t={t_stat:.3f}, p={t_p:.4f}")
         if 'wilcoxon_p' in aggregate_result:

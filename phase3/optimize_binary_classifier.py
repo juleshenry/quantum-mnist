@@ -71,36 +71,77 @@
 """
 
 import os
+import json
 import numpy as np
 import tensorflow as tf
 import cirq
 import sympy
 import itertools
-from phase2.plankton_ingress import prepare_binary_dataset, get_plankton_names
-import tensorflow_quantum as tfq
+from sklearn.model_selection import StratifiedKFold
 
-print("--- Phase 3: Hyperparameter Optimization for Quantum Plankton ---")
-print("Seeking optimal encoding, depth, and learning rates for binary classification.\n")
+# Defer heavy / Docker-only imports
+# import tensorflow_quantum as tfq
 
-# Configuration
+# Explicit module loading to avoid PYTHONPATH collision with phase4/data_loader
+try:
+    from phase2.plankton_ingress import load_images_for_class, get_plankton_names
+except ImportError:
+    pass
+
+try:
+    from experiment_utils import set_seed, bootstrap_ci
+except ImportError:
+    import importlib.util
+    _spec = importlib.util.spec_from_file_location(
+        "experiment_utils",
+        os.path.join(os.path.dirname(__file__), "..", "utils", "experiment_utils.py"),
+    )
+    _mod = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    set_seed = _mod.set_seed
+    bootstrap_ci = _mod.bootstrap_ci
+
+# ---------------------------------------------------------------------------
+# Constants
+# ---------------------------------------------------------------------------
+SEED = 42
+OUTER_FOLDS = 5          # outer CV for unbiased performance estimate
+INNER_FOLDS = 3          # inner CV for hyperparameter selection
+EPOCHS = 5               # epochs per training run (budget-constrained sweep)
+LIMIT_PER_CLASS = 100
 QUBIT_DIMS = (4, 4)
+RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
+
+# Hyperparameter search space
+HYPERPARAMS = {
+    'encoding': ['basis', 'angle'],
+    'n_layers': [1, 2],
+    'learning_rate': [0.01, 0.001],
+    'batch_size': [16, 32],
+}
+
+
+# ---------------------------------------------------------------------------
+# Model components
+# ---------------------------------------------------------------------------
 
 class CircuitLayerBuilder():
     def __init__(self, data_qubits, readout):
         self.data_qubits = data_qubits
         self.readout = readout
-    
+
     def add_layer(self, circuit, gate, prefix):
         for i, qubit in enumerate(self.data_qubits):
             symbol = sympy.Symbol(prefix + '-' + str(i))
             circuit.append(gate(qubit, self.readout)**symbol)
 
+
 def convert_to_circuit(image, encoding='angle'):
-    # Input image is now already 4x4 from plankton_ingress
+    """Encode a 4x4 image into a quantum circuit."""
     values = np.ndarray.flatten(image)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
-    
+
     if encoding == 'basis':
         for i, value in enumerate(values):
             if value > 0.5:
@@ -108,99 +149,235 @@ def convert_to_circuit(image, encoding='angle'):
     elif encoding == 'angle':
         for i, value in enumerate(values):
             circuit.append(cirq.ry(np.pi * value)(qubits[i]))
-            
+
     return circuit
 
+
 def create_quantum_model(n_layers=1):
+    """Create a parameterized quantum circuit with variable depth."""
     data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
-    
+
     circuit.append(cirq.X(readout))
     circuit.append(cirq.H(readout))
-    
+
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
-    
-    for l in range(n_layers):
-        builder.add_layer(circuit, cirq.XX, f"xx{l}")
-        builder.add_layer(circuit, cirq.ZZ, f"zz{l}")
-    
+
+    for layer_idx in range(n_layers):
+        builder.add_layer(circuit, cirq.XX, f"xx{layer_idx}")
+        builder.add_layer(circuit, cirq.ZZ, f"zz{layer_idx}")
+
     circuit.append(cirq.H(readout))
     return circuit, cirq.Z(readout)
 
+
 def hinge_accuracy(y_true, y_pred):
+    """Accuracy metric compatible with hinge-loss label format [-1, 1]."""
     y_true = tf.cast(y_true > 0.0, tf.float32)
     y_pred = tf.cast(y_pred > 0.0, tf.float32)
     return tf.reduce_mean(tf.cast(tf.equal(y_true, y_pred), tf.float32))
 
-# Define the hyperparameter search space
-hyperparams = {
-    'encoding': ['basis', 'angle'],
-    'n_layers': [1, 2],
-    'learning_rate': [0.01, 0.001],
-    'batch_size': [16, 32]
-}
 
 def setup_sweep():
-    keys, values = zip(*hyperparams.items())
+    """Generate all hyperparameter combinations."""
+    keys, values = zip(*HYPERPARAMS.items())
     combinations = [dict(zip(keys, v)) for v in itertools.product(*values)]
-    print(f"Total combinations to explore: {len(combinations)}")
     return combinations
 
-def run_sweep(combinations, class_a, class_b):
-    best_accuracy = 0
-    best_config = None
-    
-    (x_train, y_train), (x_test, y_test) = prepare_binary_dataset(class_a, class_b, limit=100)
-    y_train_hinge = 2.0 * y_train - 1.0
-    y_test_hinge = 2.0 * y_test - 1.0
-    
-    for i, config in enumerate(combinations):
-        print(f"[{i+1}/{len(combinations)}] Testing: {config}")
-        
-        x_train_tfq = tfq.convert_to_tensor([convert_to_circuit(x, encoding=config['encoding']) for x in x_train])
-        x_test_tfq = tfq.convert_to_tensor([convert_to_circuit(x, encoding=config['encoding']) for x in x_test])
-        
-        model_circuit, model_readout = create_quantum_model(n_layers=config['n_layers'])
-        model = tf.keras.Sequential([
-            tf.keras.layers.Input(shape=(), dtype=tf.string),
-            tfq.layers.PQC(model_circuit, model_readout),
-        ])
-        
-        model.compile(
-            loss=tf.keras.losses.Hinge(),
-            optimizer=tf.keras.optimizers.Adam(learning_rate=config['learning_rate']),
-            metrics=[hinge_accuracy]
+
+# ---------------------------------------------------------------------------
+# Core: Nested Cross-Validation
+# ---------------------------------------------------------------------------
+
+def _train_and_evaluate(tfq, config, x_train, y_train, x_test, y_test, seed):
+    """Train a single model and return held-out accuracy."""
+    set_seed(seed)
+
+    x_train_tfq = tfq.convert_to_tensor(
+        [convert_to_circuit(x, encoding=config['encoding']) for x in x_train]
+    )
+    x_test_tfq = tfq.convert_to_tensor(
+        [convert_to_circuit(x, encoding=config['encoding']) for x in x_test]
+    )
+
+    model_circuit, model_readout = create_quantum_model(
+        n_layers=config['n_layers']
+    )
+    model = tf.keras.Sequential([
+        tf.keras.layers.Input(shape=(), dtype=tf.string),
+        tfq.layers.PQC(model_circuit, model_readout),
+    ])
+    model.compile(
+        loss=tf.keras.losses.Hinge(),
+        optimizer=tf.keras.optimizers.Adam(
+            learning_rate=config['learning_rate']
+        ),
+        metrics=[hinge_accuracy],
+    )
+    model.fit(
+        x_train_tfq, 2.0 * y_train - 1.0,
+        batch_size=config['batch_size'],
+        epochs=EPOCHS,
+        verbose=0,
+    )
+    _, acc = model.evaluate(
+        x_test_tfq, 2.0 * y_test - 1.0, verbose=0
+    )
+    return float(acc)
+
+
+def run_nested_cv(class_a, class_b):
+    """Nested cross-validation for hyperparameter optimisation.
+
+    Outer loop: ``OUTER_FOLDS``-fold stratified CV — each fold provides
+    an unbiased accuracy estimate using the *best* hyper-parameters
+    selected in the inner loop.
+
+    Inner loop: ``INNER_FOLDS``-fold stratified CV on the outer-training
+    set — selects the best configuration without touching the outer-test set.
+
+    This eliminates the data leakage present in the original Phase 3
+    implementation.
+    """
+    import tensorflow_quantum as tfq
+
+    set_seed(SEED)
+
+    combinations = setup_sweep()
+    print(f"Hyperparameter combinations: {len(combinations)}")
+
+    # Load full dataset
+    imgs_a = load_images_for_class(class_a, LIMIT_PER_CLASS)
+    imgs_b = load_images_for_class(class_b, LIMIT_PER_CLASS)
+    labels_a = np.zeros(len(imgs_a))
+    labels_b = np.ones(len(imgs_b))
+    X = np.array(imgs_a + imgs_b)
+    y = np.concatenate([labels_a, labels_b])
+
+    outer_cv = StratifiedKFold(
+        n_splits=OUTER_FOLDS, shuffle=True, random_state=SEED
+    )
+
+    outer_fold_results = []
+
+    for outer_idx, (outer_train_idx, outer_test_idx) in enumerate(
+        outer_cv.split(X, y)
+    ):
+        print(f"\n=== Outer Fold {outer_idx + 1}/{OUTER_FOLDS} ===")
+
+        X_outer_train, X_outer_test = X[outer_train_idx], X[outer_test_idx]
+        y_outer_train, y_outer_test = y[outer_train_idx], y[outer_test_idx]
+
+        # --- Inner loop: select best config on outer-training data ---
+        inner_cv = StratifiedKFold(
+            n_splits=INNER_FOLDS, shuffle=True,
+            random_state=SEED + outer_idx,
         )
-        
-        history = model.fit(
-            x_train_tfq, y_train_hinge,
-            batch_size=config['batch_size'],
-            epochs=5,
-            verbose=0,
-            validation_data=(x_test_tfq, y_test_hinge)
+
+        config_scores = {i: [] for i in range(len(combinations))}
+
+        for inner_idx, (inner_train_idx, inner_val_idx) in enumerate(
+            inner_cv.split(X_outer_train, y_outer_train)
+        ):
+            X_inner_train = X_outer_train[inner_train_idx]
+            y_inner_train = y_outer_train[inner_train_idx]
+            X_inner_val = X_outer_train[inner_val_idx]
+            y_inner_val = y_outer_train[inner_val_idx]
+
+            for cfg_idx, config in enumerate(combinations):
+                inner_seed = SEED + outer_idx * 1000 + inner_idx * 100 + cfg_idx
+                acc = _train_and_evaluate(
+                    tfq, config,
+                    X_inner_train, y_inner_train,
+                    X_inner_val, y_inner_val,
+                    seed=inner_seed,
+                )
+                config_scores[cfg_idx].append(acc)
+                print(
+                    f"  Inner {inner_idx+1}/{INNER_FOLDS} | "
+                    f"Config {cfg_idx+1}/{len(combinations)} | "
+                    f"Val Acc: {acc:.4f}"
+                )
+
+        # Pick config with best mean inner-CV accuracy
+        mean_inner = {
+            i: float(np.mean(scores))
+            for i, scores in config_scores.items()
+        }
+        best_cfg_idx = max(mean_inner, key=mean_inner.get)
+        best_config = combinations[best_cfg_idx]
+        best_inner_acc = mean_inner[best_cfg_idx]
+        print(f"  Best inner config: {best_config} "
+              f"(mean inner acc: {best_inner_acc:.4f})")
+
+        # --- Retrain on full outer-training set, evaluate on outer-test ---
+        outer_seed = SEED + outer_idx
+        outer_acc = _train_and_evaluate(
+            tfq, best_config,
+            X_outer_train, y_outer_train,
+            X_outer_test, y_outer_test,
+            seed=outer_seed,
         )
-        
-        val_acc = max(history.history['val_hinge_accuracy'])
-        print(f"Best Val Acc: {val_acc:.4f}")
-        
-        if val_acc > best_accuracy:
-            best_accuracy = val_acc
-            best_config = config
-            
-    return best_config, best_accuracy
+        print(f"  Outer test accuracy: {outer_acc:.4f}")
+
+        outer_fold_results.append({
+            "outer_fold": outer_idx + 1,
+            "best_config": best_config,
+            "best_inner_mean_acc": best_inner_acc,
+            "outer_test_accuracy": outer_acc,
+        })
+
+    # Aggregate
+    outer_accs = [r["outer_test_accuracy"] for r in outer_fold_results]
+    acc_ci = bootstrap_ci(outer_accs, seed=SEED)
+
+    results = {
+        "class_a": class_a,
+        "class_b": class_b,
+        "seed": SEED,
+        "outer_folds": OUTER_FOLDS,
+        "inner_folds": INNER_FOLDS,
+        "epochs_per_run": EPOCHS,
+        "limit_per_class": LIMIT_PER_CLASS,
+        "n_configs": len(combinations),
+        "hyperparams": HYPERPARAMS,
+        "per_fold": outer_fold_results,
+        "outer_test_accuracies": outer_accs,
+        "mean_accuracy": float(np.mean(outer_accs)),
+        "std_accuracy": float(np.std(outer_accs)),
+        "bootstrap_ci": acc_ci,
+    }
+    return results
+
 
 if __name__ == "__main__":
+    print("--- Phase 3: Hyperparameter Optimization (Nested CV) ---")
+    print("Using nested cross-validation to prevent data leakage.\n")
+
     plank = get_plankton_names()
     if len(plank) < 2:
         print("Not enough plankton classes found.")
     else:
-        class_a, class_b = plank[0], plank[3] # aphanizomenon vs bosmina
+        class_a, class_b = plank[0], plank[3]  # aphanizomenon vs bosmina
         print(f"Optimizing Quantum Model for {class_a} vs {class_b}")
-        
-        combos = setup_sweep()
-        best_cfg, best_acc = run_sweep(combos, class_a, class_b)
-        
-        print("\n--- QUANTUM SWEEP COMPLETE ---")
-        print(f"Best Configuration: {best_cfg}")
-        print(f"Best Accuracy: {best_acc:.4f}")
+
+        results = run_nested_cv(class_a, class_b)
+
+        print("\n=== Phase 3 Results (Nested CV) ===")
+        print(f"Accuracy: {results['mean_accuracy']:.4f} "
+              f"+/- {results['std_accuracy']:.4f}")
+        ci = results['bootstrap_ci']
+        print(f"95% Bootstrap CI: [{ci['ci_lower']:.4f}, {ci['ci_upper']:.4f}]")
+        print(f"Per outer-fold accuracies: {results['outer_test_accuracies']}")
+        for fold in results['per_fold']:
+            print(f"  Fold {fold['outer_fold']}: "
+                  f"acc={fold['outer_test_accuracy']:.4f}, "
+                  f"config={fold['best_config']}")
+
+        os.makedirs(RESULTS_DIR, exist_ok=True)
+        results_path = os.path.join(RESULTS_DIR, "phase3_results.json")
+        # Convert HYPERPARAMS list values for JSON serialization
+        with open(results_path, "w") as f:
+            json.dump(results, f, indent=2)
+        print(f"\nResults saved to {results_path}")

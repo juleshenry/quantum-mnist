@@ -72,6 +72,7 @@
 
 import os
 import numpy as np
+import random
 import tensorflow as tf
 import tensorflow_quantum as tfq
 import cirq
@@ -80,12 +81,27 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import StratifiedShuffleSplit
 from tqdm import tqdm
 
-# Import components from phase5
+# Import components from phase5 -- use importlib to avoid PYTHONPATH collision
+# with phase4's data_loader (both phases have a data_loader.py)
 import sys
-sys.path.append('phase5')
-from data_loader import load_plankton_k_categories, get_top_k_categories, apply_pca_reduction
+import importlib.util
+sys.path.append('utils')
+
+_p5_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'phase5')
+_spec = importlib.util.spec_from_file_location(
+    "data_loader_p5",
+    os.path.join(_p5_dir, "data_loader.py"),
+)
+_dl = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_dl)
+load_plankton_k_categories = _dl.load_plankton_k_categories
+get_top_k_categories = _dl.get_top_k_categories
+apply_pca_reduction = _dl.apply_pca_reduction
+
+from experiment_utils import set_seed
 
 def create_saliency_circuit(n_features, k, n_layers=1):
     data_qubits = cirq.GridQubit.rect(4, 4)
@@ -147,6 +163,10 @@ class QuantumSaliencyModel(tf.keras.Model):
 def run_saliency_demo():
     print("--- Phase 6: Quantum Interpretability ---")
     os.makedirs('phase6/results', exist_ok=True)
+
+    # Reproducibility: set all random seeds
+    SEED = 42
+    set_seed(SEED)
     
     # 1. Load Data
     k = 2
@@ -167,16 +187,58 @@ def run_saliency_demo():
         metrics=['accuracy']
     )
     
-    # 3. Train briefly
-    print("Training model on subset...")
-    subset_size = 200
-    model.fit(X_train_pca[:subset_size], y_train[:subset_size], epochs=5, batch_size=32, verbose=1)
+    # 3. Train on a stratified, reproducible subset
+    print("Training model on stratified subset...")
+    subset_size = min(200, len(y_train))
+    sss = StratifiedShuffleSplit(n_splits=1, train_size=subset_size, random_state=SEED)
+    subset_idx, _ = next(sss.split(X_train_pca, y_train))
+    X_sub = X_train_pca[subset_idx]
+    y_sub = y_train[subset_idx]
+    print(f"  Subset: {len(y_sub)} samples, class distribution: {dict(zip(*np.unique(y_sub, return_counts=True)))}")
+
+    model.fit(X_sub, y_sub, epochs=5, batch_size=32, verbose=1)
     
-    # 4. Compute Saliency for a few examples
-    n_examples = 5
+    # 4. Select representative saliency examples
+    # Pick the highest-confidence correctly classified example per class,
+    # plus some misclassified examples for contrast.
+    print("Selecting representative test examples for saliency...")
+    preds_all = model.predict(X_test_pca, verbose=0)
+    pred_labels = np.argmax(preds_all, axis=1)
+    pred_conf = np.max(preds_all, axis=1)
+    correct_mask = pred_labels == y_test
+
+    selected_indices = []
+    selection_reasons = []
+
+    # Highest-confidence correct prediction per class
+    for cls in range(k):
+        cls_correct = np.where(correct_mask & (y_test == cls))[0]
+        if len(cls_correct) > 0:
+            best = cls_correct[np.argmax(pred_conf[cls_correct])]
+            selected_indices.append(best)
+            selection_reasons.append(f"correct_{categories[cls]}_high_conf")
+
+    # Lowest-confidence correct prediction per class (uncertain)
+    for cls in range(k):
+        cls_correct = np.where(correct_mask & (y_test == cls))[0]
+        if len(cls_correct) > 1:
+            worst = cls_correct[np.argmin(pred_conf[cls_correct])]
+            if worst not in selected_indices:
+                selected_indices.append(worst)
+                selection_reasons.append(f"correct_{categories[cls]}_low_conf")
+
+    # Misclassified example (if any exist)
+    misclassified = np.where(~correct_mask)[0]
+    if len(misclassified) > 0:
+        selected_indices.append(misclassified[0])
+        selection_reasons.append("misclassified")
+
+    n_examples = len(selected_indices)
+    print(f"  Selected {n_examples} examples: {selection_reasons}")
+
+    # 5. Compute saliency maps for selected examples
     print(f"Generating {n_examples} saliency maps...")
-    for i in range(n_examples):
-        img_idx = i
+    for i, img_idx in enumerate(selected_indices):
         x_pca = X_test_pca[img_idx:img_idx+1]
         x_raw = X_test_raw[img_idx]
         true_label = y_test[img_idx]
@@ -184,6 +246,7 @@ def run_saliency_demo():
         # Predicted label
         preds = model.predict(x_pca, verbose=0)
         pred_label = np.argmax(preds[0])
+        confidence = preds[0][pred_label]
         
         # Gradient
         feat_tensor = tf.convert_to_tensor(x_pca, dtype=tf.float32)
@@ -195,7 +258,7 @@ def run_saliency_demo():
             
         grads = tape.gradient(score, feat_tensor).numpy()[0]
         
-        # 5. Map back to image space
+        # 6. Map back to image space
         # PCA Inverse: Saliency_Image = Grads * PCA_Components
         saliency_raw = np.dot(grads, pca.components_)
         saliency_img = saliency_raw.reshape(28, 28)
@@ -205,7 +268,7 @@ def run_saliency_demo():
         if np.max(saliency_img) > 0:
             saliency_img /= np.max(saliency_img)
             
-        # 6. Plotting
+        # 7. Plotting
         plt.figure(figsize=(12, 4))
         
         plt.subplot(1, 3, 1)
@@ -221,14 +284,14 @@ def run_saliency_demo():
         plt.subplot(1, 3, 3)
         plt.imshow(x_raw, cmap='gray')
         plt.imshow(saliency_img, cmap='hot', alpha=0.5)
-        plt.title(f"Overlay (Pred: {categories[pred_label]})")
+        plt.title(f"Pred: {categories[pred_label]} ({confidence:.2f})\n[{selection_reasons[i]}]")
         plt.axis('off')
         
         plt.tight_layout()
-        plt.savefig(f'phase6/results/saliency_example_{i}.png')
+        plt.savefig(f'phase6/results/saliency_{selection_reasons[i]}.png')
         plt.close()
         
-    print(f"Saved saliency maps to phase6/results/")
+    print(f"Saved {n_examples} saliency maps to phase6/results/")
 
 if __name__ == "__main__":
     run_saliency_demo()

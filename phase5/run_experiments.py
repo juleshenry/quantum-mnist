@@ -104,7 +104,7 @@ from classical_k_classifier import create_fair_classical_k_model, create_cnn_k_m
 from experiment_utils import (
     set_seed, majority_baseline, random_baseline, compute_metrics,
     paired_significance_test, holm_bonferroni, log_experiment_metadata,
-    save_confusion_matrix,
+    save_confusion_matrix, bootstrap_ci,
 )
 
 
@@ -345,6 +345,9 @@ if __name__ == "__main__":
                            'cnn_acc', 'cnn_f1', 'qnn_time', 'fair_time', 'cnn_time']:
                 summary[f'{metric}_mean'] = df_k[metric].mean()
                 summary[f'{metric}_std'] = df_k[metric].std()
+                ci = bootstrap_ci(df_k[metric].values)
+                summary[f'{metric}_ci_lower'] = ci['ci_lower']
+                summary[f'{metric}_ci_upper'] = ci['ci_upper']
 
             summary['majority_baseline'] = df_k['majority_baseline'].mean()
             summary['random_baseline'] = df_k['random_baseline'].mean()

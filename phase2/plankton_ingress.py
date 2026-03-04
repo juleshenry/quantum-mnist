@@ -74,6 +74,7 @@ import os
 import numpy as np
 from PIL import Image
 from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 # Configuration
 QUBIT_DIMS = (4, 4)
@@ -102,22 +103,39 @@ def load_images_for_class(class_name, limit=50):
             print(f"Error loading {p}: {e}")
     return imgs
 
-def prepare_binary_dataset(class_a, class_b, limit=50, test_split=0.25):
+def prepare_binary_dataset(class_a, class_b, limit=50, test_split=0.25, seed=42):
+    """Load two classes and split into train/test with stratification.
+
+    Parameters
+    ----------
+    class_a, class_b : str
+        Plankton class directory names.
+    limit : int
+        Maximum images per class.
+    test_split : float
+        Fraction held out for testing.
+    seed : int or None
+        Random seed for reproducible, stratified splitting.  Pass ``None``
+        for legacy (non-deterministic) behaviour.
+
+    Returns
+    -------
+    (X_train, y_train), (X_test, y_test)
+    """
     imgs_a = load_images_for_class(class_a, limit)
     imgs_b = load_images_for_class(class_b, limit)
-    
+
     labels_a = np.zeros(len(imgs_a))
     labels_b = np.ones(len(imgs_b))
-    
+
     X = np.array(imgs_a + imgs_b)
     y = np.concatenate([labels_a, labels_b])
-    
-    # Shuffle
-    indices = np.random.permutation(len(X))
-    X, y = X[indices], y[indices]
-    
-    split_idx = int(len(X) * (1 - test_split))
-    return (X[:split_idx], y[:split_idx]), (X[split_idx:], y[split_idx:])
+
+    # Stratified split keeps class balance in both train and test
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_split, random_state=seed, stratify=y
+    )
+    return (X_train, y_train), (X_test, y_test)
 
 if __name__ == "__main__":
     plank = get_plankton_names()

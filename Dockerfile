@@ -36,11 +36,18 @@ ENV DATA_DIR="/app/data/zooplankton_0p5x"
 ENV PYTHONPATH="/app:/app/utils:/app/phase1:/app/phase2:/app/phase3:/app/phase4:/app/phase5:/app/phase6:/app/phase7"
 
 # Ensure results directories exist
-RUN mkdir -p /app/phase4/results /app/phase5/results /app/phase6/results /app/phase7/results /app/utils
+RUN mkdir -p /app/phase2/results /app/phase3/results /app/phase4/results /app/phase5/results /app/phase6/results /app/phase7/results /app/utils
 
-# Run the comprehensive rigor test suite before experiments.
+# Run the comprehensive rigor test suites before experiments.
 # If any test fails, the build aborts.
-RUN python -m pytest /app/phase4/test_rigor.py -v --tb=short
+RUN python -m pytest \
+    /app/phase2/test_rigor_phase2.py \
+    /app/phase3/test_rigor_phase3.py \
+    /app/phase4/test_rigor.py \
+    /app/phase5/test_rigor_phase5.py \
+    /app/phase6/test_rigor_phase6.py \
+    /app/phase7/test_rigor_phase7.py \
+    -v --tb=short
 
 # Default to running the latest phase (Phase 5)
 CMD ["python", "phase5/run_experiments.py"]

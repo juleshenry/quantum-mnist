@@ -279,6 +279,45 @@ def log_experiment_metadata(model_name, model, n_train, n_test, class_names=None
     return meta
 
 
+def bootstrap_ci(values, n_bootstrap=10000, ci=0.95, seed=42):
+    """Compute a bootstrap confidence interval for the mean.
+
+    Parameters
+    ----------
+    values : array-like of float
+        Sample values (e.g. fold-level accuracies).
+    n_bootstrap : int
+        Number of bootstrap resamples.
+    ci : float
+        Confidence level (default 0.95 for a 95% CI).
+    seed : int
+        Random seed for reproducibility.
+
+    Returns
+    -------
+    dict with keys: mean, ci_lower, ci_upper, ci_level, n_bootstrap
+    """
+    values = np.asarray(values, dtype=float)
+    rng = np.random.RandomState(seed)
+    n = len(values)
+
+    boot_means = np.empty(n_bootstrap)
+    for i in range(n_bootstrap):
+        boot_means[i] = rng.choice(values, size=n, replace=True).mean()
+
+    alpha = 1.0 - ci
+    lo = np.percentile(boot_means, 100 * alpha / 2)
+    hi = np.percentile(boot_means, 100 * (1 - alpha / 2))
+
+    return {
+        "mean": float(np.mean(values)),
+        "ci_lower": float(lo),
+        "ci_upper": float(hi),
+        "ci_level": ci,
+        "n_bootstrap": n_bootstrap,
+    }
+
+
 def save_confusion_matrix(cm, filepath):
     """Save a confusion matrix as a CSV file."""
     import pandas as pd
