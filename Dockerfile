@@ -33,10 +33,10 @@ COPY . .
 
 # Environment setup
 ENV DATA_DIR="/app/data/zooplankton_0p5x"
-ENV PYTHONPATH="/app:/app/utils:/app/phase1:/app/phase2:/app/phase3:/app/phase4:/app/phase5:/app/phase6"
+ENV PYTHONPATH="/app:/app/utils:/app/phase1:/app/phase2:/app/phase3:/app/phase4:/app/phase5:/app/phase6:/app/phase7"
 
 # Ensure results directories exist
-RUN mkdir -p /app/phase4/results /app/phase5/results /app/phase6/results /app/utils
+RUN mkdir -p /app/phase4/results /app/phase5/results /app/phase6/results /app/phase7/results /app/utils
 
 # Run the comprehensive rigor test suite before experiments.
 # If any test fails, the build aborts.

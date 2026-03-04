@@ -449,6 +449,34 @@ docker run --rm --platform linux/amd64 \
 
 A per-pair result is only claimed as statistically significant if `significant_05 == True`. The aggregate test is the primary basis for claiming QNN vs. classical performance differences.
 
+### Phase 6 -- Quantum Saliency Maps
+
+Generate gradient-based saliency maps showing which pixels drive QNN decisions:
+
+```bash
+docker run --rm --platform linux/amd64 \
+  -v $(pwd)/phase6/results:/app/phase6/results \
+  quantum-plankton \
+  python phase6/quantum_saliency.py
+```
+
+**Outputs:**
+- `phase6/results/saliency_example_0.png` through `saliency_example_4.png` -- original image, heatmap, and overlay
+
+### Phase 7 -- Expressibility & Entanglement Analysis
+
+Theoretical rigor analysis of the PQC architecture (Meyer-Wallach entanglement and KL divergence expressibility across 1-5 layers):
+
+```bash
+docker run --rm --platform linux/amd64 \
+  -v $(pwd)/phase7:/app/phase7 \
+  quantum-plankton \
+  python phase7/quantum_rigor.py
+```
+
+**Outputs:**
+- `phase7/results_rigor.txt` -- expressibility and entanglement metrics per layer count
+
 ### Legacy Phase Commands
 
 Phases 2 and 3 predate the rigorous framework and use simpler methodology:
