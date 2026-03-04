@@ -25,7 +25,11 @@ docker run --rm --platform linux/amd64 \
   -v $(pwd)/phase4/results:/app/phase4/results \
   quantum-plankton python phase4/run_experiments.py
 
-## Phase 5: K-Category Scaling Benchmarks (2, 3, 4, 8)
+## Phase 5: PCA Pipeline Smoke Test (~2 min, verifies PCA + QNN end-to-end)
+docker run --rm --platform linux/amd64 \
+  quantum-plankton python phase5/smoke_test.py
+
+## Phase 5: K-Category Scaling Benchmarks (k = 2, 3, 4, 5, 8, 12, 16)
 docker run -it --rm --platform linux/amd64 \
   -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=2.0 \
   -v $(pwd)/phase5/results:/app/phase5/results \
@@ -37,11 +41,16 @@ docker run -it --rm --platform linux/amd64 \
   -v $(pwd)/phase5/results:/app/phase5/results \
   quantum-plankton python phase5/scientific_comparison.py
 
-## 6. Final Result Synchronization (Update READMEs)
-After running the experiments above, sync the CSV data into the Markdown tables:
+## Publish Results (Update READMEs with experiment data)
+After running Phase 4 and/or Phase 5 experiments, sync CSV/JSON results
+into the Markdown tables in README.md, phase4/README.md, and phase5/README.md:
 ```bash
 python tools/publish_results.py
 ```
+This reads from:
+- `phase4/results/experiment_results.csv` → Phase 4 per-pair table
+- `phase4/results/aggregate_test.json` → Phase 4 aggregate statistical test
+- `phase5/results/comprehensive_k_summary.csv` → Phase 5 K-scaling table
 
 ## Test Suite
 docker run --rm --platform linux/amd64 quantum-plankton python -m pytest phase4/test_rigor.py -v

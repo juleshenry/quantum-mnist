@@ -90,11 +90,11 @@ def publish_phase5():
     df = pd.read_csv(csv_path)
     cols = ['k', 'qnn_acc_mean', 'fair_acc_mean']
     df_sub = df[cols].copy()
-    df_sub.columns = ['K (Categories)', 'QNN (4x4 PCA)', 'Fair Classical (4x4)']
+    df_sub.columns = ['K (Categories)', 'QNN (PCA 16)', 'Fair Classical (PCA 16)']
     
     # Format decimals
-    df_sub['QNN (4x4 PCA)'] = df_sub['QNN (4x4 PCA)'].map(lambda x: f"{x*100:.1f}%")
-    df_sub['Fair Classical (4x4)'] = df_sub['Fair Classical (4x4)'].map(lambda x: f"{x*100:.1f}%")
+    df_sub['QNN (PCA 16)'] = df_sub['QNN (PCA 16)'].map(lambda x: f"{x*100:.1f}%")
+    df_sub['Fair Classical (PCA 16)'] = df_sub['Fair Classical (PCA 16)'].map(lambda x: f"{x*100:.1f}%")
     
     table_md = df_to_markdown(df_sub)
     
