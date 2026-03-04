@@ -223,6 +223,13 @@ All models use `EarlyStopping(patience=3, restore_best_weights=True)` monitoring
 ### 1. Hybrid Comparison Pipeline
 The phase 4 implementation (`phase4/run_experiments.py`) compares models across different input resolutions and parameter scales:
 
+---
+
+### Data Preprocessing
+To fit images into our 16-qubit quantum simulator, we downsample or PCA-reduce them to a 4x4 (16-pixel) representation. This preserves the essential morphological features while staying within reasonable simulation time.
+
+![Preprocessing Gallery](results/preprocessing/preprocessing_gallery.png)
+
 ```mermaid
 graph TD
     A["Plankton Dataset"] --> B1["128x128 RGB"]
