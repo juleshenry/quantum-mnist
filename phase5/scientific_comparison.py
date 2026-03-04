@@ -3,6 +3,11 @@
 Uses stratified K-fold cross-validation, equal sample budgets, nested
 hyperparameter sweep (inner CV), baselines, comprehensive metrics, and
 paired statistical tests with Holm-Bonferroni correction across K values.
+
+Instead of raw 4x4 downsampling, images are loaded at 28x28 and
+PCA-reduced to 16 features.  Both QNN and Fair Classical receive the
+same PCA features, isolating the quantum-vs-classical comparison from
+the compression method.
 """
 
 import os
@@ -18,7 +23,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedShuffleSplit
 
-from data_loader import get_top_k_categories, load_plankton_k_all, get_kfold_splitter
+from data_loader import get_top_k_categories, load_plankton_k_all, get_kfold_splitter, apply_pca_reduction
 from quantum_k_classifier import create_qnn_multiclass_model, convert_to_circuit
 from classical_k_classifier import create_fair_classical_k_model
 from experiment_utils import (
@@ -115,8 +120,12 @@ def run_sweep(k, model_type, x_train, y_train):
 # Single Fold
 # ===================================================================
 
-def run_fold(k, X_4, y, train_idx, test_idx, fold_id, best_q_params, best_c_params):
-    """Run quantum and classical models on one CV fold."""
+def run_fold(k, X_28, y, train_idx, test_idx, fold_id, best_q_params, best_c_params):
+    """Run quantum and classical models on one CV fold.
+
+    PCA is applied per fold: fit on train, transform on test.
+    Both QNN and Fair Classical receive the same 16 PCA features.
+    """
     fold_seed = 42 + fold_id
     set_seed(fold_seed)
 
@@ -129,18 +138,23 @@ def run_fold(k, X_4, y, train_idx, test_idx, fold_id, best_q_params, best_c_para
     else:
         train_idx_limited = train_idx
 
-    X_train = X_4[train_idx_limited]
-    X_test = X_4[test_idx]
+    X_train_28 = X_28[train_idx_limited]
+    X_test_28 = X_28[test_idx]
     y_train = y[train_idx_limited]
     y_test = y[test_idx]
 
+    # --- PCA: extract 16 features from 28x28 images ---
+    X_train_pca, X_test_pca, pca_obj = apply_pca_reduction(
+        X_train_28, X_test_28, n_components=16)
+
     val_split = 0.2
-    fold_res = {'k': k, 'fold': fold_id, 'n_train': len(y_train), 'n_test': len(y_test)}
+    fold_res = {'k': k, 'fold': fold_id, 'n_train': len(y_train), 'n_test': len(y_test),
+                'pca_variance_explained': float(pca_obj.explained_variance_ratio_.sum())}
 
     # ---- Quantum ----
-    print(f"    Converting {len(X_train)} images to circuits...")
-    x_train_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_train])
-    x_test_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_test])
+    print(f"    Converting {len(X_train_pca)} PCA features to circuits...")
+    x_train_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_train_pca])
+    x_test_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_test_pca])
 
     q_model = create_qnn_multiclass_model(k, **best_q_params)
     log_experiment_metadata(f'QNN_k{k}', q_model, len(y_train), len(y_test))
@@ -162,20 +176,17 @@ def run_fold(k, X_4, y, train_idx, test_idx, fold_id, best_q_params, best_c_para
     fold_res['q_f1'] = q_metrics['macro_f1']
     fold_res['q_cm'] = q_metrics['confusion_matrix']
 
-    # ---- Classical ----
-    X_train_c = X_train[..., np.newaxis]
-    X_test_c = X_test[..., np.newaxis]
-
-    c_model = create_fair_classical_k_model(k, **best_c_params)
+    # ---- Classical (16 PCA features) ----
+    c_model = create_fair_classical_k_model(k, input_shape=(16,), **best_c_params)
     log_experiment_metadata(f'FairMLP_k{k}', c_model, len(y_train), len(y_test))
 
     start = time.time()
     c_model.fit(
-        X_train_c, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0,
+        X_train_pca, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0,
         validation_split=val_split, callbacks=[_early_stopping()],
     )
     fold_res['c_time'] = time.time() - start
-    c_pred = np.argmax(c_model.predict(X_test_c, verbose=0), axis=1)
+    c_pred = np.argmax(c_model.predict(X_test_pca, verbose=0), axis=1)
     c_metrics = compute_metrics(y_test, c_pred, k=k)
     fold_res['c_acc'] = c_metrics['accuracy']
     fold_res['c_f1'] = c_metrics['macro_f1']
@@ -208,12 +219,14 @@ def perform_comparison():
         print(f"{'='*60}")
 
         categories = get_top_k_categories(k)
-        X_4, y = load_plankton_k_all(categories, img_size=(4, 4))
+
+        # Load at 28x28 for PCA and CNN
+        X_28, y = load_plankton_k_all(categories, img_size=(28, 28))
 
         kfold = get_kfold_splitter(n_folds=N_FOLDS)
 
         # --- Sweep on first fold's training data ---
-        first_train_idx, _ = next(iter(kfold.split(X_4, y)))
+        first_train_idx, _ = next(iter(kfold.split(X_28, y)))
         sweep_limit = min(len(first_train_idx), Q_SAMPLES)
         if sweep_limit < len(first_train_idx):
             ss = StratifiedShuffleSplit(n_splits=1, train_size=sweep_limit, random_state=42)
@@ -222,20 +235,25 @@ def perform_comparison():
         else:
             sweep_train_idx = first_train_idx
 
-        X_sweep = X_4[sweep_train_idx]
-        y_sweep = y[sweep_train_idx]
+        # Apply PCA for sweep data (use a held-out portion as "test" for PCA fit)
+        sweep_ss = StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+        sw_tr, sw_te = next(sweep_ss.split(np.zeros(len(sweep_train_idx)), y[sweep_train_idx]))
+        X_sweep_pca_tr, X_sweep_pca_te, _pca = apply_pca_reduction(
+            X_28[sweep_train_idx[sw_tr]], X_28[sweep_train_idx[sw_te]], n_components=16)
+        # Recombine for sweep (both portions were PCA-transformed)
+        X_sweep_all_pca = np.vstack([X_sweep_pca_tr, X_sweep_pca_te])
+        y_sweep = np.concatenate([y[sweep_train_idx[sw_tr]], y[sweep_train_idx[sw_te]]])
 
         # Quantum sweep needs circuit tensors
-        x_sweep_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_sweep])
+        x_sweep_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_sweep_all_pca])
         best_q_params = run_sweep(k, 'quantum', x_sweep_circ, y_sweep)
 
-        X_sweep_c = X_sweep[..., np.newaxis]
-        best_c_params = run_sweep(k, 'classical', X_sweep_c, y_sweep)
+        best_c_params = run_sweep(k, 'classical', X_sweep_all_pca, y_sweep)
 
         # --- Run folds ---
         fold_results_k = []
-        for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_4, y)):
-            res = run_fold(k, X_4, y, train_idx, test_idx, fold_id,
+        for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_28, y)):
+            res = run_fold(k, X_28, y, train_idx, test_idx, fold_id,
                            best_q_params, best_c_params)
 
             # Save confusion matrices
@@ -301,6 +319,14 @@ def perform_comparison():
         'k_values': K_VALUES, 'n_folds': N_FOLDS, 'epochs': EPOCHS,
         'batch_size': BATCH_SIZE, 'q_samples': Q_SAMPLES,
         'q_sweep': Q_SWEEP, 'c_sweep': C_SWEEP, 'smoke_test': IS_SMOKE,
+        'pca': {
+            'source_resolution': '28x28',
+            'n_components': 16,
+            'whiten': True,
+            'scaling': 'MinMaxScaler to [0, 1]',
+            'note': 'PCA fit on train fold, transform on test fold. '
+                    'Both QNN and Fair Classical receive the same 16 PCA features.',
+        },
     }
     with open(os.path.join(RESULTS_DIR, 'scientific_config.json'), 'w') as f:
         json.dump(config, f, indent=2)

@@ -1,8 +1,14 @@
-"""Phase 5: Rigorous K-category scaling experiments.
+"""Phase 5: Rigorous K-category scaling experiments with PCA-enhanced features.
 
 Uses stratified K-fold cross-validation, equal sample budgets across
 all models, early stopping, baselines, comprehensive metrics, and
 paired statistical tests with Holm-Bonferroni correction.
+
+Instead of raw 4x4 downsampling (which discards critical morphological
+information), this pipeline loads images at 28x28 and applies PCA to
+extract the 16 most informative features.  Both the QNN (16 qubits)
+and Fair Classical MLP receive the same PCA features, isolating the
+quantum-vs-classical comparison from the compression method.
 
 This is the standard multi-class experiment runner.  For the swept
 hyperparameter comparison, see ``scientific_comparison.py``.
@@ -20,7 +26,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedShuffleSplit
 
-from data_loader import load_plankton_k_all, get_top_k_categories, get_kfold_splitter
+from data_loader import load_plankton_k_all, get_top_k_categories, get_kfold_splitter, apply_pca_reduction
 from quantum_k_classifier import create_qnn_multiclass_model, convert_to_circuit
 from classical_k_classifier import create_fair_classical_k_model, create_cnn_k_model
 from experiment_utils import (
@@ -63,8 +69,13 @@ def _early_stopping():
 # Single Fold
 # ===================================================================
 
-def run_fold(k, X_4, X_28, y, train_idx, test_idx, fold_id):
-    """Run QNN, Fair Classical, and CNN on one CV fold."""
+def run_fold(k, X_28, y, train_idx, test_idx, fold_id):
+    """Run QNN, Fair Classical, and CNN on one CV fold.
+
+    The QNN and Fair Classical models receive 16 PCA features extracted
+    from 28x28 images (fit on train, transform on test).  The CNN
+    receives the raw 28x28 images.
+    """
     fold_seed = 42 + fold_id
     set_seed(fold_seed)
 
@@ -77,19 +88,24 @@ def run_fold(k, X_4, X_28, y, train_idx, test_idx, fold_id):
     else:
         train_idx_limited = train_idx
 
-    X_train_4 = X_4[train_idx_limited]
-    X_test_4 = X_4[test_idx]
     X_train_28 = X_28[train_idx_limited]
     X_test_28 = X_28[test_idx]
     y_train = y[train_idx_limited]
     y_test = y[test_idx]
 
-    val_split = 0.2
-    fold_res = {'k': k, 'fold': fold_id, 'n_train': len(y_train), 'n_test': len(y_test)}
+    # --- PCA: extract 16 features from 28x28 images ---
+    X_train_pca, X_test_pca, pca_obj = apply_pca_reduction(
+        X_train_28, X_test_28, n_components=16)
+    print(f"    PCA explained variance ratio (sum): "
+          f"{pca_obj.explained_variance_ratio_.sum():.3f}")
 
-    # ---- 1. QNN (4x4) ----
-    x_train_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_train_4])
-    x_test_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_test_4])
+    val_split = 0.2
+    fold_res = {'k': k, 'fold': fold_id, 'n_train': len(y_train), 'n_test': len(y_test),
+                'pca_variance_explained': float(pca_obj.explained_variance_ratio_.sum())}
+
+    # ---- 1. QNN (16 PCA features -> 16 qubits) ----
+    x_train_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_train_pca])
+    x_test_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_test_pca])
 
     qnn = create_qnn_multiclass_model(k)
     log_experiment_metadata(f'QNN_k{k}', qnn, len(y_train), len(y_test))
@@ -111,20 +127,17 @@ def run_fold(k, X_4, X_28, y, train_idx, test_idx, fold_id):
     fold_res['qnn_f1'] = q_metrics['macro_f1']
     fold_res['qnn_cm'] = q_metrics['confusion_matrix']
 
-    # ---- 2. Fair Classical (4x4) ----
-    X_tr_c = X_train_4[..., np.newaxis]
-    X_te_c = X_test_4[..., np.newaxis]
-
-    fair_nn = create_fair_classical_k_model(k)
+    # ---- 2. Fair Classical (16 PCA features) ----
+    fair_nn = create_fair_classical_k_model(k, input_shape=(16,))
     log_experiment_metadata(f'FairMLP_k{k}', fair_nn, len(y_train), len(y_test))
 
     start = time.time()
     fair_nn.fit(
-        X_tr_c, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0,
+        X_train_pca, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0,
         validation_split=val_split, callbacks=[_early_stopping()],
     )
     fold_res['fair_time'] = time.time() - start
-    f_pred = np.argmax(fair_nn.predict(X_te_c, verbose=0), axis=1)
+    f_pred = np.argmax(fair_nn.predict(X_test_pca, verbose=0), axis=1)
     f_metrics = compute_metrics(y_test, f_pred, k=k)
     fold_res['fair_acc'] = f_metrics['accuracy']
     fold_res['fair_f1'] = f_metrics['macro_f1']
@@ -171,14 +184,15 @@ def run_k_experiment(k):
     print(f"{'='*60}")
 
     categories = get_top_k_categories(k)
-    X_4, y = load_plankton_k_all(categories, img_size=(4, 4))
-    X_28, _ = load_plankton_k_all(categories, img_size=(28, 28))
+
+    # Load at 28x28 for both PCA source and CNN baseline
+    X_28, y = load_plankton_k_all(categories, img_size=(28, 28))
 
     kfold = get_kfold_splitter(n_folds=N_FOLDS)
     fold_results = []
 
-    for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_4, y)):
-        res = run_fold(k, X_4, X_28, y, train_idx, test_idx, fold_id)
+    for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_28, y)):
+        res = run_fold(k, X_28, y, train_idx, test_idx, fold_id)
 
         # Save confusion matrices
         cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices', f'k{k}')
@@ -300,6 +314,14 @@ if __name__ == "__main__":
     config = {
         'k_values': K_VALUES, 'n_folds': N_FOLDS, 'epochs': EPOCHS,
         'batch_size': BATCH_SIZE, 'q_samples': Q_SAMPLES, 'smoke_test': IS_SMOKE,
+        'pca': {
+            'source_resolution': '28x28',
+            'n_components': 16,
+            'whiten': True,
+            'scaling': 'MinMaxScaler to [0, 1]',
+            'note': 'PCA fit on train fold, transform on test fold. '
+                    'Both QNN and Fair Classical receive the same 16 PCA features.',
+        },
     }
     with open(os.path.join(RESULTS_DIR, 'experiment_config.json'), 'w') as f:
         json.dump(config, f, indent=2)
