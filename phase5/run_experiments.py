@@ -40,7 +40,7 @@ EPOCHS = 20
 BATCH_SIZE = 32
 Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 400))
 IS_SMOKE = os.environ.get('SMOKE_TEST', 'false').lower() == 'true'
-RESULTS_DIR = os.path.join('phasefive', os.environ.get('RESULTS_DIR', 'results'))
+RESULTS_DIR = os.path.join('phase5', os.environ.get('RESULTS_DIR', 'results'))
 
 if IS_SMOKE:
     print("!!! SMOKE TEST MODE !!!")

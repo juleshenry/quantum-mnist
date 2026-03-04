@@ -2,6 +2,8 @@ import os
 import numpy as np
 from PIL import Image
 from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
 
 
 def _sorted_image_files(directory):
@@ -114,3 +116,27 @@ def _load_categories_raw(categories, img_size, data_dir, max_per_class):
 def get_kfold_splitter(n_folds=5, random_state=42):
     """Return a StratifiedKFold splitter instance."""
     return StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
+
+
+def apply_pca_reduction(X_train, X_test, n_components=16):
+    """
+    Applies PCA to reduce dimensionality of images and scales to [0, 1].
+    Expects X to be (N, H, W) or (N, D).
+    """
+    # Flatten images if they are 2D/3D
+    n_train = X_train.shape[0]
+    n_test = X_test.shape[0]
+    X_train_flat = X_train.reshape(n_train, -1)
+    X_test_flat = X_test.reshape(n_test, -1)
+
+    # Use PCA to extract the most informative features
+    pca = PCA(n_components=n_components, whiten=True, random_state=42)
+    X_train_pca = pca.fit_transform(X_train_flat)
+    X_test_pca = pca.transform(X_test_flat)
+
+    # Scale to [0, 1] for Quantum Gate rotation (Ry(pi * value))
+    scaler = MinMaxScaler()
+    X_train_scaled = scaler.fit_transform(X_train_pca)
+    X_test_scaled = scaler.transform(X_test_pca)
+
+    return X_train_scaled, X_test_scaled, pca

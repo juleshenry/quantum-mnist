@@ -84,8 +84,8 @@ A custom convolutional neural network designed specifically for this dataset.
 - **Complexity**: Medium (~2.3M parameters).
 
 ### C. "Fair" Classical Baseline
-A minimal Multi-Layer Perceptron (MLP) that matches the low parameter count (~35) of the Quantum Neural Network.
-- **Architecture**: Flatten -> Dense(2 units) -> ReLU -> Dense(1 unit).
+A minimal Multi-Layer Perceptron (MLP) that matches the low parameter count (~48) of the Quantum Neural Network.
+- **Architecture**: Flatten(16) -> Dense(3 units, ReLU) -> Dense(1 unit, Sigmoid) = 55 parameters.
 - **Input**: 4x4 Grayscale images.
 - **Purpose**: To provide a direct comparison of "Parameter Efficiency" between classical and quantum regimes.
 
@@ -162,26 +162,49 @@ Unlike Phase 2, which primarily used a consistent 16x16 resolution for both clas
 
 All resolutions utilize **Bilinear Interpolation** for resizing to minimize aliasing artifacts during downsampling.
 
-## 4. Comparison Metrics
+## 4. Swiss Paper Benchmark (EAWAG Greifensee)
+The dataset used in this project originated from the research by **Kyathanahally et al. (2021)**. Their state-of-the-art models (DenseNet, ResNet, and MobileNet ensembles) achieved **98% accuracy** on 35 classes using 128x128 resolution.
 
-| Model | Input Size | Params (Approx) | Data Format | Accuracy (Binary) |
-| :--- | :--- | :--- | :--- | :--- |
-| **MobileNetV2** | 128x128 | ~45K (Head) | RGB | 84.5% (Multiclass) |
-| **SmallCNN** | 128x128 | ~2.3M | RGB | 86.6% (Multiclass) |
-| **Standard CNN** | 28x28 | ~1.2M | Grayscale | 91.7% - 100% |
-| **Fair Classical**| 4x4 | 55 | Grayscale | 52.6% - 79.6% |
-| **QNN (Phase 4)** | 4x4 | 48 | Quantum | **51.7% - 88.3%** |
+Phase 4 compares our binary QNN results against their feature-based MLP results (91.2%) to evaluate the efficiency of quantum feature extraction on a restricted 4x4 input space.
+
+## 5. Performance Comparison (Binary)
+We conduct head-to-head evaluations on **25 plankton pairs** selected via power analysis (see below) to establish the performance of the QNN against its classical counterparts with sufficient statistical power.
 
 ---
 
-## 5. Scientific Rigor & Reproducibility
+## 6. Statistical Design & Power Analysis
+
+### Pair Selection
+The 25 plankton pairs were selected using a deterministic greedy algorithm that:
+1. Ensures all 25 eligible biological classes are represented at least once
+2. Prefers balanced-size pairs to avoid class-imbalance confounds
+3. Uses `seed=42` for full reproducibility
+
+Classes excluded: ambiguous categories (unknown, unknown_plankton, dirt, fish, filament) and classes with fewer than 80 images.
+
+### Why 25 Pairs?
+A power analysis (see `utils/power_analysis.py`) revealed:
+- At n=5 folds, the **Wilcoxon signed-rank test cannot produce p < 0.05** (minimum p = 0.0625)
+- Per-pair paired t-tests require **Cohen's d >= 1.62** for 80% power at n=5 — unrealistically large
+- **Solution**: Treat pairs as the unit of replication. Run a one-sample t-test / Wilcoxon across all 25 pair-level accuracy deltas (QNN − Fair Classical)
+- At the pilot-observed effect size (d ≈ 0.65), 25 pairs provide **~88% power**
+
+### Statistical Testing (Two Levels)
+1. **Per-pair** (exploratory): Paired t-test across 5 folds for each pair. These are underpowered by design and should be interpreted with caution.
+2. **Aggregate** (confirmatory): One-sample t-test and Wilcoxon signed-rank on the 25 pair-level mean accuracy deltas. This is the primary analysis. Results are saved to `aggregate_test.json`.
+
+---
+
+## 7. Scientific Rigor & Reproducibility
 
 To ensure the validity of these results, Phase 4 incorporates several rigorous methodological standards:
 
 *   **Dockerized Environment:** All experiments are run within a containerized environment with pinned dependency versions (`tensorflow==2.7.0`, `tensorflow-quantum==0.7.2`, etc.) to ensure bit-for-bit reproducibility across different hardware.
-*   **Multiple Trials:** Each experiment pair is run for **3 independent trials**. The results reported in `experiment_results.csv` include both the `mean` and `standard deviation` of accuracy and training time.
-*   **Stratified Data Splitting:** We use stratified random sampling to ensure that the train/test split maintains the original class distribution, preventing bias from class imbalance.
+*   **5-Fold Stratified Cross-Validation:** Each pair is evaluated using 5-fold stratified CV. Per-fold accuracy is recorded, and per-pair statistics (mean, std) are computed across folds.
+*   **Equal Sample Budgets:** All models (QNN, Fair Classical, CNN) train on the same number of samples per fold to avoid data-quantity confounds.
+*   **Stratified Data Splitting:** We use stratified random sampling to ensure that each fold maintains the original class distribution, preventing bias from class imbalance.
 *   **Automated Verification:** A `test_rigor.py` suite is executed during the Docker build process to verify data loading integrity, parameter counts, and quantum circuit encoding before any experiments begin.
+*   **Two-Level Statistical Testing:** Per-pair tests (exploratory, underpowered) and aggregate test across all pairs (confirmatory, powered at ~88%). See Section 6.
 *   **Parameter Alignment:** The "Fair Classical" model was specifically tuned (3 hidden units) to align its parameter count (~55) as closely as possible with the QNN (~48), providing a statistically sound comparison of model capacity.
 
 ### Running the Experiments
@@ -190,35 +213,45 @@ To reproduce these results using the rigorous Docker environment:
 
 ```bash
 # Build the image (includes automated rigor tests)
-docker build -t quantum-plankton .
+docker build --platform linux/amd64 -t quantum-plankton .
+
+# Run power analysis report
+docker run --rm --platform linux/amd64 quantum-plankton python utils/power_analysis.py
 
 # Run the experiments and extract results
-docker run --rm -v $(pwd)/phasefour/results:/app/phasefour/results quantum-plankton python phasefour/run_experiments.py
+docker run --rm --platform linux/amd64 -v $(pwd)/phase4/results:/app/phase4/results quantum-plankton python phase4/run_experiments.py
 ```
 
 ---
 
-## 6. Results & Analysis
+## 8. Results & Analysis (Binary)
 
-The Phase 4 evaluation bridged the gap between quantum optimizations and classical benchmarks by conducting a direct, head-to-head comparison across 3 independent trials per pair.
+The Phase 4 evaluation compares quantum and classical models across 25 plankton pairs using 5-fold stratified CV per pair, with an aggregate statistical test as the primary analysis.
 
 ### Experimental Results Summary
 
-| Plankton Pair | Standard CNN (28x28) | Fair Classical (4x4) | QNN (4x4) | Quantum vs. Fair Classical |
-| :--- | :---: | :---: | :---: | :---: |
-| **dinobryon vs nauplius** | 94.1% (±0.1) | 69.1% (±0.7) | 68.6% (±0.0) | Comparable |
-| **maybe_cyano vs diaphanosoma** | 98.0% (±0.5) | 70.6% (±22.7) | **81.8% (±1.7)** | **+11.2% Gain** |
-| **asterionella vs uroglena** | 99.2% (±0.0) | 57.6% (±8.7) | **78.2% (±10.5)** | **+20.6% Gain** |
-| **cyclops vs ceratium** | 98.2% (±0.0) | 49.2% (±0.7) | 50.5% (±1.4) | Comparable |
+<!-- P4_RESULTS_START -->
+| Pair | QNN Accuracy | Fair Classical | P-Value | Significant? |
+| --- | --- | --- | --- | --- |
+| *Results will be populated after running experiments on 25 pairs* | | | | |
+<!-- P4_RESULTS_END -->
+
+### Aggregate Test
+
+After all 25 pairs complete, `aggregate_test.json` contains the primary analysis:
+- **mean_delta**: Mean accuracy difference (QNN − Fair Classical) across all pairs
+- **effect_size_d**: Cohen's d for the aggregate effect
+- **ttest_p**: One-sample t-test p-value
+- **wilcoxon_p**: Wilcoxon signed-rank p-value
+- **qnn_wins / fair_wins**: Win/loss count across pairs
 
 ### Key Observations:
 
-*   **Significant Quantum Advantage:** On the highly constrained 4x4 resolution scale, the **QNN** outperformed the **Fair Classical** model by over **20%** in the *asterionella vs. uroglena* task and by **11%** in the *maybe_cyano vs. diaphanosoma* task.
-*   **Parameter Efficiency:** The QNN achieved up to **81.8%** accuracy using only 48 parameters on 4x4 inputs, demonstrating a superior ability to extract complex morphological features compared to a classical MLP of similar size.
-*   **High-Resolution Baseline:** The **Standard CNN (28x28)** maintained a near-perfect baseline (>94%), highlighting that while the QNN is exceptionally efficient for its size, higher spatial resolution remains a primary driver for absolute accuracy in classical architectures.
+*Results pending — the 25-pair experiment suite takes approximately 6 hours under x86 emulation. Previous 4-pair pilot data (mean delta = +8.95%, d = 0.66) suggests a moderate quantum advantage at 4×4 resolution, but the aggregate test across 25 pairs is needed to confirm this with adequate statistical power.*
 
 ### Conclusion:
-Phase 4 confirms that the **Quantum Neural Network (QNN)** exhibits superior feature extraction capabilities and parameter efficiency at extremely low resolutions (4x4). This suggests that quantum circuits, through multi-axis interactions and entanglement, can capture biological signatures that simple classical networks of the same scale fail to resolve.
 
-Full experimental data is archived in `phasefour/results/experiment_results.csv`.
+*Pending aggregate test results. The expanded 25-pair design provides ~88% power to detect the pilot-observed effect size (d ≈ 0.65), compared to only ~9% power with the original 4-pair design.*
+
+Full experimental data is archived in `phase4/results/experiment_results.csv` and `phase4/results/aggregate_test.json`.
 

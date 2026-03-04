@@ -2,6 +2,8 @@ import os
 import numpy as np
 from PIL import Image
 from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import MinMaxScaler
 
 
 def _sorted_image_files(directory):
@@ -148,9 +150,43 @@ def load_plankton_binary_all(class_a, class_b, img_size=(128, 128), data_dir=Non
     return X, y
 
 
+def get_top_k_categories(k, data_dir=None):
+    if data_dir is None:
+        data_dir = os.environ.get('DATA_DIR', 'data/zooplankton_0p5x')
+
+    cats = []
+    for c in sorted(os.listdir(data_dir)):
+        path = os.path.join(data_dir, c, 'training_data')
+        if os.path.isdir(path):
+            cats.append((c, len(_sorted_image_files(path))))
+
+    # Sort by count descending, name ascending for determinism
+    sorted_cats = sorted(cats, key=lambda x: (-x[1], x[0]))
+    return [c[0] for c in sorted_cats[:k]]
+
+
 def get_kfold_splitter(n_folds=5, random_state=42):
     """Return a StratifiedKFold splitter instance."""
     return StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=random_state)
+
+
+def apply_pca_reduction(X_train, X_test, n_components=16):
+    """Applies PCA to reduce dimensionality and scales to [0, 1]."""
+    n_train = X_train.shape[0]
+    n_test = X_test.shape[0]
+    # Flatten if necessary
+    X_train_flat = X_train.reshape(n_train, -1)
+    X_test_flat = X_test.reshape(n_test, -1)
+
+    pca = PCA(n_components=n_components, whiten=True, random_state=42)
+    X_train_pca = pca.fit_transform(X_train_flat)
+    X_test_pca = pca.transform(X_test_flat)
+
+    scaler = MinMaxScaler()
+    X_train_scaled = scaler.fit_transform(X_train_pca)
+    X_test_scaled = scaler.transform(X_test_pca)
+
+    return X_train_scaled, X_test_scaled, pca
 
 
 if __name__ == "__main__":

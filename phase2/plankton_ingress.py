@@ -4,7 +4,7 @@ from PIL import Image
 from pathlib import Path
 
 # Configuration
-QUBIT_DIMS = (16, 16)
+QUBIT_DIMS = (4, 4)
 DATA_DIR = Path(__file__).parent.parent / 'data' / 'zooplankton_0p5x'
 
 def get_plankton_names():
@@ -22,7 +22,7 @@ def load_images_for_class(class_name, limit=50):
     for p in img_paths:
         try:
             with Image.open(p) as img:
-                # Convert to grayscale and resize to 16x16 as per Phase Two requirement
+                # Convert to grayscale and resize to 4x4 as per requirement
                 img = img.convert('L')
                 img = img.resize(QUBIT_DIMS, Image.BILINEAR)
                 imgs.append(np.asarray(img) / 255.0)

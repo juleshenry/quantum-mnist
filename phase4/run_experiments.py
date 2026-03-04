@@ -33,13 +33,41 @@ from experiment_utils import (
 N_FOLDS = int(os.environ.get('N_FOLDS', 5))
 Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 200))
 IS_SMOKE = os.environ.get('SMOKE_TEST', 'false').lower() == 'true'
-RESULTS_DIR = os.environ.get('RESULTS_DIR', 'results')
+RESULTS_DIR = os.environ.get('RESULTS_DIR', 'phase4/results')
 
+# 25 pairs selected by power analysis (see utils/power_analysis.py).
+# Selection criteria:
+#   - All 25 eligible biological classes represented (>= 80 images each)
+#   - Greedy class coverage, then balanced-size fill (seed=42)
+#   - 25 pairs gives 88% power to detect the observed aggregate effect
+#     size (d=0.65) when using pairs as the unit of replication
+#   - Ambiguous classes excluded: unknown, unknown_plankton, dirt, fish, filament
 PLANKTON_PAIRS = [
-    ('dinobryon', 'nauplius'),
-    ('maybe_cyano', 'diaphanosoma'),
+    ('aphanizomenon', 'leptodora'),
+    ('asplanchna', 'uroglena'),
+    ('asterionella', 'diaphanosoma'),
+    ('asterionella', 'rotifers'),
     ('asterionella', 'uroglena'),
-    ('cyclops', 'ceratium'),
+    ('bosmina', 'brachionus'),
+    ('bosmina', 'polyarthra'),
+    ('brachionus', 'synchaeta'),
+    ('ceratium', 'cyclops'),
+    ('conochilus', 'daphnia'),
+    ('conochilus', 'fragilaria'),
+    ('conochilus', 'keratella_cochlearis'),
+    ('conochilus', 'trichocerca'),
+    ('cyclops', 'kellicottia'),
+    ('daphnia', 'kellicottia'),
+    ('daphnia', 'rotifers'),
+    ('dinobryon', 'nauplius'),
+    ('eudiaptomus', 'kellicottia'),
+    ('eudiaptomus', 'uroglena'),
+    ('fragilaria', 'keratella_cochlearis'),
+    ('keratella_quadrata', 'paradileptus'),
+    ('keratella_quadrata', 'rotifers'),
+    ('keratella_quadrata', 'uroglena'),
+    ('leptodora', 'paradileptus'),
+    ('maybe_cyano', 'nauplius'),
 ]
 
 if IS_SMOKE:
@@ -324,7 +352,12 @@ def run_experiment(class_a, class_b):
     summary['majority_baseline'] = df_folds['majority_baseline'].mean()
     summary['random_baseline'] = df_folds['random_baseline'].mean()
 
-    # --- Statistical test: QNN vs Fair Classical (paired by fold) ---
+    # --- Per-pair statistical test: QNN vs Fair Classical (paired by fold) ---
+    # NOTE: At n=5 folds, Wilcoxon signed-rank cannot reach p<0.05
+    # (min p = 2/32 = 0.0625). The code falls back to paired t-test,
+    # which requires Cohen's d >= 1.62 for 80% power. Per-pair p-values
+    # are reported for transparency but the aggregate test across all
+    # pairs is the primary analysis (see main block).
     sig = paired_significance_test(df_folds['qnn_acc'].values, df_folds['fair_acc'].values)
     summary['qnn_vs_fair_pvalue'] = sig['p_value']
     summary['qnn_vs_fair_test'] = sig['test_used']
@@ -376,6 +409,50 @@ if __name__ == "__main__":
         s['qnn_vs_fair_corrected_p'] = s['qnn_vs_fair_pvalue']
         s['significant_05'] = s['qnn_vs_fair_pvalue'] < 0.05
 
+    # --- Aggregate test: pairs as unit of replication ---
+    # Per-pair Wilcoxon at n=5 folds cannot reach p<0.05 (min p=0.0625).
+    # Instead, we test the aggregate: is QNN systematically better/worse
+    # than Fair Classical across the population of binary tasks?
+    if len(all_summaries) >= 2:
+        deltas = np.array([s['qnn_acc_mean'] - s['fair_acc_mean'] for s in all_summaries])
+        from scipy.stats import ttest_1samp, wilcoxon as wilcoxon_1
+        # One-sample t-test on pair-level mean differences
+        t_stat, t_p = ttest_1samp(deltas, 0.0)
+        aggregate_result = {
+            'n_pairs': len(deltas),
+            'mean_delta': float(np.mean(deltas)),
+            'std_delta': float(np.std(deltas, ddof=1)),
+            'effect_size_d': float(np.mean(deltas) / np.std(deltas, ddof=1)) if np.std(deltas, ddof=1) > 0 else 0.0,
+            'ttest_statistic': float(t_stat),
+            'ttest_p': float(t_p),
+        }
+        # Also Wilcoxon signed-rank on deltas if n >= 6
+        if len(deltas) >= 6:
+            try:
+                w_stat, w_p = wilcoxon_1(deltas, alternative='two-sided')
+                aggregate_result['wilcoxon_statistic'] = float(w_stat)
+                aggregate_result['wilcoxon_p'] = float(w_p)
+            except ValueError:
+                aggregate_result['wilcoxon_p'] = 1.0
+
+        # Win/loss/tie counts
+        aggregate_result['qnn_wins'] = int(np.sum(deltas > 0))
+        aggregate_result['qnn_losses'] = int(np.sum(deltas < 0))
+        aggregate_result['ties'] = int(np.sum(deltas == 0))
+
+        print(f"\n{'='*60}")
+        print(f"AGGREGATE TEST: QNN vs Fair Classical across {len(deltas)} pairs")
+        print(f"{'='*60}")
+        print(f"  Mean delta (QNN - Fair): {aggregate_result['mean_delta']:+.4f}")
+        print(f"  Std delta:               {aggregate_result['std_delta']:.4f}")
+        print(f"  Effect size (Cohen's d): {aggregate_result['effect_size_d']:.2f}")
+        print(f"  One-sample t-test:       t={t_stat:.3f}, p={t_p:.4f}")
+        if 'wilcoxon_p' in aggregate_result:
+            print(f"  Wilcoxon signed-rank:    p={aggregate_result['wilcoxon_p']:.4f}")
+        print(f"  QNN wins: {aggregate_result['qnn_wins']}, "
+              f"losses: {aggregate_result['qnn_losses']}, "
+              f"ties: {aggregate_result['ties']}")
+
     # --- Save results ---
     df_folds = pd.DataFrame(all_fold_results)
     df_folds.to_csv(os.path.join(RESULTS_DIR, 'experiment_results.csv'), index=False)
@@ -383,16 +460,31 @@ if __name__ == "__main__":
     df_summary = pd.DataFrame(all_summaries)
     df_summary.to_csv(os.path.join(RESULTS_DIR, 'experiment_summary.csv'), index=False)
 
+    # Save aggregate result
+    if len(all_summaries) >= 2:
+        with open(os.path.join(RESULTS_DIR, 'aggregate_test.json'), 'w') as f:
+            json.dump(aggregate_result, f, indent=2)
+
     # Save config for reproducibility
     config = {
         'n_folds': N_FOLDS, 'q_samples': Q_SAMPLES, 'smoke_test': IS_SMOKE,
         'pairs': [list(p) for p in PLANKTON_PAIRS],
+        'n_pairs': len(PLANKTON_PAIRS),
+        'power_analysis': {
+            'aggregate_effect_size_pilot': 0.65,
+            'aggregate_power_at_25_pairs': 0.88,
+            'min_pairs_for_80pct_power': 21,
+            'per_pair_wilcoxon_min_p_at_5folds': 0.0625,
+            'note': 'Per-pair tests use paired t-test fallback (n<6). '
+                    'Aggregate test across pairs is the primary analysis.',
+        },
     }
     with open(os.path.join(RESULTS_DIR, 'experiment_config.json'), 'w') as f:
         json.dump(config, f, indent=2)
 
     print(f"\nAll experiments completed.")
-    print(f"  Per-fold results: {RESULTS_DIR}/experiment_results.csv")
-    print(f"  Summary:          {RESULTS_DIR}/experiment_summary.csv")
-    print(f"  Config:           {RESULTS_DIR}/experiment_config.json")
+    print(f"  Per-fold results:   {RESULTS_DIR}/experiment_results.csv")
+    print(f"  Summary:            {RESULTS_DIR}/experiment_summary.csv")
+    print(f"  Aggregate test:     {RESULTS_DIR}/aggregate_test.json")
+    print(f"  Config:             {RESULTS_DIR}/experiment_config.json")
     print(f"  Confusion matrices: {RESULTS_DIR}/confusion_matrices/")
