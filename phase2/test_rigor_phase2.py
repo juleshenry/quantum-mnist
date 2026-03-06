@@ -161,10 +161,10 @@ class TestQuantumModel(unittest.TestCase):
     """Model circuit must have correct symbol count and structure."""
 
     def test_symbol_count(self):
-        """Model should have 32 symbols (16 data qubits x 2 layers: XX, ZZ)."""
+        """Model should have 160 symbols (16 qubits x 10 param layers)."""
         circuit, readout_op = create_quantum_model()
         symbols = cirq.parameter_names(circuit)
-        self.assertEqual(len(symbols), 32)
+        self.assertEqual(len(symbols), 160)
 
     def test_readout_qubit(self):
         """Readout operator must measure Z on the readout qubit."""

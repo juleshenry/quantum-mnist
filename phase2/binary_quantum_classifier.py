@@ -85,6 +85,7 @@ import sympy
 import numpy as np
 import tensorflow as tf
 from sklearn.model_selection import StratifiedKFold
+from sklearn.linear_model import LogisticRegression
 
 # import tensorflow_quantum as tfq  # Commented out to prevent local import errors
 
@@ -134,6 +135,18 @@ class CircuitLayerBuilder:
             circuit.append(gate(qubit, self.readout) ** symbol)
 
 
+def add_single_qubit_layer(circuit, qubits, gate, prefix):
+    for i, qubit in enumerate(qubits):
+        symbol = sympy.Symbol(prefix + "-" + str(i))
+        circuit.append(gate(qubit) ** symbol)
+
+
+def add_rotation_layer(circuit, qubits, rot_fn, prefix):
+    for i, qubit in enumerate(qubits):
+        symbol = sympy.Symbol(prefix + "-" + str(i))
+        circuit.append(rot_fn(symbol)(qubit))
+
+
 def convert_to_circuit(pca_features):
     """Encode PCA-reduced features into quantum circuit using Ry angle encoding.
 
@@ -153,16 +166,37 @@ def convert_to_circuit(pca_features):
 def create_quantum_model():
     """Create a QNN model circuit for binary classification.
 
-    Architecture: XX layer -> ZZ layer -> Z Measurement
-    Total trainable parameters: 32 (16 XX + 16 ZZ).
+    Architecture (inspired by phase1 MNIST):
+    - Prepare readout: X -> H
+    - Entangle data qubits with readout using repeated XX/ZZ blocks
+    - Interleave trainable RX/RY rotations on data qubits
+    - Final H on readout before measurement
+    Total trainable parameters: 160
+      - 3 blocks of XX (48) + 3 blocks of ZZ (48)
+      - 2 blocks of RX (32) + 2 blocks of RY (32)
     """
     data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
 
+    circuit.append(cirq.X(readout))
+    circuit.append(cirq.H(readout))
+
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
     builder.add_layer(circuit, cirq.XX, "xx1")
     builder.add_layer(circuit, cirq.ZZ, "zz1")
+    add_rotation_layer(circuit, data_qubits, cirq.rx, "rx1")
+    add_rotation_layer(circuit, data_qubits, cirq.ry, "ry1")
+
+    builder.add_layer(circuit, cirq.XX, "xx2")
+    builder.add_layer(circuit, cirq.ZZ, "zz2")
+    add_rotation_layer(circuit, data_qubits, cirq.rx, "rx2")
+    add_rotation_layer(circuit, data_qubits, cirq.ry, "ry2")
+
+    builder.add_layer(circuit, cirq.XX, "xx3")
+    builder.add_layer(circuit, cirq.ZZ, "zz3")
+
+    circuit.append(cirq.H(readout))
 
     return circuit, cirq.Z(readout)
 
@@ -196,6 +230,8 @@ def run_quantum_classification(class_a, class_b):
     skf = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=SEED)
 
     fold_accuracies = []
+    flip_accuracies = []
+    baseline_accuracies = []
     fold_losses = []
 
     # Build circuit + model once to avoid tf.function retracing each fold
@@ -266,10 +302,20 @@ def run_quantum_classification(class_a, class_b):
             verbose=1,
         )
 
-        loss, acc = model.evaluate(x_test_tfq, y_test_hinge, verbose=0)
+        loss, _ = model.evaluate(x_test_tfq, y_test_hinge, verbose=0)
+        y_pred = model.predict(x_test_tfq, verbose=0).reshape(-1)
+        acc = float(np.mean((y_pred > 0.0) == (y_test_hinge > 0.0)))
+        flip_acc = float(np.mean((y_pred < 0.0) == (y_test_hinge > 0.0)))
         fold_accuracies.append(float(acc))
+        flip_accuracies.append(float(flip_acc))
         fold_losses.append(float(loss))
-        print(f"Fold {fold_idx + 1} — Loss: {loss:.4f}, Accuracy: {acc:.4f}")
+        print(f"Fold {fold_idx + 1} — Loss: {loss:.4f}, Accuracy: {acc:.4f}, "
+              f"Flipped: {flip_acc:.4f}")
+
+        baseline = LogisticRegression(max_iter=500, solver="liblinear")
+        baseline.fit(x_train_pca, y_train)
+        baseline_acc = float(baseline.score(x_test_pca, y_test))
+        baseline_accuracies.append(baseline_acc)
 
     # Aggregate results
     acc_ci = bootstrap_ci(fold_accuracies, seed=SEED)
@@ -283,8 +329,12 @@ def run_quantum_classification(class_a, class_b):
         "learning_rate": LEARNING_RATE,
         "limit_per_class": LIMIT_PER_CLASS,
         "fold_accuracies": fold_accuracies,
+        "flip_accuracies": flip_accuracies,
+        "baseline_accuracies": baseline_accuracies,
         "fold_losses": fold_losses,
         "mean_accuracy": float(np.mean(fold_accuracies)),
+        "mean_flip_accuracy": float(np.mean(flip_accuracies)),
+        "mean_baseline_accuracy": float(np.mean(baseline_accuracies)),
         "std_accuracy": float(np.std(fold_accuracies)),
         "mean_loss": float(np.mean(fold_losses)),
         "bootstrap_ci": acc_ci,

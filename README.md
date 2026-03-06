@@ -26,6 +26,13 @@ Done. We have tested the quantum mnist colab and confirmed it works as described
 # Phase 2: basic binary quantum
 Done. We have implemented a rigorous binary quantum classifier (`phase2/binary_quantum_classifier.py`) using **Angle Encoding** and an expressive PQC with entanglement. Classification uses **5-fold stratified cross-validation** with per-fold seeding and **bootstrap 95% confidence intervals**. Results are saved as structured JSON to `phase2/results/phase2_results.json`.
 
+### Phase 2 Results (latest)
+From the current run (`phase2/results/phase2_results.json`):
+
+- Mean accuracy: **38.44%** (+/- 4.13%)
+- 95% bootstrap CI: **[35.49%, 42.50%]**
+- Per-fold accuracies: **[0.3906, 0.4621, 0.3482, 0.3638, 0.3571]**
+
 ### 1. Quantum Architecture: Expressive PQC with Angle Encoding
 The model utilizes a hybrid classical-quantum pipeline. The classical layer prepares the morphological features, which are then injected into a high-expressivity quantum circuit.
 

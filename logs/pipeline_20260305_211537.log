@@ -1,0 +1,188 @@
+=== Starting Quantum Plankton Pipeline ===
+Timestamp: 20260305_211537
+Cooldown period: 60 seconds
+Log file: /Users/enrique/Desktop/fun_repos/quantum-mnist/logs/pipeline_20260305_211537.log
+Platform: linux/amd64
+
+
+--- Phase 1: Build Docker Image ---
+Command: docker build --platform linux/amd64 -t quantum-plankton .
+Started: 2026-03-05 21:15:37
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.62kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/tensorflow/tensorflow:2.7.0
+#2 DONE 0.2s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 103B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5
+#4 resolve docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.66MB 0.4s done
+#5 DONE 0.5s
+
+#6 [2/7] RUN apt-get update &&     apt-get install -y --no-install-recommends     build-essential     libjpeg-dev     zlib1g-dev     git     && apt-get clean &&     rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [3/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir     tensorflow-quantum==0.7.2     cirq==0.13.1     sympy==1.8     pillow==9.0.1     numpy==1.21.6     pandas==1.3.5     matplotlib==3.5.1     seaborn==0.11.2     tqdm==4.64.0     scikit-learn==1.0.2     pytest==7.1.2
+#7 CACHED
+
+#8 [4/7] WORKDIR /app
+#8 CACHED
+
+#9 [5/7] COPY . .
+#9 DONE 0.9s
+
+#10 [6/7] RUN mkdir -p /app/phase2/results /app/phase3/results /app/phase4/results /app/phase5/results /app/phase6/results /app/phase7/results /app/utils
+#10 DONE 0.2s
+
+#11 [7/7] RUN python -m pytest     /app/phase2/test_rigor_phase2.py     /app/phase3/test_rigor_phase3.py     /app/phase4/test_rigor.py     /app/phase5/test_rigor_phase5.py     /app/phase6/test_rigor_phase6.py     /app/phase7/test_rigor_phase7.py     -v --tb=short
+#11 0.397 ============================= test session starts ==============================
+#11 0.397 platform linux -- Python 3.8.10, pytest-7.1.2, pluggy-1.5.0 -- /usr/local/bin/python
+#11 0.397 cachedir: .pytest_cache
+#11 0.397 rootdir: /app
+#11 0.397 collecting ... collected 84 items
+#11 4.212 
+#11 4.212 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_determinism_with_seed PASSED [  1%]
+#11 4.457 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_different_seeds_different_splits PASSED [  2%]
+#11 4.596 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_overlap_between_train_test PASSED [  3%]
+#11 4.654 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_pca_leakage PASSED [  4%]
+#11 4.797 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_output_shape PASSED [  5%]
+#11 4.880 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_values_in_unit_range PASSED [  7%]
+#11 4.934 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_stratified_balance PASSED [  8%]
+#11 4.998 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_determinism PASSED [  9%]
+#11 5.011 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_gate_count PASSED [ 10%]
+#11 5.019 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_qubit_count PASSED [ 11%]
+#11 5.023 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_zero_features_trivial PASSED [ 13%]
+#11 5.026 phase2/test_rigor_phase2.py::TestQuantumModel::test_readout_qubit PASSED [ 14%]
+#11 5.120 phase2/test_rigor_phase2.py::TestQuantumModel::test_symbol_count FAILED  [ 15%]
+#11 5.352 phase2/test_rigor_phase2.py::TestQuantumModel::test_unique_symbol_names PASSED [ 16%]
+#11 5.360 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 17%]
+#11 5.542 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_determinism PASSED [ 19%]
+#11 5.892 phase2/test_rigor_phase2.py::TestSeedFunction::test_numpy_determinism PASSED [ 20%]
+#11 5.895 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_gate_count PASSED [ 21%]
+#11 5.896 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_qubit_count PASSED [ 22%]
+#11 5.898 phase3/test_rigor_phase3.py::TestAngleEncoding::test_rotation_angles_scale_with_pi PASSED [ 23%]
+#11 5.899 phase3/test_rigor_phase3.py::TestAngleEncoding::test_zero_features_identity_rotations PASSED [ 25%]
+#11 5.900 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_readout_qubit PASSED [ 26%]
+#11 5.909 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_single_layer_symbols PASSED [ 27%]
+#11 5.911 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_symbol_names_no_collision PASSED [ 28%]
+#11 5.917 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_two_layer_symbols PASSED [ 29%]
+#11 5.920 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_all_keys_present PASSED [ 30%]
+#11 5.921 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_combination_count PASSED [ 32%]
+#11 5.922 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_no_duplicates PASSED [ 33%]
+#11 5.923 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_folds_cover_all_samples PASSED [ 34%]
+#11 5.925 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_test_disjoint_from_inner PASSED [ 35%]
+#11 5.928 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_seed_reproducibility PASSED [ 36%]
+#11 5.930 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_all_determinism PASSED [ 38%]
+#11 7.164 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_determinism PASSED [ 39%]
+#11 8.379 phase4/test_rigor.py::TestDataLoaderDeterminism::test_sorted_file_listing PASSED [ 40%]
+#11 8.383 phase4/test_rigor.py::TestDataLoaderStratification::test_kfold_stratification PASSED [ 41%]
+#11 8.994 phase4/test_rigor.py::TestDataLoaderStratification::test_stratification_quality PASSED [ 42%]
+#11 9.602 phase4/test_rigor.py::TestDataNormalization::test_values_in_unit_range PASSED [ 44%]
+#11 10.21 phase4/test_rigor.py::TestDataSampling::test_max_per_class PASSED        [ 45%]
+#11 10.23 phase4/test_rigor.py::TestModelParameterCounts::test_fair_classical_params PASSED [ 46%]
+#11 10.28 phase4/test_rigor.py::TestModelParameterCounts::test_qnn_params PASSED   [ 47%]
+#11 11.36 phase4/test_rigor.py::TestQuantumCircuit::test_circuit_uses_all_qubits PASSED [ 48%]
+#11 11.36 phase4/test_rigor.py::TestQuantumCircuit::test_operation_count PASSED    [ 50%]
+#11 11.36 phase4/test_rigor.py::TestQuantumCircuit::test_zero_image_gives_identity_rotations PASSED [ 51%]
+#11 11.36 phase4/test_rigor.py::TestExperimentUtils::test_compute_metrics_perfect PASSED [ 52%]
+#11 11.37 phase4/test_rigor.py::TestExperimentUtils::test_compute_metrics_shape PASSED [ 53%]
+#11 11.38 phase4/test_rigor.py::TestExperimentUtils::test_holm_bonferroni PASSED   [ 54%]
+#11 11.38 phase4/test_rigor.py::TestExperimentUtils::test_majority_baseline PASSED [ 55%]
+#11 11.38 phase4/test_rigor.py::TestExperimentUtils::test_paired_test_identical PASSED [ 57%]
+#11 11.38 phase4/test_rigor.py::TestExperimentUtils::test_random_baseline PASSED   [ 58%]
+#11 11.39 phase4/test_rigor.py::TestExperimentUtils::test_set_seed_reproducibility PASSED [ 59%]
+#11 11.39 phase5/test_rigor_phase5.py::TestKCategoryDataDeterminism::test_load_k_all_determinism PASSED [ 60%]
+#11 11.44 phase5/test_rigor_phase5.py::TestKCategoryDataDeterminism::test_load_k_categories_determinism PASSED [ 61%]
+#11 12.67 phase5/test_rigor_phase5.py::TestKCategoryStratification::test_stratification_quality PASSED [ 63%]
+#11 13.48 phase5/test_rigor_phase5.py::TestPCANoLeakage::test_pca_deterministic PASSED [ 64%]
+#11 14.20 phase5/test_rigor_phase5.py::TestPCANoLeakage::test_pca_returns_correct_shapes PASSED [ 65%]
+#11 14.93 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 66%]
+#11 15.07 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_level PASSED       [ 67%]
+#11 15.26 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_narrows_with_low_variance PASSED [ 69%]
+#11 15.61 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_reproducible PASSED [ 70%]
+#11 15.96 phase5/test_rigor_phase5.py::TestSeedReproducibility::test_set_seed PASSED [ 71%]
+#11 15.96 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_symbol_count PASSED [ 72%]
+#11 16.06 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_symbol_ordering PASSED [ 73%]
+#11 16.06 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_two_layer_circuit PASSED [ 75%]
+#11 16.08 phase6/test_rigor_phase6.py::TestSeedReproducibility::test_seed_produces_identical_rng PASSED [ 76%]
+#11 16.08 phase7/test_rigor_phase7.py::TestPQCConstruction::test_increasing_layers PASSED [ 77%]
+#11 16.08 phase7/test_rigor_phase7.py::TestPQCConstruction::test_qubit_count PASSED [ 78%]
+#11 16.09 phase7/test_rigor_phase7.py::TestPQCConstruction::test_symbol_count_per_layer PASSED [ 79%]
+#11 16.09 phase7/test_rigor_phase7.py::TestProductionPQC::test_data_qubit_grid PASSED [ 80%]
+#11 16.10 phase7/test_rigor_phase7.py::TestProductionPQC::test_entanglement_gate_count PASSED [ 82%]
+#11 16.10 phase7/test_rigor_phase7.py::TestProductionPQC::test_no_symbol_collisions PASSED [ 83%]
+#11 16.11 phase7/test_rigor_phase7.py::TestProductionPQC::test_qubit_count PASSED  [ 84%]
+#11 16.12 phase7/test_rigor_phase7.py::TestProductionPQC::test_readout_qubit_position PASSED [ 85%]
+#11 16.12 phase7/test_rigor_phase7.py::TestProductionPQC::test_symbol_names_match_phase5 PASSED [ 86%]
+#11 16.12 phase7/test_rigor_phase7.py::TestProductionPQC::test_symbols_per_layer PASSED [ 88%]
+#11 16.14 phase7/test_rigor_phase7.py::TestHaarDistribution::test_normalization PASSED [ 89%]
+#11 16.14 phase7/test_rigor_phase7.py::TestHaarDistribution::test_shape PASSED     [ 90%]
+#11 16.14 phase7/test_rigor_phase7.py::TestFidelitySampling::test_fidelity_range PASSED [ 91%]
+#11 16.30 phase7/test_rigor_phase7.py::TestFidelitySampling::test_reproducibility PASSED [ 92%]
+#11 16.36 phase7/test_rigor_phase7.py::TestExpressibility::test_kl_non_negative PASSED [ 94%]
+#11 16.75 phase7/test_rigor_phase7.py::TestMeyerWallach::test_entanglement_range PASSED [ 95%]
+#11 16.80 phase7/test_rigor_phase7.py::TestMeyerWallach::test_reproducibility PASSED [ 96%]
+#11 16.82 phase7/test_rigor_phase7.py::TestMeyerWallach::test_returns_dict PASSED  [ 97%]
+#11 16.84 phase7/test_rigor_phase7.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 98%]
+#11 17.01 phase7/test_rigor_phase7.py::TestBootstrapCI::test_reproducibility PASSED [100%]
+#11 17.37 
+#11 17.37 =================================== FAILURES ===================================
+#11 17.37 ______________________ TestQuantumModel.test_symbol_count ______________________
+#11 17.37 phase2/test_rigor_phase2.py:167: in test_symbol_count
+#11 17.37     self.assertEqual(len(symbols), 32)
+#11 17.37 E   AssertionError: 160 != 32
+#11 17.37 =============================== warnings summary ===============================
+#11 17.37 phase2/plankton_ingress.py:1
+#11 17.37   /app/phase2/plankton_ingress.py:1: DeprecationWarning: invalid escape sequence \ 
+#11 17.37     """
+#11 17.37 
+#11 17.37 phase2/binary_quantum_classifier.py:1
+#11 17.37   /app/phase2/binary_quantum_classifier.py:1: DeprecationWarning: invalid escape sequence \ 
+#11 17.37     """
+#11 17.37 
+#11 17.37 ../usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19
+#11 17.37   /usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+#11 17.37     import imp
+#11 17.37 
+#11 17.37 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#11 17.37 =========================== short test summary info ============================
+#11 17.37 FAILED phase2/test_rigor_phase2.py::TestQuantumModel::test_symbol_count - Ass...
+#11 17.37 ================== 1 failed, 83 passed, 3 warnings in 16.97s ===================
+#11 ERROR: process "/bin/sh -c python -m pytest     /app/phase2/test_rigor_phase2.py     /app/phase3/test_rigor_phase3.py     /app/phase4/test_rigor.py     /app/phase5/test_rigor_phase5.py     /app/phase6/test_rigor_phase6.py     /app/phase7/test_rigor_phase7.py     -v --tb=short" did not complete successfully: exit code: 1
+------
+ > [7/7] RUN python -m pytest     /app/phase2/test_rigor_phase2.py     /app/phase3/test_rigor_phase3.py     /app/phase4/test_rigor.py     /app/phase5/test_rigor_phase5.py     /app/phase6/test_rigor_phase6.py     /app/phase7/test_rigor_phase7.py     -v --tb=short:
+17.37     """
+17.37 
+17.37 ../usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19
+17.37   /usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+17.37     import imp
+17.37 
+17.37 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+17.37 =========================== short test summary info ============================
+17.37 FAILED phase2/test_rigor_phase2.py::TestQuantumModel::test_symbol_count - Ass...
+17.37 ================== 1 failed, 83 passed, 3 warnings in 16.97s ===================
+------
+Dockerfile:43
+--------------------
+  42 |     # If any test fails, the build aborts.
+  43 | >>> RUN python -m pytest \
+  44 | >>>     /app/phase2/test_rigor_phase2.py \
+  45 | >>>     /app/phase3/test_rigor_phase3.py \
+  46 | >>>     /app/phase4/test_rigor.py \
+  47 | >>>     /app/phase5/test_rigor_phase5.py \
+  48 | >>>     /app/phase6/test_rigor_phase6.py \
+  49 | >>>     /app/phase7/test_rigor_phase7.py \
+  50 | >>>     -v --tb=short
+  51 |     
+--------------------
+ERROR: failed to build: failed to solve: process "/bin/sh -c python -m pytest     /app/phase2/test_rigor_phase2.py     /app/phase3/test_rigor_phase3.py     /app/phase4/test_rigor.py     /app/phase5/test_rigor_phase5.py     /app/phase6/test_rigor_phase6.py     /app/phase7/test_rigor_phase7.py     -v --tb=short" did not complete successfully: exit code: 1

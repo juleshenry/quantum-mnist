@@ -1,0 +1,41 @@
+=== Starting Quantum Plankton Pipeline ===
+Timestamp: 20260305_211510
+Cooldown period: 60 seconds
+Log file: /Users/enrique/Desktop/fun_repos/quantum-mnist/logs/pipeline_20260305_211510.log
+Platform: linux/amd64
+
+
+--- Phase 1: Build Docker Image ---
+Command: docker build --platform linux/amd64 -t quantum-plankton .
+Started: 2026-03-05 21:15:10
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.62kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/tensorflow/tensorflow:2.7.0
+#2 DONE 0.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 103B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5
+#4 resolve docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5 done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.65MB 0.4s done
+#5 DONE 0.4s
+
+#6 [2/7] RUN apt-get update &&     apt-get install -y --no-install-recommends     build-essential     libjpeg-dev     zlib1g-dev     git     && apt-get clean &&     rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [3/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir     tensorflow-quantum==0.7.2     cirq==0.13.1     sympy==1.8     pillow==9.0.1     numpy==1.21.6     pandas==1.3.5     matplotlib==3.5.1     seaborn==0.11.2     tqdm==4.64.0     scikit-learn==1.0.2     pytest==7.1.2
+#7 CACHED
+
+#8 [4/7] WORKDIR /app
+#8 CACHED
+
+#9 [5/7] COPY . .

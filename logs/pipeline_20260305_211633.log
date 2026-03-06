@@ -1,0 +1,86 @@
+=== Starting Quantum Plankton Pipeline ===
+Timestamp: 20260305_211633
+Cooldown period: 60 seconds
+Log file: /Users/enrique/Desktop/fun_repos/quantum-mnist/logs/pipeline_20260305_211633.log
+Platform: linux/amd64
+
+
+--- Phase 1: Build Docker Image ---
+Command: docker build --platform linux/amd64 -t quantum-plankton .
+Started: 2026-03-05 21:16:33
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.62kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/tensorflow/tensorflow:2.7.0
+#2 DONE 0.3s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 103B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5
+#4 resolve docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5 done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.64MB 0.5s done
+#5 DONE 0.5s
+
+#6 [2/7] RUN apt-get update &&     apt-get install -y --no-install-recommends     build-essential     libjpeg-dev     zlib1g-dev     git     && apt-get clean &&     rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [3/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir     tensorflow-quantum==0.7.2     cirq==0.13.1     sympy==1.8     pillow==9.0.1     numpy==1.21.6     pandas==1.3.5     matplotlib==3.5.1     seaborn==0.11.2     tqdm==4.64.0     scikit-learn==1.0.2     pytest==7.1.2
+#7 CACHED
+
+#8 [4/7] WORKDIR /app
+#8 CACHED
+
+#9 [5/7] COPY . .
+#9 DONE 0.8s
+
+#10 [6/7] RUN mkdir -p /app/phase2/results /app/phase3/results /app/phase4/results /app/phase5/results /app/phase6/results /app/phase7/results /app/utils
+#10 DONE 0.2s
+
+#11 [7/7] RUN python -m pytest     /app/phase2/test_rigor_phase2.py     /app/phase3/test_rigor_phase3.py     /app/phase4/test_rigor.py     /app/phase5/test_rigor_phase5.py     /app/phase6/test_rigor_phase6.py     /app/phase7/test_rigor_phase7.py     -v --tb=short
+#11 0.399 ============================= test session starts ==============================
+#11 0.399 platform linux -- Python 3.8.10, pytest-7.1.2, pluggy-1.5.0 -- /usr/local/bin/python
+#11 0.399 cachedir: .pytest_cache
+#11 0.399 rootdir: /app
+#11 0.399 collecting ... collected 84 items
+#11 4.531 
+#11 4.531 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_determinism_with_seed PASSED [  1%]
+#11 5.009 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_different_seeds_different_splits PASSED [  2%]
+#11 5.665 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_overlap_between_train_test PASSED [  3%]
+#11 5.720 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_pca_leakage PASSED [  4%]
+#11 6.081 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_output_shape PASSED [  5%]
+#11 6.425 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_values_in_unit_range PASSED [  7%]
+#11 6.706 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_stratified_balance PASSED [  8%]
+#11 6.819 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_determinism PASSED [  9%]
+#11 6.825 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_gate_count PASSED [ 10%]
+#11 6.828 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_qubit_count PASSED [ 11%]
+#11 6.831 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_zero_features_trivial PASSED [ 13%]
+#11 6.834 phase2/test_rigor_phase2.py::TestQuantumModel::test_readout_qubit PASSED [ 14%]
+#11 6.897 phase2/test_rigor_phase2.py::TestQuantumModel::test_symbol_count PASSED  [ 15%]
+#11 6.919 phase2/test_rigor_phase2.py::TestQuantumModel::test_unique_symbol_names PASSED [ 16%]
+#11 6.973 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 17%]
+#11 7.204 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_determinism PASSED [ 19%]
+#11 7.560 phase2/test_rigor_phase2.py::TestSeedFunction::test_numpy_determinism PASSED [ 20%]
+#11 7.562 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_gate_count PASSED [ 21%]
+#11 7.564 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_qubit_count PASSED [ 22%]
+#11 7.566 phase3/test_rigor_phase3.py::TestAngleEncoding::test_rotation_angles_scale_with_pi PASSED [ 23%]
+#11 7.567 phase3/test_rigor_phase3.py::TestAngleEncoding::test_zero_features_identity_rotations PASSED [ 25%]
+#11 7.569 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_readout_qubit PASSED [ 26%]
+#11 7.577 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_single_layer_symbols PASSED [ 27%]
+#11 7.580 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_symbol_names_no_collision PASSED [ 28%]
+#11 7.587 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_two_layer_symbols PASSED [ 29%]
+#11 7.592 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_all_keys_present PASSED [ 30%]
+#11 7.593 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_combination_count PASSED [ 32%]
+#11 7.593 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_no_duplicates PASSED [ 33%]
+#11 7.594 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_folds_cover_all_samples PASSED [ 34%]
+#11 7.597 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_test_disjoint_from_inner PASSED [ 35%]
+#11 7.600 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_seed_reproducibility PASSED [ 36%]
+#11 7.602 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_all_determinism PASSED [ 38%]
+#11 8.912 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_determinism 

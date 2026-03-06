@@ -19,3 +19,14 @@ To account for the diverse morphological characteristics and varying dimensions 
 - `plankton_ingress.py`: Handles the automated discovery of plankton classes and batch loading of images.
 - `binary_quantum_classifier.py`: Implementation of the expressive PQC and the training loop.
 - `Phase2.ipynb`: A comprehensive notebook for experimentation and visualization of the preprocessing steps.
+
+## Results
+The Phase 2 runner writes a structured JSON report to `phase2/results/phase2_results.json`.
+This includes per-fold accuracies, flipped-label accuracy, a classical baseline
+(logistic regression on the same PCA features), and bootstrap confidence intervals.
+
+Run the experiment to regenerate results after architecture changes:
+
+```bash
+python phase2/binary_quantum_classifier.py
+```
