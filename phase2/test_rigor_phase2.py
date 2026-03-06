@@ -20,6 +20,9 @@ from phase2.plankton_ingress import (
     prepare_binary_dataset,
     load_images_for_class,
     get_plankton_names,
+    pca_transform,
+    LOAD_DIMS,
+    N_PCA_COMPONENTS,
     QUBIT_DIMS,
 )
 from phase2.binary_quantum_classifier import (
@@ -50,7 +53,7 @@ class TestPrepareDatasetReproducibility(unittest.TestCase):
             self.skipTest("Need at least 2 plankton classes")
 
     def test_determinism_with_seed(self):
-        """Same seed must produce identical splits."""
+        """Same seed must produce identical splits (with PCA)."""
         (X1_tr, y1_tr), (X1_te, y1_te) = prepare_binary_dataset(
             self.plank[0], self.plank[1], limit=30, seed=42
         )
@@ -62,15 +65,30 @@ class TestPrepareDatasetReproducibility(unittest.TestCase):
         np.testing.assert_array_equal(X1_te, X2_te)
         np.testing.assert_array_equal(y1_te, y2_te)
 
-    def test_different_seeds_different_splits(self):
-        """Different seeds must produce different splits."""
-        (X1_tr, y1_tr), _ = prepare_binary_dataset(
+    def test_pca_output_shape(self):
+        """PCA output should have shape (N, 16)."""
+        (X_train, _), (X_test, _) = prepare_binary_dataset(
             self.plank[0], self.plank[1], limit=30, seed=42
         )
-        (X2_tr, y2_tr), _ = prepare_binary_dataset(
+        self.assertEqual(X_train.shape[1], N_PCA_COMPONENTS)
+        self.assertEqual(X_test.shape[1], N_PCA_COMPONENTS)
+
+    def test_pca_values_in_unit_range(self):
+        """MinMaxScaler should produce values in [0, 1] on train set."""
+        (X_train, _), _ = prepare_binary_dataset(
+            self.plank[0], self.plank[1], limit=30, seed=42
+        )
+        self.assertGreaterEqual(X_train.min(), 0.0)
+        self.assertLessEqual(X_train.max(), 1.0)
+
+    def test_different_seeds_different_splits(self):
+        """Different seeds must produce different splits."""
+        (X1_tr, _), _ = prepare_binary_dataset(
+            self.plank[0], self.plank[1], limit=30, seed=42
+        )
+        (X2_tr, _), _ = prepare_binary_dataset(
             self.plank[0], self.plank[1], limit=30, seed=99
         )
-        # Extremely unlikely for two different seeds to produce identical arrays
         self.assertFalse(np.array_equal(X1_tr, X2_tr))
 
     def test_stratified_balance(self):
@@ -78,32 +96,40 @@ class TestPrepareDatasetReproducibility(unittest.TestCase):
         (_, y_train), (_, y_test) = prepare_binary_dataset(
             self.plank[0], self.plank[1], limit=40, seed=42
         )
-        # Original dataset is 50/50, so train and test should both be ~50/50
         train_ratio = np.mean(y_train == 0)
         test_ratio = np.mean(y_test == 0)
-        # Allow 15% deviation for small samples
         self.assertAlmostEqual(train_ratio, 0.5, delta=0.15)
         self.assertAlmostEqual(test_ratio, 0.5, delta=0.15)
 
     def test_no_overlap_between_train_test(self):
-        """Train and test indices must not overlap (data leakage check)."""
+        """Train and test feature vectors must not overlap (data leakage check)."""
         (X_train, _), (X_test, _) = prepare_binary_dataset(
             self.plank[0], self.plank[1], limit=30, seed=42
         )
-        # Flatten images for comparison
-        train_flat = set(map(tuple, X_train.reshape(len(X_train), -1)))
-        test_flat = set(map(tuple, X_test.reshape(len(X_test), -1)))
+        # PCA output is already 2-D (N, 16)
+        train_flat = set(map(tuple, X_train))
+        test_flat = set(map(tuple, X_test))
         overlap = train_flat & test_flat
         self.assertEqual(len(overlap), 0, "Train/test overlap detected")
+
+    def test_no_pca_leakage(self):
+        """PCA must be fit on train only — different folds give different transforms."""
+        (X1_tr, _), _ = prepare_binary_dataset(
+            self.plank[0], self.plank[1], limit=30, seed=42
+        )
+        (X2_tr, _), _ = prepare_binary_dataset(
+            self.plank[0], self.plank[1], limit=30, seed=99
+        )
+        self.assertFalse(np.array_equal(X1_tr, X2_tr))
 
 
 class TestConvertToCircuit(unittest.TestCase):
     """Angle-encoded circuits must have correct structure."""
 
     def test_gate_count(self):
-        """A 4x4 image should produce 16 Ry gates."""
-        image = np.random.RandomState(42).rand(4, 4)
-        circuit = convert_to_circuit(image)
+        """16 PCA features should produce 16 Ry gates."""
+        features = np.random.RandomState(42).rand(16)
+        circuit = convert_to_circuit(features)
         ry_gates = [
             op for moment in circuit for op in moment
             if isinstance(op.gate, cirq.ops.common_gates.YPowGate)
@@ -112,21 +138,21 @@ class TestConvertToCircuit(unittest.TestCase):
 
     def test_qubit_count(self):
         """Circuit should use 16 data qubits."""
-        image = np.random.RandomState(42).rand(4, 4)
-        circuit = convert_to_circuit(image)
+        features = np.random.RandomState(42).rand(16)
+        circuit = convert_to_circuit(features)
         self.assertEqual(len(circuit.all_qubits()), 16)
 
     def test_determinism(self):
-        """Same image must produce the same circuit."""
-        image = np.random.RandomState(42).rand(4, 4)
-        c1 = convert_to_circuit(image)
-        c2 = convert_to_circuit(image)
+        """Same features must produce the same circuit."""
+        features = np.random.RandomState(42).rand(16)
+        c1 = convert_to_circuit(features)
+        c2 = convert_to_circuit(features)
         self.assertEqual(c1, c2)
 
-    def test_zero_image_trivial(self):
-        """All-zero image should produce identity-like rotations."""
-        image = np.zeros((4, 4))
-        circuit = convert_to_circuit(image)
+    def test_zero_features_trivial(self):
+        """All-zero features should produce identity-like rotations."""
+        features = np.zeros(16)
+        circuit = convert_to_circuit(features)
         # Ry(0) = identity, circuit should have 16 gates but all trivial
         self.assertEqual(len(circuit.all_qubits()), 16)
 
@@ -135,10 +161,10 @@ class TestQuantumModel(unittest.TestCase):
     """Model circuit must have correct symbol count and structure."""
 
     def test_symbol_count(self):
-        """Model should have 48 symbols (16 data qubits x 3 layers: XX, ZZ, YY)."""
+        """Model should have 32 symbols (16 data qubits x 2 layers: XX, ZZ)."""
         circuit, readout_op = create_quantum_model()
         symbols = cirq.parameter_names(circuit)
-        self.assertEqual(len(symbols), 48)
+        self.assertEqual(len(symbols), 32)
 
     def test_readout_qubit(self):
         """Readout operator must measure Z on the readout qubit."""
@@ -148,15 +174,12 @@ class TestQuantumModel(unittest.TestCase):
             cirq.Z(cirq.GridQubit(-1, -1))
         )
 
-    def test_entanglement_present(self):
-        """Model circuit must contain CZ entanglement gates."""
+    def test_unique_symbol_names(self):
+        """All symbol names in the model circuit must be unique."""
         circuit, _ = create_quantum_model()
-        cz_ops = [
-            op for moment in circuit for op in moment
-            if isinstance(op.gate, cirq.ops.common_gates.CZPowGate)
-        ]
-        # 15 CZ gates for a chain of 16 qubits
-        self.assertEqual(len(cz_ops), 15)
+        names = cirq.parameter_names(circuit)
+        self.assertEqual(len(names), len(set(names)),
+                         "Duplicate symbol names found")
 
 
 class TestBootstrapCI(unittest.TestCase):

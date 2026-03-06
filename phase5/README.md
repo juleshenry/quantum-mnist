@@ -21,6 +21,16 @@ This phase extends the previous work to a multi-class ($k$-category) setting, en
 - **Scaling Study:** Performance is evaluated across $k \in \{2, 3, 4, 5, 8, 12, 16\}$ categories.
 - **Equal Data:** All models (QNN, Fair Classical, CNN) train on the same sample budget per fold.
 
+For a higher-rigor view, `scientific_comparison.py` uses **nested CV** with an explicit
+hyperparameter sweep:
+
+| Model | Sweep Parameters |
+| --- | --- |
+| QNN | `n_layers` ∈ {1, 2, 3}, `learning_rate` ∈ {0.01, 0.05, 0.1} |
+| Fair Classical | `hidden_units` ∈ {1, 2, 4}, `learning_rate` ∈ {0.01, 0.05, 0.1} |
+
+Set `N_REPEATS` and `BASE_SEED` to repeat the outer CV with independent shuffles.
+
 ### 4. PCA Pipeline Details
 The PCA pipeline ensures a fair comparison by giving both QNN and Fair Classical the same information:
 1. Load images at 28x28 grayscale (784 pixels)
@@ -41,9 +51,25 @@ docker build --platform linux/amd64 -t quantum-plankton .
 docker run --rm --platform linux/amd64 -v $(pwd)/phase5/results:/app/phase5/results quantum-plankton python phase5/run_experiments.py
 ```
 
+To add repeated CV shuffles for uncertainty estimates:
+```bash
+docker run --rm --platform linux/amd64 \
+  -e N_REPEATS=3 -e BASE_SEED=42 \
+  -v $(pwd)/phase5/results:/app/phase5/results \
+  quantum-plankton python phase5/run_experiments.py
+```
+
 To run the high-rigor swept comparison:
 ```bash
 docker run --rm --platform linux/amd64 -v $(pwd)/phase5/results:/app/phase5/results quantum-plankton python phase5/scientific_comparison.py
+```
+
+With repeated outer CV shuffles:
+```bash
+docker run --rm --platform linux/amd64 \
+  -e N_REPEATS=3 -e BASE_SEED=42 \
+  -v $(pwd)/phase5/results:/app/phase5/results \
+  quantum-plankton python phase5/scientific_comparison.py
 ```
 
 Smoke test (quick verification of PCA pipeline):

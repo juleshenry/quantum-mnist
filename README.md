@@ -155,6 +155,7 @@ All experiment phases (2-7) use the following scientifically rigorous experiment
 ### Cross-Validation
 - **Phases 2, 4, 6**: Stratified 5-fold cross-validation. Metrics are reported as mean +/- std with bootstrap 95% confidence intervals.
 - **Phases 3, 5**: Nested cross-validation (5 outer x 3 inner folds). The inner loop selects hyperparameters; the outer loop provides unbiased performance estimates. This eliminates data leakage from using the test set for model selection.
+- **Repeatability**: Both Phase 4 and Phase 5 runners support repeated CV with independent fold shuffles to quantify variability beyond a single split. Set `N_REPEATS` and `BASE_SEED` to control the number of repeats and the deterministic seed schedule.
 - **Phase 7**: Not applicable (circuit analysis, no training).
 
 ### Sample Equalization
@@ -207,6 +208,7 @@ All models use `EarlyStopping(patience=3, restore_best_weights=True)` monitoring
 - **Pinned dependencies:** All package versions are locked in the Dockerfile.
 - **Automated verification:** A comprehensive test suite (**82 tests** across 6 files: `phase2/test_rigor_phase2.py`, `phase3/test_rigor_phase3.py`, `phase4/test_rigor.py`, `phase5/test_rigor_phase5.py`, `phase6/test_rigor_phase6.py`, `phase7/test_rigor_phase7.py`) runs during `docker build` and aborts the build if any test fails. Tests cover determinism, stratification, normalization, parameter counts, circuit correctness, nested CV structure, and bootstrap CI validity.
 - **Config logging:** Each experiment run saves its full configuration as JSON.
+- **Repeatable CV:** Repeats are deterministic with `BASE_SEED + repeat_id`, so every repeated run is reproducible and traceable.
 - **Stratified splitting:** All data splits use `stratify=y` to maintain class balance across folds and train/test partitions.
 
 ---
@@ -448,6 +450,8 @@ docker run --rm --platform linux/amd64 \
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `N_FOLDS` | `5` | Number of cross-validation folds |
+| `N_REPEATS` | `1` | Number of repeated CV runs with independent shuffles |
+| `BASE_SEED` | `42` | Base seed for deterministic fold shuffling |
 | `Q_SAMPLES` | `200` (Phase 4) / `400` (Phase 5) | Max training samples (applied to **all** models equally) |
 | `SMOKE_TEST` | `false` | Reduce to 1 pair/K, 2 folds, 10 samples |
 | `DATA_DIR` | `/app/data/zooplankton_0p5x` | Path to plankton dataset |

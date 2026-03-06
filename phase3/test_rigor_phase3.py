@@ -1,7 +1,7 @@
 """Tests for Phase 3 hyperparameter optimization components.
 
 Validates:
-- Multi-encoding circuit construction (angle vs basis)
+- Ry angle-encoded circuit construction from PCA features
 - Variable-depth model architecture
 - Hyperparameter sweep generation completeness
 - Nested CV structural properties (no data leakage by construction)
@@ -47,11 +47,12 @@ set_seed = _eu.set_seed
 
 
 class TestAngleEncoding(unittest.TestCase):
-    """Angle-encoded circuit must use Ry gates."""
+    """Ry angle-encoded circuit from PCA features."""
 
     def test_angle_gate_count(self):
-        image = np.random.RandomState(42).rand(4, 4)
-        circuit = convert_to_circuit(image, encoding='angle')
+        """16 PCA features -> 16 Ry gates."""
+        features = np.random.RandomState(42).rand(16)
+        circuit = convert_to_circuit(features)
         ry_gates = [
             op for moment in circuit for op in moment
             if isinstance(op.gate, cirq.ops.common_gates.YPowGate)
@@ -59,38 +60,32 @@ class TestAngleEncoding(unittest.TestCase):
         self.assertEqual(len(ry_gates), 16)
 
     def test_angle_qubit_count(self):
-        image = np.random.RandomState(42).rand(4, 4)
-        circuit = convert_to_circuit(image, encoding='angle')
+        features = np.random.RandomState(42).rand(16)
+        circuit = convert_to_circuit(features)
         self.assertEqual(len(circuit.all_qubits()), 16)
 
-
-class TestBasisEncoding(unittest.TestCase):
-    """Basis-encoded circuit must use X gates only where value > 0.5."""
-
-    def test_basis_gate_count(self):
-        rng = np.random.RandomState(42)
-        image = rng.rand(4, 4)
-        circuit = convert_to_circuit(image, encoding='basis')
-        x_gates = [
+    def test_zero_features_identity_rotations(self):
+        """All-zero PCA features should produce Ry(0) gates (identity)."""
+        features = np.zeros(16)
+        circuit = convert_to_circuit(features)
+        # Circuit has 16 Ry gates with angle 0
+        ry_gates = [
             op for moment in circuit for op in moment
-            if isinstance(op.gate, cirq.ops.common_gates.XPowGate)
+            if isinstance(op.gate, cirq.ops.common_gates.YPowGate)
         ]
-        expected_x = int(np.sum(image.flatten() > 0.5))
-        self.assertEqual(len(x_gates), expected_x)
+        self.assertEqual(len(ry_gates), 16)
 
-    def test_all_zeros_no_gates(self):
-        image = np.zeros((4, 4))
-        circuit = convert_to_circuit(image, encoding='basis')
-        self.assertEqual(len(list(circuit.all_operations())), 0)
-
-    def test_all_ones_full_gates(self):
-        image = np.ones((4, 4))
-        circuit = convert_to_circuit(image, encoding='basis')
-        x_gates = [
+    def test_rotation_angles_scale_with_pi(self):
+        """Feature value v should produce Ry(pi * v)."""
+        features = np.array([0.5] * 16)
+        circuit = convert_to_circuit(features)
+        ry_gates = [
             op for moment in circuit for op in moment
-            if isinstance(op.gate, cirq.ops.common_gates.XPowGate)
+            if isinstance(op.gate, cirq.ops.common_gates.YPowGate)
         ]
-        self.assertEqual(len(x_gates), 16)
+        for gate_op in ry_gates:
+            # cirq stores YPowGate exponent as rads/pi, so exponent = value
+            self.assertAlmostEqual(float(gate_op.gate.exponent), 0.5, places=6)
 
 
 class TestVariableDepthModel(unittest.TestCase):

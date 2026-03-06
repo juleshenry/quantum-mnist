@@ -1,0 +1,365 @@
+=== Starting Quantum Plankton Pipeline ===
+Timestamp: 20260305_204150
+Cooldown period: 60 seconds
+Log file: /Users/enrique/Desktop/fun_repos/quantum-mnist/logs/pipeline_20260305_204150.log
+Platform: linux/amd64
+
+
+--- Phase 1: Build Docker Image ---
+Command: docker build --platform linux/amd64 -t quantum-plankton .
+Started: 2026-03-05 20:41:50
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.62kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/tensorflow/tensorflow:2.7.0
+#2 DONE 0.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 103B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5
+#4 resolve docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.75MB 0.5s done
+#5 DONE 0.5s
+
+#6 [2/7] RUN apt-get update &&     apt-get install -y --no-install-recommends     build-essential     libjpeg-dev     zlib1g-dev     git     && apt-get clean &&     rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [3/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir     tensorflow-quantum==0.7.2     cirq==0.13.1     sympy==1.8     pillow==9.0.1     numpy==1.21.6     pandas==1.3.5     matplotlib==3.5.1     seaborn==0.11.2     tqdm==4.64.0     scikit-learn==1.0.2     pytest==7.1.2
+#7 CACHED
+
+#8 [4/7] WORKDIR /app
+#8 CACHED
+
+#9 [5/7] COPY . .
+#9 DONE 1.8s
+
+#10 [6/7] RUN mkdir -p /app/phase2/results /app/phase3/results /app/phase4/results /app/phase5/results /app/phase6/results /app/phase7/results /app/utils
+#10 DONE 0.2s
+
+#11 [7/7] RUN python -m pytest     /app/phase2/test_rigor_phase2.py     /app/phase3/test_rigor_phase3.py     /app/phase4/test_rigor.py     /app/phase5/test_rigor_phase5.py     /app/phase6/test_rigor_phase6.py     /app/phase7/test_rigor_phase7.py     -v --tb=short
+#11 0.492 ============================= test session starts ==============================
+#11 0.492 platform linux -- Python 3.8.10, pytest-7.1.2, pluggy-1.5.0 -- /usr/local/bin/python
+#11 0.492 cachedir: .pytest_cache
+#11 0.492 rootdir: /app
+#11 0.492 collecting ... collected 84 items
+#11 6.006 
+#11 6.006 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_determinism_with_seed PASSED [  1%]
+#11 6.683 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_different_seeds_different_splits PASSED [  2%]
+#11 7.249 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_overlap_between_train_test PASSED [  3%]
+#11 7.312 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_pca_leakage PASSED [  4%]
+#11 7.437 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_output_shape PASSED [  5%]
+#11 7.504 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_values_in_unit_range PASSED [  7%]
+#11 7.554 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_stratified_balance PASSED [  8%]
+#11 7.634 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_determinism PASSED [  9%]
+#11 7.663 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_gate_count PASSED [ 10%]
+#11 7.664 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_qubit_count PASSED [ 11%]
+#11 7.665 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_zero_features_trivial PASSED [ 13%]
+#11 7.684 phase2/test_rigor_phase2.py::TestQuantumModel::test_readout_qubit PASSED [ 14%]
+#11 7.729 phase2/test_rigor_phase2.py::TestQuantumModel::test_symbol_count PASSED  [ 15%]
+#11 7.739 phase2/test_rigor_phase2.py::TestQuantumModel::test_unique_symbol_names PASSED [ 16%]
+#11 7.748 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 17%]
+#11 8.039 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_determinism PASSED [ 19%]
+#11 8.382 phase2/test_rigor_phase2.py::TestSeedFunction::test_numpy_determinism PASSED [ 20%]
+#11 8.385 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_gate_count PASSED [ 21%]
+#11 8.387 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_qubit_count PASSED [ 22%]
+#11 8.388 phase3/test_rigor_phase3.py::TestAngleEncoding::test_rotation_angles_scale_with_pi PASSED [ 23%]
+#11 8.390 phase3/test_rigor_phase3.py::TestAngleEncoding::test_zero_features_identity_rotations PASSED [ 25%]
+#11 8.391 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_readout_qubit PASSED [ 26%]
+#11 8.399 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_single_layer_symbols PASSED [ 27%]
+#11 8.401 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_symbol_names_no_collision PASSED [ 28%]
+#11 8.412 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_two_layer_symbols PASSED [ 29%]
+#11 8.416 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_all_keys_present PASSED [ 30%]
+#11 8.416 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_combination_count PASSED [ 32%]
+#11 8.417 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_no_duplicates PASSED [ 33%]
+#11 8.418 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_folds_cover_all_samples PASSED [ 34%]
+#11 8.422 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_test_disjoint_from_inner PASSED [ 35%]
+#11 8.425 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_seed_reproducibility PASSED [ 36%]
+#11 8.427 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_all_determinism PASSED [ 38%]
+#11 9.709 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_determinism PASSED [ 39%]
+#11 10.93 phase4/test_rigor.py::TestDataLoaderDeterminism::test_sorted_file_listing PASSED [ 40%]
+#11 10.93 phase4/test_rigor.py::TestDataLoaderStratification::test_kfold_stratification PASSED [ 41%]
+#11 11.55 phase4/test_rigor.py::TestDataLoaderStratification::test_stratification_quality PASSED [ 42%]
+#11 12.16 phase4/test_rigor.py::TestDataNormalization::test_values_in_unit_range PASSED [ 44%]
+#11 12.77 phase4/test_rigor.py::TestDataSampling::test_max_per_class PASSED        [ 45%]
+#11 12.79 phase4/test_rigor.py::TestModelParameterCounts::test_fair_classical_params PASSED [ 46%]
+#11 12.85 phase4/test_rigor.py::TestModelParameterCounts::test_qnn_params PASSED   [ 47%]
+#11 14.04 phase4/test_rigor.py::TestQuantumCircuit::test_circuit_uses_all_qubits PASSED [ 48%]
+#11 14.05 phase4/test_rigor.py::TestQuantumCircuit::test_operation_count PASSED    [ 50%]
+#11 14.05 phase4/test_rigor.py::TestQuantumCircuit::test_zero_image_gives_identity_rotations PASSED [ 51%]
+#11 14.05 phase4/test_rigor.py::TestExperimentUtils::test_compute_metrics_perfect PASSED [ 52%]
+#11 14.06 phase4/test_rigor.py::TestExperimentUtils::test_compute_metrics_shape PASSED [ 53%]
+#11 14.06 phase4/test_rigor.py::TestExperimentUtils::test_holm_bonferroni PASSED   [ 54%]
+#11 14.06 phase4/test_rigor.py::TestExperimentUtils::test_majority_baseline PASSED [ 55%]
+#11 14.06 phase4/test_rigor.py::TestExperimentUtils::test_paired_test_identical PASSED [ 57%]
+#11 14.06 phase4/test_rigor.py::TestExperimentUtils::test_random_baseline PASSED   [ 58%]
+#11 14.07 phase4/test_rigor.py::TestExperimentUtils::test_set_seed_reproducibility PASSED [ 59%]
+#11 14.07 phase5/test_rigor_phase5.py::TestKCategoryDataDeterminism::test_load_k_all_determinism PASSED [ 60%]
+#11 14.12 phase5/test_rigor_phase5.py::TestKCategoryDataDeterminism::test_load_k_categories_determinism PASSED [ 61%]
+#11 15.34 phase5/test_rigor_phase5.py::TestKCategoryStratification::test_stratification_quality PASSED [ 63%]
+#11 16.12 phase5/test_rigor_phase5.py::TestPCANoLeakage::test_pca_deterministic PASSED [ 64%]
+#11 16.94 phase5/test_rigor_phase5.py::TestPCANoLeakage::test_pca_returns_correct_shapes PASSED [ 65%]
+#11 17.71 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 66%]
+#11 17.94 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_level PASSED       [ 67%]
+#11 18.12 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_narrows_with_low_variance PASSED [ 69%]
+#11 18.46 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_reproducible PASSED [ 70%]
+#11 18.81 phase5/test_rigor_phase5.py::TestSeedReproducibility::test_set_seed PASSED [ 71%]
+#11 18.81 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_symbol_count PASSED [ 72%]
+#11 18.83 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_symbol_ordering PASSED [ 73%]
+#11 18.83 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_two_layer_circuit PASSED [ 75%]
+#11 18.84 phase6/test_rigor_phase6.py::TestSeedReproducibility::test_seed_produces_identical_rng PASSED [ 76%]
+#11 18.84 phase7/test_rigor_phase7.py::TestPQCConstruction::test_increasing_layers PASSED [ 77%]
+#11 18.85 phase7/test_rigor_phase7.py::TestPQCConstruction::test_qubit_count PASSED [ 78%]
+#11 18.85 phase7/test_rigor_phase7.py::TestPQCConstruction::test_symbol_count_per_layer PASSED [ 79%]
+#11 18.85 phase7/test_rigor_phase7.py::TestProductionPQC::test_data_qubit_grid PASSED [ 80%]
+#11 18.86 phase7/test_rigor_phase7.py::TestProductionPQC::test_entanglement_gate_count PASSED [ 82%]
+#11 18.86 phase7/test_rigor_phase7.py::TestProductionPQC::test_no_symbol_collisions PASSED [ 83%]
+#11 18.88 phase7/test_rigor_phase7.py::TestProductionPQC::test_qubit_count PASSED  [ 84%]
+#11 18.88 phase7/test_rigor_phase7.py::TestProductionPQC::test_readout_qubit_position PASSED [ 85%]
+#11 18.88 phase7/test_rigor_phase7.py::TestProductionPQC::test_symbol_names_match_phase5 PASSED [ 86%]
+#11 18.88 phase7/test_rigor_phase7.py::TestProductionPQC::test_symbols_per_layer PASSED [ 88%]
+#11 18.90 phase7/test_rigor_phase7.py::TestHaarDistribution::test_normalization PASSED [ 89%]
+#11 18.90 phase7/test_rigor_phase7.py::TestHaarDistribution::test_shape PASSED     [ 90%]
+#11 18.90 phase7/test_rigor_phase7.py::TestFidelitySampling::test_fidelity_range PASSED [ 91%]
+#11 19.05 phase7/test_rigor_phase7.py::TestFidelitySampling::test_reproducibility PASSED [ 92%]
+#11 19.11 phase7/test_rigor_phase7.py::TestExpressibility::test_kl_non_negative PASSED [ 94%]
+#11 19.51 phase7/test_rigor_phase7.py::TestMeyerWallach::test_entanglement_range PASSED [ 95%]
+#11 19.55 phase7/test_rigor_phase7.py::TestMeyerWallach::test_reproducibility PASSED [ 96%]
+#11 19.57 phase7/test_rigor_phase7.py::TestMeyerWallach::test_returns_dict PASSED  [ 97%]
+#11 19.59 phase7/test_rigor_phase7.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 98%]
+#11 19.76 phase7/test_rigor_phase7.py::TestBootstrapCI::test_reproducibility PASSED [100%]
+#11 20.11 
+#11 20.11 =============================== warnings summary ===============================
+#11 20.11 phase2/plankton_ingress.py:1
+#11 20.11   /app/phase2/plankton_ingress.py:1: DeprecationWarning: invalid escape sequence \ 
+#11 20.11     """
+#11 20.11 
+#11 20.11 phase2/binary_quantum_classifier.py:1
+#11 20.11   /app/phase2/binary_quantum_classifier.py:1: DeprecationWarning: invalid escape sequence \ 
+#11 20.11     """
+#11 20.11 
+#11 20.11 ../usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19
+#11 20.11   /usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+#11 20.11     import imp
+#11 20.11 
+#11 20.11 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#11 20.11 ======================= 84 passed, 3 warnings in 19.62s ========================
+#11 DONE 20.6s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 5.1s done
+#12 exporting manifest sha256:d487038cc9b2f472a6208db408ccf4a4ab763ca779dbd15415e1c36fcbf446e3 done
+#12 exporting config sha256:324b5c6582a27c029301147ea629079bb27e49f136e0ac5f948fd4226b58efa6 done
+#12 exporting attestation manifest sha256:0560d2cef61371d75cfa6c9a7377003965b1dc9f8c71a8f781848a9ce392e08c done
+#12 exporting manifest list sha256:eab038b40964ddc59f8ad7dd50340cbba1e1149a479adfc48e1f847a167777e9 done
+#12 naming to docker.io/library/quantum-plankton:latest done
+#12 DONE 5.1s
+Completed: Build Docker Image (elapsed 31s)
+Cooling down for 60 seconds...
+
+--- Phase 2: Data Ingress ---
+Command: docker run --rm --platform linux/amd64 quantum-plankton python phase2/plankton_ingress.py
+Started: 2026-03-05 20:43:21
+Found 35 classes.
+Prepared dataset for aphanizomenon vs asplanchna
+Train size: 75, Test size: 25
+Completed: Data Ingress (elapsed 6s)
+Cooling down for 60 seconds...
+
+--- Phase 3: Binary Classifier (5-fold CV) ---
+Command: docker run --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase2/results:/app/phase2/results quantum-plankton python phase2/binary_quantum_classifier.py
+Started: 2026-03-05 20:44:27
+--- Phase 2: Binary Quantum Classification (Stratified 5-fold CV) ---
+Running Quantum Classification for aphanizomenon vs bosmina
+2026-03-06 02:44:31.476495: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+
+--- Fold 1/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 6s - loss: 0.9998 - hinge_accuracy: 0.6250 2/10 [=====>........................] - ETA: 1s - loss: 0.9998 - hinge_accuracy: 0.5938 3/10 [========>.....................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5625 4/10 [===========>..................] - ETA: 0s - loss: 0.9998 - hinge_accuracy: 0.5625 5/10 [==============>...............] - ETA: 0s - loss: 0.9997 - hinge_accuracy: 0.5875 6/10 [=================>............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.5417 7/10 [====================>.........] - ETA: 0s - loss: 1.0002 - hinge_accuracy: 0.5446 8/10 [=======================>......] - ETA: 0s - loss: 1.0002 - hinge_accuracy: 0.5625 9/10 [==========================>...] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.569410/10 [==============================] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.574010/10 [==============================] - 2s 165ms/step - loss: 1.0001 - hinge_accuracy: 0.5740 - val_loss: 0.9994 - val_hinge_accuracy: 0.8608
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 0.9994 - hinge_accuracy: 0.6875 2/10 [=====>........................] - ETA: 1s - loss: 0.9996 - hinge_accuracy: 0.6875 3/10 [========>.....................] - ETA: 1s - loss: 0.9996 - hinge_accuracy: 0.6458 4/10 [===========>..................] - ETA: 0s - loss: 0.9996 - hinge_accuracy: 0.6719 5/10 [==============>...............] - ETA: 0s - loss: 0.9996 - hinge_accuracy: 0.6375 6/10 [=================>............] - ETA: 0s - loss: 0.9997 - hinge_accuracy: 0.6250 7/10 [====================>.........] - ETA: 0s - loss: 0.9997 - hinge_accuracy: 0.6071 8/10 [=======================>......] - ETA: 0s - loss: 0.9996 - hinge_accuracy: 0.6250 9/10 [==========================>...] - ETA: 0s - loss: 0.9996 - hinge_accuracy: 0.625010/10 [==============================] - ETA: 0s - loss: 0.9996 - hinge_accuracy: 0.624010/10 [==============================] - 2s 151ms/step - loss: 0.9996 - hinge_accuracy: 0.6240 - val_loss: 1.0009 - val_hinge_accuracy: 0.5369
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0005 - hinge_accuracy: 0.5000 2/10 [=====>........................] - ETA: 1s - loss: 0.9991 - hinge_accuracy: 0.5938 3/10 [========>.....................] - ETA: 0s - loss: 0.9987 - hinge_accuracy: 0.5833 4/10 [===========>..................] - ETA: 0s - loss: 0.9985 - hinge_accuracy: 0.6250 5/10 [==============>...............] - ETA: 0s - loss: 0.9982 - hinge_accuracy: 0.6375 6/10 [=================>............] - ETA: 0s - loss: 0.9968 - hinge_accuracy: 0.6875 7/10 [====================>.........] - ETA: 0s - loss: 0.9974 - hinge_accuracy: 0.6786 8/10 [=======================>......] - ETA: 0s - loss: 0.9968 - hinge_accuracy: 0.6953 9/10 [==========================>...] - ETA: 0s - loss: 0.9957 - hinge_accuracy: 0.694410/10 [==============================] - ETA: 0s - loss: 0.9943 - hinge_accuracy: 0.701910/10 [==============================] - 1s 149ms/step - loss: 0.9943 - hinge_accuracy: 0.7019 - val_loss: 1.0093 - val_hinge_accuracy: 0.4148
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 0.9597 - hinge_accuracy: 0.9375 2/10 [=====>........................] - ETA: 1s - loss: 0.9638 - hinge_accuracy: 0.8750 3/10 [========>.....................] - ETA: 1s - loss: 0.9665 - hinge_accuracy: 0.8542 4/10 [===========>..................] - ETA: 0s - loss: 0.9692 - hinge_accuracy: 0.8125 5/10 [==============>...............] - ETA: 0s - loss: 0.9668 - hinge_accuracy: 0.8000 6/10 [=================>............] - ETA: 0s - loss: 0.9695 - hinge_accuracy: 0.7708 7/10 [====================>.........] - ETA: 0s - loss: 0.9685 - hinge_accuracy: 0.7500 8/10 [=======================>......] - ETA: 0s - loss: 0.9659 - hinge_accuracy: 0.7500 9/10 [==========================>...] - ETA: 0s - loss: 0.9626 - hinge_accuracy: 0.743110/10 [==============================] - ETA: 0s - loss: 0.9612 - hinge_accuracy: 0.738010/10 [==============================] - 2s 152ms/step - loss: 0.9612 - hinge_accuracy: 0.7380 - val_loss: 1.0801 - val_hinge_accuracy: 0.2301
+Fold 1 — Loss: 0.9997, Accuracy: 0.5871
+
+--- Fold 2/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0005 - hinge_accuracy: 0.1250 2/10 [=====>........................] - ETA: 1s - loss: 1.0003 - hinge_accuracy: 0.2188 3/10 [========>.....................] - ETA: 0s - loss: 1.0002 - hinge_accuracy: 0.3542 4/10 [===========>..................] - ETA: 0s - loss: 1.0002 - hinge_accuracy: 0.3750 5/10 [==============>...............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3625 6/10 [=================>............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3958 7/10 [====================>.........] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.4196 8/10 [=======================>......] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.4219 9/10 [==========================>...] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.430610/10 [==============================] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.441310/10 [==============================] - 2s 152ms/step - loss: 1.0001 - hinge_accuracy: 0.4413 - val_loss: 1.0000 - val_hinge_accuracy: 0.5682
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5000 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5938 3/10 [========>.....................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.6250 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5938 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5750 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.6042 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.6071 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.6016 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.604210/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.597610/10 [==============================] - 2s 151ms/step - loss: 1.0000 - hinge_accuracy: 0.5976 - val_loss: 1.0000 - val_hinge_accuracy: 0.4290
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.6250 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5312 3/10 [========>.....................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5417 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5781 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.6000 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5938 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5804 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5547 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.527810/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.521210/10 [==============================] - 1s 148ms/step - loss: 1.0000 - hinge_accuracy: 0.5212 - val_loss: 1.0000 - val_hinge_accuracy: 0.3977
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.6250 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.6250 3/10 [========>.....................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.6042 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5781 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5417 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5089 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5156 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.548610/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.539910/10 [==============================] - 1s 150ms/step - loss: 1.0000 - hinge_accuracy: 0.5399 - val_loss: 1.0000 - val_hinge_accuracy: 0.3523
+Fold 2 — Loss: 1.0000, Accuracy: 0.5201
+
+--- Fold 3/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0001 - hinge_accuracy: 0.3750 2/10 [=====>........................] - ETA: 1s - loss: 1.0001 - hinge_accuracy: 0.4062 3/10 [========>.....................] - ETA: 1s - loss: 1.0001 - hinge_accuracy: 0.3958 4/10 [===========>..................] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.4062 5/10 [==============>...............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.4500 6/10 [=================>............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.5000 7/10 [====================>.........] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.5000 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4922 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.506910/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.525510/10 [==============================] - 2s 157ms/step - loss: 1.0000 - hinge_accuracy: 0.5255 - val_loss: 1.0001 - val_hinge_accuracy: 0.3835
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.4375 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.4688 3/10 [========>.....................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5833 4/10 [===========>..................] - ETA: 0s - loss: 0.9999 - hinge_accuracy: 0.5781 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5750 6/10 [=================>............] - ETA: 0s - loss: 0.9999 - hinge_accuracy: 0.6354 7/10 [====================>.........] - ETA: 0s - loss: 0.9999 - hinge_accuracy: 0.6071 8/10 [=======================>......] - ETA: 0s - loss: 0.9999 - hinge_accuracy: 0.6328 9/10 [==========================>...] - ETA: 0s - loss: 0.9998 - hinge_accuracy: 0.631910/10 [==============================] - ETA: 0s - loss: 0.9998 - hinge_accuracy: 0.638010/10 [==============================] - 1s 149ms/step - loss: 0.9998 - hinge_accuracy: 0.6380 - val_loss: 1.0009 - val_hinge_accuracy: 0.3381
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 0.9992 - hinge_accuracy: 0.8750 2/10 [=====>........................] - ETA: 1s - loss: 0.9997 - hinge_accuracy: 0.7188 3/10 [========>.....................] - ETA: 1s - loss: 0.9989 - hinge_accuracy: 0.7083 4/10 [===========>..................] - ETA: 0s - loss: 0.9981 - hinge_accuracy: 0.7188 5/10 [==============>...............] - ETA: 0s - loss: 0.9978 - hinge_accuracy: 0.7000 6/10 [=================>............] - ETA: 0s - loss: 0.9973 - hinge_accuracy: 0.6979 7/10 [====================>.........] - ETA: 0s - loss: 0.9974 - hinge_accuracy: 0.6518 8/10 [=======================>......] - ETA: 0s - loss: 0.9966 - hinge_accuracy: 0.6562 9/10 [==========================>...] - ETA: 0s - loss: 0.9955 - hinge_accuracy: 0.659710/10 [==============================] - ETA: 0s - loss: 0.9933 - hinge_accuracy: 0.693810/10 [==============================] - 2s 153ms/step - loss: 0.9933 - hinge_accuracy: 0.6938 - val_loss: 1.0258 - val_hinge_accuracy: 0.1392
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 0.9964 - hinge_accuracy: 0.5625 2/10 [=====>........................] - ETA: 1s - loss: 0.9858 - hinge_accuracy: 0.6875 3/10 [========>.....................] - ETA: 0s - loss: 0.9745 - hinge_accuracy: 0.7292 4/10 [===========>..................] - ETA: 0s - loss: 0.9696 - hinge_accuracy: 0.7344 5/10 [==============>...............] - ETA: 0s - loss: 0.9651 - hinge_accuracy: 0.7500 6/10 [=================>............] - ETA: 0s - loss: 0.9604 - hinge_accuracy: 0.7396 7/10 [====================>.........] - ETA: 0s - loss: 0.9550 - hinge_accuracy: 0.7411 8/10 [=======================>......] - ETA: 0s - loss: 0.9510 - hinge_accuracy: 0.7344 9/10 [==========================>...] - ETA: 0s - loss: 0.9345 - hinge_accuracy: 0.756910/10 [==============================] - ETA: 0s - loss: 0.9212 - hinge_accuracy: 0.773610/10 [==============================] - 1s 150ms/step - loss: 0.9212 - hinge_accuracy: 0.7736 - val_loss: 1.2652 - val_hinge_accuracy: 0.0000e+00
+Fold 3 — Loss: 1.0000, Accuracy: 0.4420
+
+--- Fold 4/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0001 - hinge_accuracy: 0.5000 2/10 [=====>........................] - ETA: 1s - loss: 1.0001 - hinge_accuracy: 0.3750 3/10 [========>.....................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.3958 4/10 [===========>..................] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3594 5/10 [==============>...............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3750 6/10 [=================>............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3958 7/10 [====================>.........] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.4018 8/10 [=======================>......] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.4219 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.430610/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.433710/10 [==============================] - 2s 152ms/step - loss: 1.0000 - hinge_accuracy: 0.4337 - val_loss: 1.0000 - val_hinge_accuracy: 0.6903
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.3125 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.4062 3/10 [========>.....................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.3958 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4375 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4000 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4167 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4286 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4609 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.472210/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.471210/10 [==============================] - 2s 153ms/step - loss: 1.0000 - hinge_accuracy: 0.4712 - val_loss: 1.0000 - val_hinge_accuracy: 0.7841
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.3750 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5000 3/10 [========>.....................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.4583 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4844 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4625 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5208 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4911 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4922 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.493110/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.497610/10 [==============================] - 2s 150ms/step - loss: 1.0000 - hinge_accuracy: 0.4976 - val_loss: 1.0000 - val_hinge_accuracy: 0.7074
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.3750 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.4375 3/10 [========>.....................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4375 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4844 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5000 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5104 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.4821 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5000 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.520810/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.499510/10 [==============================] - 2s 150ms/step - loss: 1.0000 - hinge_accuracy: 0.4995 - val_loss: 1.0000 - val_hinge_accuracy: 0.6165
+Fold 4 — Loss: 1.0000, Accuracy: 0.4375
+
+--- Fold 5/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0001 - hinge_accuracy: 0.4375 2/10 [=====>........................] - ETA: 1s - loss: 1.0002 - hinge_accuracy: 0.3125 3/10 [========>.....................] - ETA: 1s - loss: 1.0001 - hinge_accuracy: 0.3333 4/10 [===========>..................] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3281 5/10 [==============>...............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3625 6/10 [=================>............] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3646 7/10 [====================>.........] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3839 8/10 [=======================>......] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.3984 9/10 [==========================>...] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.430610/10 [==============================] - ETA: 0s - loss: 1.0001 - hinge_accuracy: 0.433710/10 [==============================] - 2s 154ms/step - loss: 1.0001 - hinge_accuracy: 0.4337 - val_loss: 1.0000 - val_hinge_accuracy: 0.4006
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5000 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5938 3/10 [========>.....................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5750 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5938 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5982 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.6016 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.604210/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.589910/10 [==============================] - 2s 152ms/step - loss: 1.0000 - hinge_accuracy: 0.5899 - val_loss: 1.0000 - val_hinge_accuracy: 0.2926
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.6250 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5625 3/10 [========>.....................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5208 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5781 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5893 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.6016 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.597210/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.576010/10 [==============================] - 1s 149ms/step - loss: 1.0000 - hinge_accuracy: 0.5760 - val_loss: 1.0000 - val_hinge_accuracy: 0.2614
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.4375 2/10 [=====>........................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.3750 3/10 [========>.....................] - ETA: 1s - loss: 1.0000 - hinge_accuracy: 0.5208 4/10 [===========>..................] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 5/10 [==============>...............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5375 6/10 [=================>............] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 7/10 [====================>.........] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5625 8/10 [=======================>......] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.5781 9/10 [==========================>...] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.569410/10 [==============================] - ETA: 0s - loss: 1.0000 - hinge_accuracy: 0.589410/10 [==============================] - 2s 154ms/step - loss: 1.0000 - hinge_accuracy: 0.5894 - val_loss: 1.0000 - val_hinge_accuracy: 0.2614
+Fold 5 — Loss: 1.0000, Accuracy: 0.4866
+
+=== Phase 2 Results ===
+Accuracy: 0.4946 +/- 0.0553
+95% Bootstrap CI: [0.4491, 0.5446]
+Per-fold accuracies: [0.5870535373687744, 0.5200892686843872, 0.4419642984867096, 0.4375, 0.4866071343421936]
+Results saved to phase2/results/phase2_results.json
+Completed: Binary Classifier (5-fold CV) (elapsed 41s)
+Cooling down for 60 seconds...
+
+--- Phase 4: Hyperparameter Sweep (Nested 5x3 CV) ---
+Command: docker run --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=2.0 -e THERMAL_SLEEP=30 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase3/results:/app/phase3/results quantum-plankton python phase3/optimize_binary_classifier.py
+Started: 2026-03-05 20:46:08
+--- Phase 3: Hyperparameter Optimization (Nested CV) ---
+Using nested cross-validation to prevent data leakage.
+
+Optimizing Quantum Model for aphanizomenon vs bosmina
+2026-03-06 02:46:12.139064: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Hyperparameter combinations: 8
+
+=== Outer Fold 1/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.4219
+  Inner 1/3 | Config 2/8 | Val Acc: 0.3906
+  Inner 1/3 | Config 3/8 | Val Acc: 0.3906
+  Inner 1/3 | Config 4/8 | Val Acc: 0.3750
+  Inner 1/3 | Config 5/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 6/8 | Val Acc: 0.6875
+  Inner 1/3 | Config 7/8 | Val Acc: 0.8125
+  Inner 1/3 | Config 8/8 | Val Acc: 0.7188
+  Inner 2/3 | Config 1/8 | Val Acc: 0.4219
+  Inner 2/3 | Config 2/8 | Val Acc: 0.4219
+  Inner 2/3 | Config 3/8 | Val Acc: 0.3906
+  Inner 2/3 | Config 4/8 | Val Acc: 0.3906
+  Inner 2/3 | Config 5/8 | Val Acc: 0.5312
+  Inner 2/3 | Config 6/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 7/8 | Val Acc: 0.8125
+  Inner 2/3 | Config 8/8 | Val Acc: 0.6875
+  Inner 3/3 | Config 1/8 | Val Acc: 0.4375
+  Inner 3/3 | Config 2/8 | Val Acc: 0.4531
+  Inner 3/3 | Config 3/8 | Val Acc: 0.4688
+  Inner 3/3 | Config 4/8 | Val Acc: 0.4688
+  Inner 3/3 | Config 5/8 | Val Acc: 0.5000
+  Inner 3/3 | Config 6/8 | Val Acc: 0.4844
+  Inner 3/3 | Config 7/8 | Val Acc: 0.5312
+  Inner 3/3 | Config 8/8 | Val Acc: 0.5781
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.001, 'batch_size': 16} (mean inner acc: 0.7188)
+  Outer test accuracy: 0.5938
+
+=== Outer Fold 2/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.4219
+  Inner 1/3 | Config 2/8 | Val Acc: 0.3906
+  Inner 1/3 | Config 3/8 | Val Acc: 0.3906
+  Inner 1/3 | Config 4/8 | Val Acc: 0.3906
+  Inner 1/3 | Config 5/8 | Val Acc: 0.7969
+  Inner 1/3 | Config 6/8 | Val Acc: 0.7969
+  Inner 1/3 | Config 7/8 | Val Acc: 0.6250
+  Inner 1/3 | Config 8/8 | Val Acc: 0.4531
+  Inner 2/3 | Config 1/8 | Val Acc: 0.5781
+  Inner 2/3 | Config 2/8 | Val Acc: 0.4531
+  Inner 2/3 | Config 3/8 | Val Acc: 0.3906
+  Inner 2/3 | Config 4/8 | Val Acc: 0.3906
+  Inner 2/3 | Config 5/8 | Val Acc: 0.5000
+  Inner 2/3 | Config 6/8 | Val Acc: 0.5156
+  Inner 2/3 | Config 7/8 | Val Acc: 0.6250
+  Inner 2/3 | Config 8/8 | Val Acc: 0.5625
+  Inner 3/3 | Config 1/8 | Val Acc: 0.5625
+  Inner 3/3 | Config 2/8 | Val Acc: 0.4062
+  Inner 3/3 | Config 3/8 | Val Acc: 0.3906
+  Inner 3/3 | Config 4/8 | Val Acc: 0.3906
+  Inner 3/3 | Config 5/8 | Val Acc: 0.8125
+  Inner 3/3 | Config 6/8 | Val Acc: 0.8594
+  Inner 3/3 | Config 7/8 | Val Acc: 0.6875
+  Inner 3/3 | Config 8/8 | Val Acc: 0.5625
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.01, 'batch_size': 32} (mean inner acc: 0.7240)
+  Outer test accuracy: 0.8281
+
+=== Outer Fold 3/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.5312
+  Inner 1/3 | Config 2/8 | Val Acc: 0.4688
+  Inner 1/3 | Config 3/8 | Val Acc: 0.3906
+  Inner 1/3 | Config 4/8 | Val Acc: 0.3906
+  Inner 1/3 | Config 5/8 | Val Acc: 0.4844
+  Inner 1/3 | Config 6/8 | Val Acc: 0.5000
+  Inner 1/3 | Config 7/8 | Val Acc: 0.6719
+  Inner 1/3 | Config 8/8 | Val Acc: 0.6562
+  Inner 2/3 | Config 1/8 | Val Acc: 0.5312
+  Inner 2/3 | Config 2/8 | Val Acc: 0.5312
+  Inner 2/3 | Config 3/8 | Val Acc: 0.4688
+  Inner 2/3 | Config 4/8 | Val Acc: 0.4688
+  Inner 2/3 | Config 5/8 | Val Acc: 0.5000
+  Inner 2/3 | Config 6/8 | Val Acc: 0.5156
+  Inner 2/3 | Config 7/8 | Val Acc: 0.7344
+  Inner 2/3 | Config 8/8 | Val Acc: 0.5469
+  Inner 3/3 | Config 1/8 | Val Acc: 0.4688
+  Inner 3/3 | Config 2/8 | Val Acc: 0.5156
+  Inner 3/3 | Config 3/8 | Val Acc: 0.4531
+  Inner 3/3 | Config 4/8 | Val Acc: 0.4531
+  Inner 3/3 | Config 5/8 | Val Acc: 0.5156
+  Inner 3/3 | Config 6/8 | Val Acc: 0.4688
+  Inner 3/3 | Config 7/8 | Val Acc: 0.6875
+  Inner 3/3 | Config 8/8 | Val Acc: 0.5156
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.001, 'batch_size': 16} (mean inner acc: 0.6979)
+  Outer test accuracy: 0.8281
+
+=== Outer Fold 4/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.6406
+  Inner 1/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 3/8 | Val Acc: 0.4375
+  Inner 1/3 | Config 4/8 | Val Acc: 0.4219
+  Inner 1/3 | Config 5/8 | Val Acc: 0.7031
+  Inner 1/3 | Config 6/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 7/8 | Val Acc: 0.5312
+  Inner 1/3 | Config 8/8 | Val Acc: 0.5312
+  Inner 2/3 | Config 1/8 | Val Acc: 0.6562
+  Inner 2/3 | Config 2/8 | Val Acc: 0.6250
+  Inner 2/3 | Config 3/8 | Val Acc: 0.4844
+  Inner 2/3 | Config 4/8 | Val Acc: 0.4844
+  Inner 2/3 | Config 5/8 | Val Acc: 0.7188
+  Inner 2/3 | Config 6/8 | Val Acc: 0.6562
+  Inner 2/3 | Config 7/8 | Val Acc: 0.6719
+  Inner 2/3 | Config 8/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 1/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 2/8 | Val Acc: 0.6094
+  Inner 3/3 | Config 3/8 | Val Acc: 0.5469
+  Inner 3/3 | Config 4/8 | Val Acc: 0.5156
+  Inner 3/3 | Config 5/8 | Val Acc: 0.6406
+  Inner 3/3 | Config 6/8 | Val Acc: 0.7188

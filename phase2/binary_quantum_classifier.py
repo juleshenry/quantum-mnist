@@ -90,7 +90,9 @@ from sklearn.model_selection import StratifiedKFold
 
 # Import local data loader
 try:
-    from phase2.plankton_ingress import load_images_for_class, get_plankton_names
+    from phase2.plankton_ingress import (
+        load_images_for_class, get_plankton_names, pca_transform,
+    )
 except ImportError:
     # Fallback for colab if needed
     pass
@@ -116,7 +118,7 @@ SEED = 42
 N_FOLDS = 5
 EPOCHS = 15
 BATCH_SIZE = 16
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 LIMIT_PER_CLASS = 150
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
@@ -132,37 +134,36 @@ class CircuitLayerBuilder:
             circuit.append(gate(qubit, self.readout) ** symbol)
 
 
-def convert_to_circuit(image):
-    """Encode classical image into quantum datapoint using angle encoding."""
-    # Input image is now already 4x4 from plankton_ingress
-    values = np.ndarray.flatten(image)
+def convert_to_circuit(pca_features):
+    """Encode PCA-reduced features into quantum circuit using Ry angle encoding.
+
+    Parameters
+    ----------
+    pca_features : array-like of shape (16,)
+        PCA components scaled to [0, 1] via MinMaxScaler.
+    """
+    values = np.ndarray.flatten(pca_features)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
     for i, value in enumerate(values):
-        # Use Angle Encoding (Ry rotation)
         circuit.append(cirq.ry(np.pi * value)(qubits[i]))
     return circuit
 
 
 def create_quantum_model():
-    """Create a QNN model circuit with improved expressivity."""
+    """Create a QNN model circuit for binary classification.
+
+    Architecture: XX layer -> ZZ layer -> Z Measurement
+    Total trainable parameters: 32 (16 XX + 16 ZZ).
+    """
     data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
 
-    # Add entanglement between data qubits
-    for i in range(len(data_qubits) - 1):
-        circuit.append(cirq.CZ(data_qubits[i], data_qubits[i + 1]))
-
-    circuit.append(cirq.X(readout))
-    circuit.append(cirq.H(readout))
-
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
     builder.add_layer(circuit, cirq.XX, "xx1")
     builder.add_layer(circuit, cirq.ZZ, "zz1")
-    builder.add_layer(circuit, cirq.YY, "yy1")  # Added YY layer for more expressivity
 
-    circuit.append(cirq.H(readout))
     return circuit, cirq.Z(readout)
 
 
@@ -197,46 +198,71 @@ def run_quantum_classification(class_a, class_b):
     fold_accuracies = []
     fold_losses = []
 
+    # Build circuit + model once to avoid tf.function retracing each fold
+    model_circuit, model_readout = create_quantum_model()
+    model = tf.keras.Sequential(
+        [
+            tf.keras.layers.Input(shape=(), dtype=tf.string),
+            tfq.layers.PQC(model_circuit, model_readout),
+        ]
+    )
+    model.compile(
+        loss=tf.keras.losses.Hinge(),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
+        metrics=[hinge_accuracy],
+    )
+    initial_weights = model.get_weights()
+
     for fold_idx, (train_idx, test_idx) in enumerate(skf.split(X, y)):
         set_seed(SEED + fold_idx)  # per-fold determinism
 
         x_train, x_test = X[train_idx], X[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
 
+        # PCA dimensionality reduction: fit on train fold only (no leakage)
+        x_train_pca, x_test_pca = pca_transform(x_train, x_test,
+                                                  seed=SEED + fold_idx)
+
         # Convert labels to hinge loss format [-1, 1]
         y_train_hinge = 2.0 * y_train - 1.0
         y_test_hinge = 2.0 * y_test - 1.0
 
-        # Convert images to circuits
-        x_train_circ = [convert_to_circuit(x) for x in x_train]
-        x_test_circ = [convert_to_circuit(x) for x in x_test]
+        # Convert PCA features to circuits
+        x_train_circ = [convert_to_circuit(x) for x in x_train_pca]
+        x_test_circ = [convert_to_circuit(x) for x in x_test_pca]
 
         x_train_tfq = tfq.convert_to_tensor(x_train_circ)
         x_test_tfq = tfq.convert_to_tensor(x_test_circ)
 
-        model_circuit, model_readout = create_quantum_model()
-
-        model = tf.keras.Sequential(
-            [
-                tf.keras.layers.Input(shape=(), dtype=tf.string),
-                tfq.layers.PQC(model_circuit, model_readout),
-            ]
-        )
-
-        model.compile(
-            loss=tf.keras.losses.Hinge(),
-            optimizer=tf.keras.optimizers.Adam(learning_rate=LEARNING_RATE),
-            metrics=[hinge_accuracy],
-        )
+        # Reset model weights + optimizer state for each fold.
+        # Do NOT replace model.optimizer with a new Adam() — that creates
+        # fresh tf.Variables which crash inside tf.function on the next
+        # model.fit() call.  Reset state in-place instead.
+        model.set_weights(initial_weights)
+        optimizer = model.optimizer
+        optimizer.learning_rate.assign(LEARNING_RATE)
+        for var in optimizer.variables():
+            var.assign(tf.zeros_like(var))
 
         print(f"\n--- Fold {fold_idx + 1}/{N_FOLDS} "
               f"(train={len(x_train)}, test={len(x_test)}) ---")
 
+        # Carve out a small validation set from training data for early stopping.
+        # Use the last 15 % of training samples (already shuffled by StratifiedKFold).
+        val_size = max(1, int(0.15 * len(y_train_hinge)))
+        x_fit, x_val = x_train_tfq[:-val_size], x_train_tfq[-val_size:]
+        y_fit, y_val = y_train_hinge[:-val_size], y_train_hinge[-val_size:]
+
+        early_stop = tf.keras.callbacks.EarlyStopping(
+            monitor='val_loss', patience=3, restore_best_weights=True, verbose=0,
+        )
+
         model.fit(
-            x_train_tfq,
-            y_train_hinge,
+            x_fit, y_fit,
             batch_size=BATCH_SIZE,
             epochs=EPOCHS,
+            validation_data=(x_val, y_val),
+            callbacks=[early_stop],
             verbose=1,
         )
 

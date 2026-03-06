@@ -67,6 +67,15 @@ docker run --rm --platform linux/amd64 \
   quantum-plankton python phase4/run_experiments.py
 ```
 
+**Repeated CV shuffles** (quantify variability):
+
+```bash
+docker run -it --rm --platform linux/amd64 \
+  -e N_REPEATS=3 -e BASE_SEED=42 \
+  -v $(pwd)/phase4/results:/app/phase4/results \
+  quantum-plankton python phase4/run_experiments.py
+```
+
 **Outputs:**
 - `phase4/results/experiment_results.csv` -- per-fold, per-pair metrics
 - `phase4/results/experiment_summary.csv` -- aggregated stats with p-values
@@ -94,11 +103,29 @@ docker run -it --rm --platform linux/amd64 \
   quantum-plankton python phase5/run_experiments.py
 ```
 
+**Full run with repeated CV shuffles:**
+
+```bash
+docker run -it --rm --platform linux/amd64 \
+  -e N_REPEATS=3 -e BASE_SEED=42 \
+  -v $(pwd)/phase5/results:/app/phase5/results \
+  quantum-plankton python phase5/run_experiments.py
+```
+
 **Scientific comparison** (K=2,3,4,5 with hyperparameter sweep):
 
 ```bash
 docker run -it --rm --platform linux/amd64 \
   -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=3.0 -e THERMAL_SLEEP=60 \
+  -v $(pwd)/phase5/results:/app/phase5/results \
+  quantum-plankton python phase5/scientific_comparison.py
+```
+
+**Scientific comparison with repeated outer CV shuffles:**
+
+```bash
+docker run -it --rm --platform linux/amd64 \
+  -e N_REPEATS=3 -e BASE_SEED=42 \
   -v $(pwd)/phase5/results:/app/phase5/results \
   quantum-plankton python phase5/scientific_comparison.py
 ```
@@ -191,6 +218,8 @@ following environment variables help manage heat:
 | `THERMAL_SLEEP` | `0` | Seconds to pause between full experiments |
 | `BATCH_COOL` | `0` | Seconds to pause after every batch |
 | `BREATHE_SLEEP` | `0.05` | Micro-sleeps during heavy data processing |
+| `N_REPEATS` | `1` | Number of repeated CV runs with independent shuffles |
+| `BASE_SEED` | `42` | Base seed for deterministic fold shuffling |
 
 **Maximum cooling one-liner:**
 

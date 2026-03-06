@@ -1,5 +1,5 @@
-"""
-                               ★■╬▂▂▂▂▂◓□                                                           
+r"""
+                                ★■╬▂▂▂▂▂◓□
                               ☆◕◓◊◊▇▅◕⬤▽■●⬤                                                         
                                    ▽■◑▅▆◑★■╬◒.                                                      
                                        ⬤▂▄◔▽▽▅◒◕★                                                   
@@ -103,6 +103,8 @@ from experiment_utils import (
 # ===================================================================
 
 N_FOLDS = int(os.environ.get('N_FOLDS', 5))
+N_REPEATS = int(os.environ.get('N_REPEATS', 1))
+BASE_SEED = int(os.environ.get('BASE_SEED', 42))
 Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 200))
 IS_SMOKE = os.environ.get('SMOKE_TEST', 'false').lower() == 'true'
 RESULTS_DIR = os.environ.get('RESULTS_DIR', 'phase4/results')
@@ -146,6 +148,7 @@ if IS_SMOKE:
     print("!!! SMOKE TEST MODE ENABLED !!!")
     PLANKTON_PAIRS = PLANKTON_PAIRS[:1]
     N_FOLDS = 2
+    N_REPEATS = 1
     Q_SAMPLES = 10
 
 
@@ -264,7 +267,7 @@ def _early_stopping():
 # Single Fold Execution
 # ===================================================================
 
-def run_single_fold(X_4, y_binary, X_28, train_idx, test_idx, fold_id):
+def run_single_fold(X_4, y_binary, X_28, train_idx, test_idx, fold_id, repeat_id):
     """Run all three models on one CV fold.
 
     All models train on the *same* sample budget (``Q_SAMPLES``).
@@ -282,7 +285,7 @@ def run_single_fold(X_4, y_binary, X_28, train_idx, test_idx, fold_id):
     -------
     dict of per-model metrics for this fold
     """
-    fold_seed = 42 + fold_id
+    fold_seed = BASE_SEED + repeat_id * 100 + fold_id
     set_seed(fold_seed)
 
     # --- Subsample training data to Q_SAMPLES for fairness ---
@@ -388,29 +391,37 @@ def run_experiment(class_a, class_b):
     a list of per-fold results.
     """
     print(f"\n{'='*60}")
-    print(f"Experiment: {class_a} vs {class_b}  ({N_FOLDS}-fold CV, Q_SAMPLES={Q_SAMPLES})")
+    repeat_msg = f", repeats={N_REPEATS}" if N_REPEATS > 1 else ""
+    print(
+        f"Experiment: {class_a} vs {class_b}  ({N_FOLDS}-fold CV{repeat_msg}, Q_SAMPLES={Q_SAMPLES})"
+    )
     print(f"{'='*60}")
 
     # Load all data at both resolutions (same images, same order)
     X_4, y = load_plankton_binary_all(class_a, class_b, img_size=(4, 4))
     X_28, _ = load_plankton_binary_all(class_a, class_b, img_size=(28, 28))
 
-    kfold = get_kfold_splitter(n_folds=N_FOLDS)
     fold_results = []
 
-    for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_4, y)):
-        res = run_single_fold(X_4, y, X_28, train_idx, test_idx, fold_id)
-        res['class_a'] = class_a
-        res['class_b'] = class_b
+    for repeat_id in range(N_REPEATS):
+        kfold = get_kfold_splitter(n_folds=N_FOLDS, random_state=BASE_SEED + repeat_id)
+        for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_4, y)):
+            res = run_single_fold(X_4, y, X_28, train_idx, test_idx, fold_id, repeat_id)
+            res['class_a'] = class_a
+            res['class_b'] = class_b
+            res['repeat'] = repeat_id
 
-        # Save confusion matrices
-        cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices',
-                              f'{class_a}_vs_{class_b}')
-        for model_key in ['cnn', 'fair', 'qnn']:
-            cm = res.pop(f'{model_key}_cm')
-            save_confusion_matrix(cm, os.path.join(cm_dir, f'{model_key}_fold{fold_id}.csv'))
+            # Save confusion matrices
+            cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices',
+                                  f'{class_a}_vs_{class_b}')
+            for model_key in ['cnn', 'fair', 'qnn']:
+                cm = res.pop(f'{model_key}_cm')
+                save_confusion_matrix(
+                    cm,
+                    os.path.join(cm_dir, f'{model_key}_repeat{repeat_id}_fold{fold_id}.csv')
+                )
 
-        fold_results.append(res)
+            fold_results.append(res)
 
     # --- Aggregate ---
     df_folds = pd.DataFrame(fold_results)
@@ -450,7 +461,8 @@ def run_experiment(class_a, class_b):
 
 if __name__ == "__main__":
     print(f"Phase 4 Rigorous Experiments")
-    print(f"  N_FOLDS={N_FOLDS}  Q_SAMPLES={Q_SAMPLES}  SMOKE={IS_SMOKE}")
+    print(f"  N_FOLDS={N_FOLDS}  N_REPEATS={N_REPEATS}  BASE_SEED={BASE_SEED}")
+    print(f"  Q_SAMPLES={Q_SAMPLES}  SMOKE={IS_SMOKE}")
     print(f"  Results -> {RESULTS_DIR}/")
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -547,7 +559,8 @@ if __name__ == "__main__":
 
     # Save config for reproducibility
     config = {
-        'n_folds': N_FOLDS, 'q_samples': Q_SAMPLES, 'smoke_test': IS_SMOKE,
+        'n_folds': N_FOLDS, 'n_repeats': N_REPEATS, 'base_seed': BASE_SEED,
+        'q_samples': Q_SAMPLES, 'smoke_test': IS_SMOKE,
         'pairs': [list(p) for p in PLANKTON_PAIRS],
         'n_pairs': len(PLANKTON_PAIRS),
         'power_analysis': {

@@ -206,6 +206,7 @@ To ensure the validity of these results, Phase 4 incorporates several rigorous m
 *   **Automated Verification:** A `test_rigor.py` suite is executed during the Docker build process to verify data loading integrity, parameter counts, and quantum circuit encoding before any experiments begin.
 *   **Two-Level Statistical Testing:** Per-pair tests (exploratory, underpowered) and aggregate test across all pairs (confirmatory, powered at ~88%). See Section 6.
 *   **Parameter Alignment:** The "Fair Classical" model was specifically tuned (3 hidden units) to align its parameter count (~55) as closely as possible with the QNN (~48), providing a statistically sound comparison of model capacity.
+*   **Repeated CV (optional):** Set `N_REPEATS` (and `BASE_SEED`) to run multiple independent CV shuffles per pair to quantify variability beyond a single split.
 
 ### Running the Experiments
 
@@ -254,4 +255,3 @@ After all 25 pairs complete, `aggregate_test.json` contains the primary analysis
 *Pending aggregate test results. The expanded 25-pair design provides ~88% power to detect the pilot-observed effect size (d ≈ 0.65), compared to only ~9% power with the original 4-pair design.*
 
 Full experimental data is archived in `phase4/results/experiment_results.csv` and `phase4/results/aggregate_test.json`.
-

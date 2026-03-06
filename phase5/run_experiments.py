@@ -114,6 +114,8 @@ from experiment_utils import (
 
 K_VALUES = [2, 3, 4, 5, 8, 12, 16]
 N_FOLDS = int(os.environ.get('N_FOLDS', 5))
+N_REPEATS = int(os.environ.get('N_REPEATS', 1))
+BASE_SEED = int(os.environ.get('BASE_SEED', 42))
 EPOCHS = 20
 BATCH_SIZE = 32
 Q_SAMPLES = int(os.environ.get('Q_SAMPLES', 400))
@@ -124,6 +126,7 @@ if IS_SMOKE:
     print("!!! SMOKE TEST MODE !!!")
     K_VALUES = [2, 3]
     N_FOLDS = 2
+    N_REPEATS = 1
     Q_SAMPLES = 10
     EPOCHS = 2
 
@@ -141,14 +144,14 @@ def _early_stopping():
 # Single Fold
 # ===================================================================
 
-def run_fold(k, X_28, y, train_idx, test_idx, fold_id):
+def run_fold(k, X_28, y, train_idx, test_idx, fold_id, repeat_id):
     """Run QNN, Fair Classical, and CNN on one CV fold.
 
     The QNN and Fair Classical models receive 16 PCA features extracted
     from 28x28 images (fit on train, transform on test).  The CNN
     receives the raw 28x28 images.
     """
-    fold_seed = 42 + fold_id
+    fold_seed = BASE_SEED + repeat_id * 100 + fold_id
     set_seed(fold_seed)
 
     # --- Subsample training to Q_SAMPLES for fairness ---
@@ -172,7 +175,8 @@ def run_fold(k, X_28, y, train_idx, test_idx, fold_id):
           f"{pca_obj.explained_variance_ratio_.sum():.3f}")
 
     val_split = 0.2
-    fold_res = {'k': k, 'fold': fold_id, 'n_train': len(y_train), 'n_test': len(y_test),
+    fold_res = {'k': k, 'fold': fold_id, 'repeat': repeat_id,
+                'n_train': len(y_train), 'n_test': len(y_test),
                 'pca_variance_explained': float(pca_obj.explained_variance_ratio_.sum())}
 
     # ---- 1. QNN (16 PCA features -> 16 qubits) ----
@@ -252,7 +256,8 @@ def run_fold(k, X_28, y, train_idx, test_idx, fold_id):
 def run_k_experiment(k):
     """Run K-fold CV for a given number of categories."""
     print(f"\n{'='*60}")
-    print(f"K={k} Scaling Experiment ({N_FOLDS}-fold CV, Q_SAMPLES={Q_SAMPLES})")
+    repeat_msg = f", repeats={N_REPEATS}" if N_REPEATS > 1 else ""
+    print(f"K={k} Scaling Experiment ({N_FOLDS}-fold CV{repeat_msg}, Q_SAMPLES={Q_SAMPLES})")
     print(f"{'='*60}")
 
     categories = get_top_k_categories(k)
@@ -260,19 +265,23 @@ def run_k_experiment(k):
     # Load at 28x28 for both PCA source and CNN baseline
     X_28, y = load_plankton_k_all(categories, img_size=(28, 28))
 
-    kfold = get_kfold_splitter(n_folds=N_FOLDS)
     fold_results = []
 
-    for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_28, y)):
-        res = run_fold(k, X_28, y, train_idx, test_idx, fold_id)
+    for repeat_id in range(N_REPEATS):
+        kfold = get_kfold_splitter(n_folds=N_FOLDS, random_state=BASE_SEED + repeat_id)
+        for fold_id, (train_idx, test_idx) in enumerate(kfold.split(X_28, y)):
+            res = run_fold(k, X_28, y, train_idx, test_idx, fold_id, repeat_id)
 
-        # Save confusion matrices
-        cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices', f'k{k}')
-        for model_key in ['qnn', 'fair', 'cnn']:
-            cm = res.pop(f'{model_key}_cm')
-            save_confusion_matrix(cm, os.path.join(cm_dir, f'{model_key}_fold{fold_id}.csv'))
+            # Save confusion matrices
+            cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices', f'k{k}')
+            for model_key in ['qnn', 'fair', 'cnn']:
+                cm = res.pop(f'{model_key}_cm')
+                save_confusion_matrix(
+                    cm,
+                    os.path.join(cm_dir, f'{model_key}_repeat{repeat_id}_fold{fold_id}.csv')
+                )
 
-        fold_results.append(res)
+            fold_results.append(res)
 
     return fold_results
 
@@ -326,7 +335,8 @@ def plot_results(df_summary):
 
 if __name__ == "__main__":
     print(f"Phase 5 Rigorous K-Scaling Experiments")
-    print(f"  K_VALUES={K_VALUES}  N_FOLDS={N_FOLDS}  Q_SAMPLES={Q_SAMPLES}")
+    print(f"  K_VALUES={K_VALUES}  N_FOLDS={N_FOLDS}  N_REPEATS={N_REPEATS}")
+    print(f"  BASE_SEED={BASE_SEED}  Q_SAMPLES={Q_SAMPLES}")
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
@@ -387,7 +397,8 @@ if __name__ == "__main__":
     df_summary.to_csv(os.path.join(RESULTS_DIR, 'comprehensive_k_summary.csv'), index=False)
 
     config = {
-        'k_values': K_VALUES, 'n_folds': N_FOLDS, 'epochs': EPOCHS,
+        'k_values': K_VALUES, 'n_folds': N_FOLDS, 'n_repeats': N_REPEATS,
+        'base_seed': BASE_SEED, 'epochs': EPOCHS,
         'batch_size': BATCH_SIZE, 'q_samples': Q_SAMPLES, 'smoke_test': IS_SMOKE,
         'pca': {
             'source_resolution': '28x28',

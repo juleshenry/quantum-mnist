@@ -111,6 +111,8 @@ from experiment_utils import (
 
 K_VALUES = [2, 3, 4, 5, 8]
 N_OUTER_FOLDS = int(os.environ.get('N_FOLDS', 5))
+N_REPEATS = int(os.environ.get('N_REPEATS', 1))
+BASE_SEED = int(os.environ.get('BASE_SEED', 42))
 N_INNER_FOLDS = 3
 EPOCHS = 20
 INNER_EPOCHS = 10
@@ -132,6 +134,7 @@ if IS_SMOKE:
     print("!!! SMOKE TEST MODE !!!")
     K_VALUES = [2]
     N_OUTER_FOLDS = 2
+    N_REPEATS = 1
     N_INNER_FOLDS = 2
     Q_SAMPLES = 20
     EPOCHS = 2
@@ -144,7 +147,7 @@ if IS_SMOKE:
 # Inner Loop: Hyperparameter Tuning
 # ===================================================================
 
-def tune_hyperparameters(k, model_type, X_train_pca, y_train, fold_id):
+def tune_hyperparameters(k, model_type, X_train_pca, y_train, fold_id, repeat_id):
     """Perform Inner CV to find best hyperparameters."""
     print(f"    [Fold {fold_id}] Tuning {model_type} hyperparameters (Inner CV)...")
     
@@ -152,7 +155,11 @@ def tune_hyperparameters(k, model_type, X_train_pca, y_train, fold_id):
     keys, values = zip(*sweep_space.items())
     combinations = list(itertools.product(*values))
     
-    inner_cv = StratifiedKFold(n_splits=N_INNER_FOLDS, shuffle=True, random_state=42)
+    inner_cv = StratifiedKFold(
+        n_splits=N_INNER_FOLDS,
+        shuffle=True,
+        random_state=BASE_SEED + repeat_id * 100 + fold_id,
+    )
     
     best_avg_acc = -1
     best_params = None
@@ -197,78 +204,116 @@ def tune_hyperparameters(k, model_type, X_train_pca, y_train, fold_id):
 def run_nested_cv(k):
     """Run full nested CV for K categories."""
     print(f"\n{'='*60}")
-    print(f"K={k} NESTED CV EXPERIMENT ({N_OUTER_FOLDS}x{N_INNER_FOLDS}, Q_SAMPLES={Q_SAMPLES})")
+    repeat_msg = f", repeats={N_REPEATS}" if N_REPEATS > 1 else ""
+    print(
+        f"K={k} NESTED CV EXPERIMENT ({N_OUTER_FOLDS}x{N_INNER_FOLDS}{repeat_msg}, "
+        f"Q_SAMPLES={Q_SAMPLES})"
+    )
     print(f"{'='*60}")
 
     categories = get_top_k_categories(k)
     X_28, y = load_plankton_k_all(categories, img_size=(28, 28))
     
-    outer_cv = StratifiedKFold(n_splits=N_OUTER_FOLDS, shuffle=True, random_state=42)
     outer_results = []
+    for repeat_id in range(N_REPEATS):
+        outer_cv = StratifiedKFold(
+            n_splits=N_OUTER_FOLDS,
+            shuffle=True,
+            random_state=BASE_SEED + repeat_id,
+        )
+        for fold_id, (train_idx, test_idx) in enumerate(outer_cv.split(X_28, y)):
+            print(f"\n--- Outer Fold {fold_id} (repeat {repeat_id}) ---")
 
-    for fold_id, (train_idx, test_idx) in enumerate(outer_cv.split(X_28, y)):
-        print(f"\n--- Outer Fold {fold_id} ---")
-        
-        # 1. Subsample training data to fixed budget (Q_SAMPLES)
-        train_limit = min(len(train_idx), Q_SAMPLES)
-        if train_limit < len(train_idx):
-            ss = StratifiedShuffleSplit(n_splits=1, train_size=train_limit, random_state=42 + fold_id)
-            sub_idx, _ = next(ss.split(train_idx, y[train_idx]))
-            train_idx_limited = train_idx[sub_idx]
-        else:
-            train_idx_limited = train_idx
+            # 1. Subsample training data to fixed budget (Q_SAMPLES)
+            train_limit = min(len(train_idx), Q_SAMPLES)
+            if train_limit < len(train_idx):
+                ss = StratifiedShuffleSplit(
+                    n_splits=1,
+                    train_size=train_limit,
+                    random_state=BASE_SEED + repeat_id * 100 + fold_id,
+                )
+                sub_idx, _ = next(ss.split(train_idx, y[train_idx]))
+                train_idx_limited = train_idx[sub_idx]
+            else:
+                train_idx_limited = train_idx
 
-        X_tr_28, y_tr = X_28[train_idx_limited], y[train_idx_limited]
-        X_te_28, y_te = X_28[test_idx], y[test_idx]
+            X_tr_28, y_tr = X_28[train_idx_limited], y[train_idx_limited]
+            X_te_28, y_te = X_28[test_idx], y[test_idx]
 
-        # 2. PCA: Fit on Outer Train, Transform both
-        X_tr_pca, X_te_pca, _pca = apply_pca_reduction(X_tr_28, X_te_28, n_components=16)
+            # 2. PCA: Fit on Outer Train, Transform both
+            X_tr_pca, X_te_pca, _pca = apply_pca_reduction(X_tr_28, X_te_28, n_components=16)
 
-        # 3. Inner Loop: Tune Hyperparameters
-        best_q_params = tune_hyperparameters(k, 'quantum', X_tr_pca, y_tr, fold_id)
-        best_c_params = tune_hyperparameters(k, 'classical', X_tr_pca, y_tr, fold_id)
+            # 3. Inner Loop: Tune Hyperparameters
+            best_q_params = tune_hyperparameters(k, 'quantum', X_tr_pca, y_tr, fold_id, repeat_id)
+            best_c_params = tune_hyperparameters(k, 'classical', X_tr_pca, y_tr, fold_id, repeat_id)
 
-        # 4. Train with best params on full outer train set
-        set_seed(42 + fold_id)
-        fold_res = {'k': k, 'fold': fold_id, 'q_params': str(best_q_params), 'c_params': str(best_c_params)}
+            # 4. Train with best params on full outer train set
+            set_seed(BASE_SEED + repeat_id * 100 + fold_id)
+            fold_res = {
+                'k': k,
+                'fold': fold_id,
+                'repeat': repeat_id,
+                'q_params': str(best_q_params),
+                'c_params': str(best_c_params),
+            }
 
-        # --- Quantum ---
-        x_tr_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_tr_pca])
-        x_te_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_te_pca])
-        
-        q_model = create_qnn_multiclass_model(k, **best_q_params)
-        start = time.time()
-        q_model.fit(x_tr_circ, y_tr, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0, 
-                    validation_split=0.1, callbacks=[tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)])
-        fold_res['q_time'] = time.time() - start
-        q_pred = np.argmax(q_model.predict(x_te_circ, verbose=0), axis=1)
-        q_metrics = compute_metrics(y_te, q_pred, k=k)
-        fold_res['q_acc'] = q_metrics['accuracy']
-        fold_res['q_f1'] = q_metrics['macro_f1']
+            # --- Quantum ---
+            x_tr_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_tr_pca])
+            x_te_circ = tfq.convert_to_tensor([convert_to_circuit(x) for x in X_te_pca])
 
-        # --- Classical ---
-        c_model = create_fair_classical_k_model(k, input_shape=(16,), **best_c_params)
-        start = time.time()
-        c_model.fit(X_tr_pca, y_tr, epochs=EPOCHS, batch_size=BATCH_SIZE, verbose=0,
-                    validation_split=0.1, callbacks=[tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)])
-        fold_res['c_time'] = time.time() - start
-        c_pred = np.argmax(c_model.predict(X_te_pca, verbose=0), axis=1)
-        c_metrics = compute_metrics(y_te, c_pred, k=k)
-        fold_res['c_acc'] = c_metrics['accuracy']
-        fold_res['c_f1'] = c_metrics['macro_f1']
-        
-        # Baselines
-        fold_res['majority_baseline'] = majority_baseline(y_te)
-        fold_res['random_baseline'] = random_baseline(y_te, k=k)['analytical']
+            q_model = create_qnn_multiclass_model(k, **best_q_params)
+            start = time.time()
+            q_model.fit(
+                x_tr_circ,
+                y_tr,
+                epochs=EPOCHS,
+                batch_size=BATCH_SIZE,
+                verbose=0,
+                validation_split=0.1,
+                callbacks=[tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)],
+            )
+            fold_res['q_time'] = time.time() - start
+            q_pred = np.argmax(q_model.predict(x_te_circ, verbose=0), axis=1)
+            q_metrics = compute_metrics(y_te, q_pred, k=k)
+            fold_res['q_acc'] = q_metrics['accuracy']
+            fold_res['q_f1'] = q_metrics['macro_f1']
 
-        print(f"  Fold {fold_id} Final: Q_acc={fold_res['q_acc']:.3f}, C_acc={fold_res['c_acc']:.3f}")
-        
-        # Save confusion matrices for each fold
-        cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices', f'k{k}')
-        save_confusion_matrix(q_metrics['confusion_matrix'], os.path.join(cm_dir, f'q_fold{fold_id}.csv'))
-        save_confusion_matrix(c_metrics['confusion_matrix'], os.path.join(cm_dir, f'c_fold{fold_id}.csv'))
+            # --- Classical ---
+            c_model = create_fair_classical_k_model(k, input_shape=(16,), **best_c_params)
+            start = time.time()
+            c_model.fit(
+                X_tr_pca,
+                y_tr,
+                epochs=EPOCHS,
+                batch_size=BATCH_SIZE,
+                verbose=0,
+                validation_split=0.1,
+                callbacks=[tf.keras.callbacks.EarlyStopping(patience=3, restore_best_weights=True)],
+            )
+            fold_res['c_time'] = time.time() - start
+            c_pred = np.argmax(c_model.predict(X_te_pca, verbose=0), axis=1)
+            c_metrics = compute_metrics(y_te, c_pred, k=k)
+            fold_res['c_acc'] = c_metrics['accuracy']
+            fold_res['c_f1'] = c_metrics['macro_f1']
 
-        outer_results.append(fold_res)
+            # Baselines
+            fold_res['majority_baseline'] = majority_baseline(y_te)
+            fold_res['random_baseline'] = random_baseline(y_te, k=k)['analytical']
+
+            print(f"  Fold {fold_id} Final: Q_acc={fold_res['q_acc']:.3f}, C_acc={fold_res['c_acc']:.3f}")
+
+            # Save confusion matrices for each fold
+            cm_dir = os.path.join(RESULTS_DIR, 'confusion_matrices', f'k{k}')
+            save_confusion_matrix(
+                q_metrics['confusion_matrix'],
+                os.path.join(cm_dir, f'q_repeat{repeat_id}_fold{fold_id}.csv')
+            )
+            save_confusion_matrix(
+                c_metrics['confusion_matrix'],
+                os.path.join(cm_dir, f'c_repeat{repeat_id}_fold{fold_id}.csv')
+            )
+
+            outer_results.append(fold_res)
 
     return outer_results
 
@@ -360,4 +405,9 @@ def _plot_results(df_summary):
     plt.savefig(os.path.join(RESULTS_DIR, 'rigorous_scientific_comparison.png'))
 
 if __name__ == "__main__":
+    print(
+        f"Phase 5 Scientific Comparison (Nested CV)\n"
+        f"  K_VALUES={K_VALUES}  N_FOLDS={N_OUTER_FOLDS}  N_REPEATS={N_REPEATS}\n"
+        f"  BASE_SEED={BASE_SEED}  Q_SAMPLES={Q_SAMPLES}  SMOKE={IS_SMOKE}"
+    )
     perform_rigorous_comparison()

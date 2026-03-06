@@ -1,5 +1,5 @@
-"""
-                               ★■╬▂▂▂▂▂◓□                                                           
+r"""
+                                ★■╬▂▂▂▂▂◓□
                               ☆◕◓◊◊▇▅◕⬤▽■●⬤                                                         
                                    ▽■◑▅▆◑★■╬◒.                                                      
                                        ⬤▂▄◔▽▽▅◒◕★                                                   
@@ -84,7 +84,9 @@ from sklearn.model_selection import StratifiedKFold
 
 # Explicit module loading to avoid PYTHONPATH collision with phase4/data_loader
 try:
-    from phase2.plankton_ingress import load_images_for_class, get_plankton_names
+    from phase2.plankton_ingress import (
+        load_images_for_class, get_plankton_names, pca_transform,
+    )
 except ImportError:
     pass
 
@@ -104,17 +106,15 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-SEED = 42
+SEED = 420
 OUTER_FOLDS = 5          # outer CV for unbiased performance estimate
 INNER_FOLDS = 3          # inner CV for hyperparameter selection
 EPOCHS = 5               # epochs per training run (budget-constrained sweep)
 LIMIT_PER_CLASS = 100
-QUBIT_DIMS = (4, 4)
 RESULTS_DIR = os.path.join(os.path.dirname(__file__), "results")
 
 # Hyperparameter search space
 HYPERPARAMS = {
-    'encoding': ['basis', 'angle'],
     'n_layers': [1, 2],
     'learning_rate': [0.01, 0.001],
     'batch_size': [16, 32],
@@ -136,20 +136,19 @@ class CircuitLayerBuilder():
             circuit.append(gate(qubit, self.readout)**symbol)
 
 
-def convert_to_circuit(image, encoding='angle'):
-    """Encode a 4x4 image into a quantum circuit."""
-    values = np.ndarray.flatten(image)
+def convert_to_circuit(pca_features):
+    """Encode PCA-reduced features into quantum circuit using Ry angle encoding.
+
+    Parameters
+    ----------
+    pca_features : array-like of shape (16,)
+        PCA components scaled to [0, 1] via MinMaxScaler.
+    """
+    values = np.ndarray.flatten(pca_features)
     qubits = cirq.GridQubit.rect(4, 4)
     circuit = cirq.Circuit()
-
-    if encoding == 'basis':
-        for i, value in enumerate(values):
-            if value > 0.5:
-                circuit.append(cirq.X(qubits[i]))
-    elif encoding == 'angle':
-        for i, value in enumerate(values):
-            circuit.append(cirq.ry(np.pi * value)(qubits[i]))
-
+    for i, value in enumerate(values):
+        circuit.append(cirq.ry(np.pi * value)(qubits[i]))
     return circuit
 
 
@@ -159,16 +158,12 @@ def create_quantum_model(n_layers=1):
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
 
-    circuit.append(cirq.X(readout))
-    circuit.append(cirq.H(readout))
-
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
 
     for layer_idx in range(n_layers):
         builder.add_layer(circuit, cirq.XX, f"xx{layer_idx}")
         builder.add_layer(circuit, cirq.ZZ, f"zz{layer_idx}")
 
-    circuit.append(cirq.H(readout))
     return circuit, cirq.Z(readout)
 
 
@@ -190,31 +185,54 @@ def setup_sweep():
 # Core: Nested Cross-Validation
 # ---------------------------------------------------------------------------
 
-def _train_and_evaluate(tfq, config, x_train, y_train, x_test, y_test, seed):
-    """Train a single model and return held-out accuracy."""
+def _train_and_evaluate(tfq, config, x_train_pca, y_train, x_test_pca, y_test,
+                        seed, model_cache):
+    """Train a single model and return held-out accuracy.
+
+    Parameters
+    ----------
+    x_train_pca, x_test_pca : ndarray of shape (N, 16)
+        PCA-reduced features scaled to [0, 1].
+    model_cache : dict
+        Maps n_layers -> (model, initial_weights) to avoid rebuilding
+        the tf.keras model (and triggering tf.function retracing).
+    """
     set_seed(seed)
 
     x_train_tfq = tfq.convert_to_tensor(
-        [convert_to_circuit(x, encoding=config['encoding']) for x in x_train]
+        [convert_to_circuit(x) for x in x_train_pca]
     )
     x_test_tfq = tfq.convert_to_tensor(
-        [convert_to_circuit(x, encoding=config['encoding']) for x in x_test]
+        [convert_to_circuit(x) for x in x_test_pca]
     )
 
-    model_circuit, model_readout = create_quantum_model(
-        n_layers=config['n_layers']
-    )
-    model = tf.keras.Sequential([
-        tf.keras.layers.Input(shape=(), dtype=tf.string),
-        tfq.layers.PQC(model_circuit, model_readout),
-    ])
-    model.compile(
-        loss=tf.keras.losses.Hinge(),
-        optimizer=tf.keras.optimizers.Adam(
-            learning_rate=config['learning_rate']
-        ),
-        metrics=[hinge_accuracy],
-    )
+    n_layers = config['n_layers']
+    if n_layers not in model_cache:
+        model_circuit, model_readout = create_quantum_model(n_layers=n_layers)
+        model = tf.keras.Sequential([
+            tf.keras.layers.Input(shape=(), dtype=tf.string),
+            tfq.layers.PQC(model_circuit, model_readout),
+        ])
+        model.compile(
+            loss=tf.keras.losses.Hinge(),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=config['learning_rate']),
+            metrics=[hinge_accuracy],
+        )
+        model_cache[n_layers] = (model, model.get_weights())
+
+    model, initial_weights = model_cache[n_layers]
+
+    # Reset weights + optimizer state for a clean training run.
+    # We must NOT replace the optimizer object — assigning a new Adam()
+    # would create fresh tf.Variables on the next model.fit(), which
+    # crashes inside tf.function ("only supports singleton tf.Variables
+    # created on the first call").  Instead, reset state in-place.
+    model.set_weights(initial_weights)
+    optimizer = model.optimizer
+    optimizer.learning_rate.assign(config['learning_rate'])
+    for var in optimizer.variables():
+        var.assign(tf.zeros_like(var))
+
     model.fit(
         x_train_tfq, 2.0 * y_train - 1.0,
         batch_size=config['batch_size'],
@@ -261,6 +279,9 @@ def run_nested_cv(class_a, class_b):
 
     outer_fold_results = []
 
+    # Cache models by n_layers to avoid tf.function retracing
+    model_cache = {}
+
     for outer_idx, (outer_train_idx, outer_test_idx) in enumerate(
         outer_cv.split(X, y)
     ):
@@ -268,6 +289,11 @@ def run_nested_cv(class_a, class_b):
 
         X_outer_train, X_outer_test = X[outer_train_idx], X[outer_test_idx]
         y_outer_train, y_outer_test = y[outer_train_idx], y[outer_test_idx]
+
+        # PCA on outer fold: fit on outer-train only (no leakage)
+        X_outer_train_pca, X_outer_test_pca = pca_transform(
+            X_outer_train, X_outer_test, seed=SEED + outer_idx
+        )
 
         # --- Inner loop: select best config on outer-training data ---
         inner_cv = StratifiedKFold(
@@ -278,11 +304,11 @@ def run_nested_cv(class_a, class_b):
         config_scores = {i: [] for i in range(len(combinations))}
 
         for inner_idx, (inner_train_idx, inner_val_idx) in enumerate(
-            inner_cv.split(X_outer_train, y_outer_train)
+            inner_cv.split(X_outer_train_pca, y_outer_train)
         ):
-            X_inner_train = X_outer_train[inner_train_idx]
+            X_inner_train = X_outer_train_pca[inner_train_idx]
             y_inner_train = y_outer_train[inner_train_idx]
-            X_inner_val = X_outer_train[inner_val_idx]
+            X_inner_val = X_outer_train_pca[inner_val_idx]
             y_inner_val = y_outer_train[inner_val_idx]
 
             for cfg_idx, config in enumerate(combinations):
@@ -292,6 +318,7 @@ def run_nested_cv(class_a, class_b):
                     X_inner_train, y_inner_train,
                     X_inner_val, y_inner_val,
                     seed=inner_seed,
+                    model_cache=model_cache,
                 )
                 config_scores[cfg_idx].append(acc)
                 print(
@@ -315,9 +342,10 @@ def run_nested_cv(class_a, class_b):
         outer_seed = SEED + outer_idx
         outer_acc = _train_and_evaluate(
             tfq, best_config,
-            X_outer_train, y_outer_train,
-            X_outer_test, y_outer_test,
+            X_outer_train_pca, y_outer_train,
+            X_outer_test_pca, y_outer_test,
             seed=outer_seed,
+            model_cache=model_cache,
         )
         print(f"  Outer test accuracy: {outer_acc:.4f}")
 
