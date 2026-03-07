@@ -183,15 +183,15 @@ class TestModelParameterCounts(unittest.TestCase):
                          f"Fair classical has {model.count_params()} params, expected 55")
 
     def test_qnn_params(self):
-        """QNN has 48 trainable parameters (3 gate types x 16 qubits)."""
+        """QNN has 160 trainable parameters (10 param layers x 16 qubits)."""
         model = create_qnn_model()
         # Build model with a dummy input to initialize weights
         import tensorflow_quantum as tfq
         import cirq
         dummy = tfq.convert_to_tensor([convert_to_circuit(np.zeros((4, 4)))])
         model.predict(dummy, verbose=0)
-        self.assertEqual(model.count_params(), 48,
-                         f"QNN has {model.count_params()} params, expected 48")
+        self.assertEqual(model.count_params(), 160,
+                         f"QNN has {model.count_params()} params, expected 160")
 
 
 class TestQuantumCircuit(unittest.TestCase):

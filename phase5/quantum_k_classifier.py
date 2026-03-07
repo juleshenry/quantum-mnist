@@ -76,6 +76,11 @@ import cirq
 import sympy
 import numpy as np
 
+def add_rotation_layer(circuit, qubits, rot_fn, prefix, layer_idx):
+    for i, qubit in enumerate(qubits):
+        symbol = sympy.Symbol(f"{prefix}-{layer_idx}-{i}")
+        circuit.append(rot_fn(symbol)(qubit))
+
 def create_k_category_quantum_model(k, n_layers=1):
     # Total 17 qubits: 16 data + 1 readout
     data_qubits = cirq.GridQubit.rect(4, 4)
@@ -88,6 +93,9 @@ def create_k_category_quantum_model(k, n_layers=1):
         circuit.append(cirq.CZ(data_qubits[i], data_qubits[i+1]))
     circuit.append(cirq.CZ(data_qubits[-1], readout))
     
+    circuit.append(cirq.X(readout))
+    circuit.append(cirq.H(readout))
+
     # Parametric layers
     for l in range(n_layers):
         for i, q in enumerate(data_qubits):
@@ -97,6 +105,11 @@ def create_k_category_quantum_model(k, n_layers=1):
             # ZZ gates
             symbol_zz = sympy.Symbol(f'zz-{l}-{i}')
             circuit.append(cirq.ZZ(q, readout)**symbol_zz)
+
+        add_rotation_layer(circuit, data_qubits, cirq.rx, "rx", l)
+        add_rotation_layer(circuit, data_qubits, cirq.ry, "ry", l)
+
+    circuit.append(cirq.H(readout))
 
     # Observables: We need k observables for k categories
     # We use the readout qubit (index 0) and data qubits (indices 1 to k-1)

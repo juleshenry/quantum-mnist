@@ -1,0 +1,92 @@
+{
+  "class_a": "aphanizomenon",
+  "class_b": "bosmina",
+  "seed": 420,
+  "outer_folds": 5,
+  "inner_folds": 3,
+  "epochs_per_run": 5,
+  "limit_per_class": 100,
+  "n_configs": 8,
+  "hyperparams": {
+    "n_layers": [
+      1,
+      2
+    ],
+    "learning_rate": [
+      0.01,
+      0.001
+    ],
+    "batch_size": [
+      16,
+      32
+    ]
+  },
+  "per_fold": [
+    {
+      "outer_fold": 1,
+      "best_config": {
+        "n_layers": 2,
+        "learning_rate": 0.01,
+        "batch_size": 32
+      },
+      "best_inner_mean_acc": 0.6927083333333334,
+      "outer_test_accuracy": 0.734375
+    },
+    {
+      "outer_fold": 2,
+      "best_config": {
+        "n_layers": 2,
+        "learning_rate": 0.001,
+        "batch_size": 32
+      },
+      "best_inner_mean_acc": 0.6666666666666666,
+      "outer_test_accuracy": 0.6875
+    },
+    {
+      "outer_fold": 3,
+      "best_config": {
+        "n_layers": 2,
+        "learning_rate": 0.001,
+        "batch_size": 32
+      },
+      "best_inner_mean_acc": 0.6666666666666666,
+      "outer_test_accuracy": 0.609375
+    },
+    {
+      "outer_fold": 4,
+      "best_config": {
+        "n_layers": 2,
+        "learning_rate": 0.01,
+        "batch_size": 16
+      },
+      "best_inner_mean_acc": 0.65625,
+      "outer_test_accuracy": 0.703125
+    },
+    {
+      "outer_fold": 5,
+      "best_config": {
+        "n_layers": 2,
+        "learning_rate": 0.01,
+        "batch_size": 32
+      },
+      "best_inner_mean_acc": 0.6197916666666666,
+      "outer_test_accuracy": 0.703125
+    }
+  ],
+  "outer_test_accuracies": [
+    0.734375,
+    0.6875,
+    0.609375,
+    0.703125,
+    0.703125
+  ],
+  "mean_accuracy": 0.6875,
+  "std_accuracy": 0.04192627457812106,
+  "bootstrap_ci": {
+    "mean": 0.6875,
+    "ci_lower": 0.646875,
+    "ci_upper": 0.71875,
+    "ci_level": 0.95,
+    "n_bootstrap": 10000
+  }
+}

@@ -205,13 +205,16 @@ class CircuitLayerBuilder():
             circuit.append(gate(qubit, self.readout)**symbol)
 
 
+def add_rotation_layer(circuit, qubits, rot_fn, prefix):
+    for i, qubit in enumerate(qubits):
+        symbol = sympy.Symbol(prefix + '-' + str(i))
+        circuit.append(rot_fn(symbol)(qubit))
+
+
 def create_quantum_model():
     data_qubits = cirq.GridQubit.rect(4, 4)
     readout = cirq.GridQubit(-1, -1)
     circuit = cirq.Circuit()
-
-    for i in range(len(data_qubits) - 1):
-        circuit.append(cirq.CZ(data_qubits[i], data_qubits[i + 1]))
 
     circuit.append(cirq.X(readout))
     circuit.append(cirq.H(readout))
@@ -219,7 +222,16 @@ def create_quantum_model():
     builder = CircuitLayerBuilder(data_qubits=data_qubits, readout=readout)
     builder.add_layer(circuit, cirq.XX, "xx1")
     builder.add_layer(circuit, cirq.ZZ, "zz1")
-    builder.add_layer(circuit, cirq.YY, "yy1")
+    add_rotation_layer(circuit, data_qubits, cirq.rx, "rx1")
+    add_rotation_layer(circuit, data_qubits, cirq.ry, "ry1")
+
+    builder.add_layer(circuit, cirq.XX, "xx2")
+    builder.add_layer(circuit, cirq.ZZ, "zz2")
+    add_rotation_layer(circuit, data_qubits, cirq.rx, "rx2")
+    add_rotation_layer(circuit, data_qubits, cirq.ry, "ry2")
+
+    builder.add_layer(circuit, cirq.XX, "xx3")
+    builder.add_layer(circuit, cirq.ZZ, "zz3")
     circuit.append(cirq.H(readout))
 
     return circuit, cirq.Z(readout)

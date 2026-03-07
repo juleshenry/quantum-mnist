@@ -1,4 +1,4 @@
-"""
+r"""
                                ★■╬▂▂▂▂▂◓□                                                           
                               ☆◕◓◊◊▇▅◕⬤▽■●⬤                                                         
                                    ▽■◑▅▆◑★■╬◒.                                                      
@@ -106,14 +106,21 @@ def df_to_markdown(df):
     return "\n".join([header, sep] + rows)
 
 def publish_phase4():
-    csv_path = 'phase4/results/experiment_results.csv'
-    if not os.path.exists(csv_path):
+    csv_candidates = [
+        'phase4/results/experiment_summary.csv',
+        'phase4/results/experiment_results.csv',
+    ]
+    csv_path = next((path for path in csv_candidates if os.path.exists(path)), None)
+    if not csv_path:
         print("No Phase 4 results found.")
         return
     
     df = pd.read_csv(csv_path)
     # Mapping columns to readable names
-    cols = ['pair', 'qnn_acc_mean', 'fair_acc_mean', 'p_value', 'significant']
+    if 'qnn_vs_fair_pvalue' in df.columns:
+        cols = ['pair', 'qnn_acc_mean', 'fair_acc_mean', 'qnn_vs_fair_pvalue', 'significant_05']
+    else:
+        cols = ['pair', 'qnn_acc_mean', 'fair_acc_mean', 'p_value', 'significant']
     df_sub = df[cols].copy()
     df_sub.columns = ['Pair', 'QNN Accuracy', 'Fair Classical', 'P-Value', 'Significant?']
     

@@ -1,0 +1,117 @@
+{
+  "n_folds": 5,
+  "n_repeats": 1,
+  "base_seed": 42,
+  "q_samples": 200,
+  "smoke_test": false,
+  "pairs": [
+    [
+      "aphanizomenon",
+      "leptodora"
+    ],
+    [
+      "asplanchna",
+      "uroglena"
+    ],
+    [
+      "asterionella",
+      "diaphanosoma"
+    ],
+    [
+      "asterionella",
+      "rotifers"
+    ],
+    [
+      "asterionella",
+      "uroglena"
+    ],
+    [
+      "bosmina",
+      "brachionus"
+    ],
+    [
+      "bosmina",
+      "polyarthra"
+    ],
+    [
+      "brachionus",
+      "synchaeta"
+    ],
+    [
+      "ceratium",
+      "cyclops"
+    ],
+    [
+      "conochilus",
+      "daphnia"
+    ],
+    [
+      "conochilus",
+      "fragilaria"
+    ],
+    [
+      "conochilus",
+      "keratella_cochlearis"
+    ],
+    [
+      "conochilus",
+      "trichocerca"
+    ],
+    [
+      "cyclops",
+      "kellicottia"
+    ],
+    [
+      "daphnia",
+      "kellicottia"
+    ],
+    [
+      "daphnia",
+      "rotifers"
+    ],
+    [
+      "dinobryon",
+      "nauplius"
+    ],
+    [
+      "eudiaptomus",
+      "kellicottia"
+    ],
+    [
+      "eudiaptomus",
+      "uroglena"
+    ],
+    [
+      "fragilaria",
+      "keratella_cochlearis"
+    ],
+    [
+      "keratella_quadrata",
+      "paradileptus"
+    ],
+    [
+      "keratella_quadrata",
+      "rotifers"
+    ],
+    [
+      "keratella_quadrata",
+      "uroglena"
+    ],
+    [
+      "leptodora",
+      "paradileptus"
+    ],
+    [
+      "maybe_cyano",
+      "nauplius"
+    ]
+  ],
+  "n_pairs": 25,
+  "power_analysis": {
+    "aggregate_effect_size_pilot": 0.65,
+    "aggregate_power_at_25_pairs": 0.88,
+    "min_pairs_for_80pct_power": 21,
+    "per_pair_wilcoxon_min_p_at_5folds": 0.0625,
+    "note": "Per-pair tests use paired t-test fallback (n<6). Aggregate test across pairs is the primary analysis."
+  }
+}

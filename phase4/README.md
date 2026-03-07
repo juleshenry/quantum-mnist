@@ -234,7 +234,31 @@ The Phase 4 evaluation compares quantum and classical models across 25 plankton 
 <!-- P4_RESULTS_START -->
 | Pair | QNN Accuracy | Fair Classical | P-Value | Significant? |
 | --- | --- | --- | --- | --- |
-| *Results will be populated after running experiments on 25 pairs* | | | | |
+| aphanizomenon_vs_leptodora | 57.2% | 55.1% | 0.5117 | False |
+| asplanchna_vs_uroglena | 73.7% | 61.2% | 0.0691 | False |
+| asterionella_vs_diaphanosoma | 63.8% | 55.3% | 0.0057 | False |
+| asterionella_vs_rotifers | 58.9% | 55.4% | 0.2831 | False |
+| asterionella_vs_uroglena | 86.0% | 59.4% | 0.0133 | False |
+| bosmina_vs_brachionus | 75.9% | 62.2% | 0.0781 | False |
+| bosmina_vs_polyarthra | 51.2% | 46.9% | 0.2056 | False |
+| brachionus_vs_synchaeta | 53.0% | 53.0% | 0.9978 | False |
+| ceratium_vs_cyclops | 49.5% | 53.6% | 0.1645 | False |
+| conochilus_vs_daphnia | 73.3% | 70.1% | 0.2517 | False |
+| conochilus_vs_fragilaria | 65.1% | 53.5% | 0.0778 | False |
+| conochilus_vs_keratella_cochlearis | 70.2% | 68.9% | 0.3739 | False |
+| conochilus_vs_trichocerca | 53.6% | 50.3% | 0.4479 | False |
+| cyclops_vs_kellicottia | 62.5% | 61.7% | 0.4213 | False |
+| daphnia_vs_kellicottia | 58.1% | 56.2% | 0.3285 | False |
+| daphnia_vs_rotifers | 81.6% | 61.1% | 0.0173 | False |
+| dinobryon_vs_nauplius | 68.8% | 61.1% | 0.3739 | False |
+| eudiaptomus_vs_kellicottia | 51.6% | 53.3% | 0.1638 | False |
+| eudiaptomus_vs_uroglena | 95.5% | 66.6% | 0.0002 | True |
+| fragilaria_vs_keratella_cochlearis | 73.2% | 64.8% | 0.3739 | False |
+| keratella_quadrata_vs_paradileptus | 60.9% | 52.8% | 0.0044 | False |
+| keratella_quadrata_vs_rotifers | 63.9% | 63.1% | 0.3739 | False |
+| keratella_quadrata_vs_uroglena | 72.0% | 69.6% | 0.3576 | False |
+| leptodora_vs_paradileptus | 67.6% | 73.2% | 0.1493 | False |
+| maybe_cyano_vs_nauplius | 53.1% | 56.3% | 0.3471 | False |
 <!-- P4_RESULTS_END -->
 
 ### Aggregate Test

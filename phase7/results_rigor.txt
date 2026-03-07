@@ -1,14 +1,14 @@
 Phase 7: Expressibility & Entanglement Analysis
-Architecture: PQC from Phase 5 (Subsystem of 4 qubits)
+Architecture: Phase 5 production PQC (17 qubits: 16 data in 4x4 GridQubit grid + 1 readout at (-1,-1))
+Seed: 42
+Fidelity samples: 500, Entanglement samples: 50
 --------------------------------------------------
-Layers: 1, Expressibility: 0.8363, Entanglement: 0.5690
-Layers: 2, Expressibility: 0.4693, Entanglement: 0.7471
-Layers: 3, Expressibility: 0.3741, Entanglement: 0.7944
-Layers: 4, Expressibility: 0.4042, Entanglement: 0.8256
-Layers: 5, Expressibility: 0.4289, Entanglement: 0.8406
+Layers: 1, Expr: 0.0000 95%CI[0.0000,0.0000], Ent: 0.5306 +/- 0.0802 95%CI[0.5081,0.5525]
+Layers: 2, Expr: 0.0000 95%CI[0.0000,0.0000], Ent: 0.7504 +/- 0.0611 95%CI[0.7329,0.7673]
+Layers: 3, Expr: 0.0000 95%CI[0.0000,0.0000], Ent: 0.8686 +/- 0.0457 95%CI[0.8552,0.8806]
 
-Analysis:
-As the number of layers increases, the Expressibility value (KL divergence) should decrease,
-indicating that the PQC is approaching the Haar distribution and can explore the Hilbert space more uniformly.
-Similarly, the Meyer-Wallach entanglement measure should increase, showing that the circuit is capable
-of generating more global entanglement.
+As the number of layers increases, the Expressibility value (KL divergence from Haar) should decrease, indicating the PQC explores the Hilbert space more uniformly.  The Meyer-Wallach entanglement measure should increase, showing the circuit generates more global entanglement.  These metrics are computed on the exact 17-qubit architecture deployed in Phase 5 experiments.
+
+Limitations:
+  - Noiseless statevector simulation — real hardware noise (decoherence, gate errors) is not modelled.
+  - Sample counts reduced for computational feasibility under AMD64 emulation on ARM64.

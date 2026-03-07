@@ -122,10 +122,31 @@ The model now consistently exceeds the 60% threshold. Below are the verified acc
 <!-- P4_RESULTS_START -->
 | Pair | QNN Accuracy | Fair Classical | P-Value | Significant? |
 | --- | --- | --- | --- | --- |
-| dinobryon_vs_nauplius | 68.5% | 72.7% | 0.0032 | True |
-| maybe_cyano_vs_diaphanosoma | 59.9% | 54.5% | 0.4553 | False |
-| asterionella_vs_uroglena | 87.0% | 59.0% | 0.0202 | True |
-| cyclops_vs_ceratium | 55.5% | 48.9% | 0.0447 | True |
+| aphanizomenon_vs_leptodora | 57.2% | 55.1% | 0.5117 | False |
+| asplanchna_vs_uroglena | 73.7% | 61.2% | 0.0691 | False |
+| asterionella_vs_diaphanosoma | 63.8% | 55.3% | 0.0057 | False |
+| asterionella_vs_rotifers | 58.9% | 55.4% | 0.2831 | False |
+| asterionella_vs_uroglena | 86.0% | 59.4% | 0.0133 | False |
+| bosmina_vs_brachionus | 75.9% | 62.2% | 0.0781 | False |
+| bosmina_vs_polyarthra | 51.2% | 46.9% | 0.2056 | False |
+| brachionus_vs_synchaeta | 53.0% | 53.0% | 0.9978 | False |
+| ceratium_vs_cyclops | 49.5% | 53.6% | 0.1645 | False |
+| conochilus_vs_daphnia | 73.3% | 70.1% | 0.2517 | False |
+| conochilus_vs_fragilaria | 65.1% | 53.5% | 0.0778 | False |
+| conochilus_vs_keratella_cochlearis | 70.2% | 68.9% | 0.3739 | False |
+| conochilus_vs_trichocerca | 53.6% | 50.3% | 0.4479 | False |
+| cyclops_vs_kellicottia | 62.5% | 61.7% | 0.4213 | False |
+| daphnia_vs_kellicottia | 58.1% | 56.2% | 0.3285 | False |
+| daphnia_vs_rotifers | 81.6% | 61.1% | 0.0173 | False |
+| dinobryon_vs_nauplius | 68.8% | 61.1% | 0.3739 | False |
+| eudiaptomus_vs_kellicottia | 51.6% | 53.3% | 0.1638 | False |
+| eudiaptomus_vs_uroglena | 95.5% | 66.6% | 0.0002 | True |
+| fragilaria_vs_keratella_cochlearis | 73.2% | 64.8% | 0.3739 | False |
+| keratella_quadrata_vs_paradileptus | 60.9% | 52.8% | 0.0044 | False |
+| keratella_quadrata_vs_rotifers | 63.9% | 63.1% | 0.3739 | False |
+| keratella_quadrata_vs_uroglena | 72.0% | 69.6% | 0.3576 | False |
+| leptodora_vs_paradileptus | 67.6% | 73.2% | 0.1493 | False |
+| maybe_cyano_vs_nauplius | 53.1% | 56.3% | 0.3471 | False |
 <!-- P4_RESULTS_END -->
 
 ### Swiss Paper Benchmark
@@ -140,15 +161,15 @@ Done. We have scaled the quantum algorithm to handle multi-class classification 
 We evaluate the QNN's ability to handle increasing classification complexity, benchmarked against parameter-matched classical nets ("Fair" MLP) and standard CNNs.
 
 <!-- P5_RESULTS_START -->
-| K (Categories) | QNN (4x4 PCA) | Fair Classical (4x4) |
+| K (Categories) | QNN (PCA 16) | Fair Classical (PCA 16) |
 | --- | --- | --- |
-| 2 | 73.1% | 68.7% |
-| 3 | 53.7% | 53.6% |
-| 4 | 43.8% | 45.6% |
-| 5 | 40.4% | 39.9% |
-| 8 | 32.5% | 30.8% |
-| 12 | 25.4% | 24.5% |
-| 16 | 21.2% | 21.6% |
+| 2 | 71.0% | 68.8% |
+| 3 | 54.5% | 55.6% |
+| 4 | 46.1% | 47.8% |
+| 5 | 37.8% | 40.5% |
+| 8 | 30.2% | 31.8% |
+| 12 | 23.4% | 25.7% |
+| 16 | 18.3% | 21.7% |
 <!-- P5_RESULTS_END -->
 
 **Detailed Documentation:** [Phase 5 Scaling Study](phase5/README.md)

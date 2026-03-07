@@ -12,11 +12,11 @@ This phase extends the previous work to a multi-class ($k$-category) setting, en
 ### 2. Quantum Architecture (4x4 Grid)
 - **Architecture:** 16 data qubits arranged in a 4x4 grid, plus 1 auxiliary readout qubit (**Total 17 qubits**).
 - **Encoding:** Angle encoding ($R_y(\pi \cdot x)$ rotations) of the 16 PCA features.
-- **Circuit:** 1-2 layers of entangling CZ gates followed by parametric XX and ZZ gates between each data qubit and the readout qubit.
-- **Parameter Count:** ~32 parameters per layer (16 XX + 16 ZZ).
+- **Circuit:** Readout prep (X+H), repeated XX/ZZ blocks with interleaved RX/RY rotations on data qubits, final H before measurement.
+- **Parameter Count:** ~64 parameters per layer (16 XX + 16 ZZ + 16 RX + 16 RY).
 
 ### 3. Scientific Comparison
-- **Fair Classical:** A tiny MLP (`Dense(h) -> Dense(k)`) receiving the same 16 PCA features, calibrated to match the ~32-64 parameters of the QNN.
+- **Fair Classical:** A tiny MLP (`Dense(h) -> Dense(k)`) receiving the same 16 PCA features, calibrated to match the ~64-128 parameters of the QNN.
 - **CNN Baseline:** A standard CNN trained on full 28x28 resolution images to provide an "upper bound" on potential performance.
 - **Scaling Study:** Performance is evaluated across $k \in \{2, 3, 4, 5, 8, 12, 16\}$ categories.
 - **Equal Data:** All models (QNN, Fair Classical, CNN) train on the same sample budget per fold.
@@ -90,7 +90,13 @@ We evaluate the QNN's ability to handle increasing classification complexity (k=
 <!-- P5_RESULTS_START -->
 | K (Categories) | QNN (PCA 16) | Fair Classical (PCA 16) |
 | --- | --- | --- |
-| *Results will be populated after running experiments with PCA pipeline* | | |
+| 2 | 71.0% | 68.8% |
+| 3 | 54.5% | 55.6% |
+| 4 | 46.1% | 47.8% |
+| 5 | 37.8% | 40.5% |
+| 8 | 30.2% | 31.8% |
+| 12 | 23.4% | 25.7% |
+| 16 | 18.3% | 21.7% |
 <!-- P5_RESULTS_END -->
 
 *Note: Previous results used raw 4x4 downsampled pixels. The PCA-enhanced pipeline should yield improved feature quality and more meaningful quantum-classical comparisons.*

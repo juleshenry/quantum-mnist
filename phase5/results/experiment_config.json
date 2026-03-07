@@ -1,0 +1,25 @@
+{
+  "k_values": [
+    2,
+    3,
+    4,
+    5,
+    8,
+    12,
+    16
+  ],
+  "n_folds": 5,
+  "n_repeats": 1,
+  "base_seed": 42,
+  "epochs": 20,
+  "batch_size": 32,
+  "q_samples": 400,
+  "smoke_test": false,
+  "pca": {
+    "source_resolution": "28x28",
+    "n_components": 16,
+    "whiten": true,
+    "scaling": "MinMaxScaler to [0, 1]",
+    "note": "PCA fit on train fold, transform on test fold. Both QNN and Fair Classical receive the same 16 PCA features."
+  }
+}

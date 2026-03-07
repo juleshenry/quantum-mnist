@@ -1,0 +1,15 @@
+{
+  "n_pairs": 25,
+  "mean_delta": 0.06229628105831368,
+  "std_delta": 0.08833795718503056,
+  "delta_ci_lower": 0.03016832328744341,
+  "delta_ci_upper": 0.09845102223814542,
+  "effect_size_d": 0.7052040033915363,
+  "ttest_statistic": 3.526020016957682,
+  "ttest_p": 0.0017274332081867534,
+  "wilcoxon_statistic": 43.0,
+  "wilcoxon_p": 0.0007149577140808105,
+  "qnn_wins": 20,
+  "qnn_losses": 5,
+  "ties": 0
+}

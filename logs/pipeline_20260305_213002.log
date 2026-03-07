@@ -1,0 +1,1764 @@
+=== Starting Quantum Plankton Pipeline ===
+Timestamp: 20260305_213002
+Cooldown period: 60 seconds
+Log file: /Users/enrique/Desktop/fun_repos/quantum-mnist/logs/pipeline_20260305_213002.log
+Platform: linux/amd64
+
+
+--- Phase 1: Build Docker Image ---
+Command: docker build --platform linux/amd64 -t quantum-plankton .
+Started: 2026-03-05 21:30:02
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.62kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/tensorflow/tensorflow:2.7.0
+#2 DONE 0.7s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 103B done
+#3 DONE 0.0s
+
+#4 [1/7] FROM docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5
+#4 resolve docker.io/tensorflow/tensorflow:2.7.0@sha256:31e09cf438a41f12c759cc8cc79c6b0fbb0db5abfc3de8169e916c8c9ac38dc5 done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 2.75MB 0.7s done
+#5 DONE 0.8s
+
+#6 [2/7] RUN apt-get update &&     apt-get install -y --no-install-recommends     build-essential     libjpeg-dev     zlib1g-dev     git     && apt-get clean &&     rm -rf /var/lib/apt/lists/*
+#6 CACHED
+
+#7 [3/7] RUN pip install --no-cache-dir --upgrade pip &&     pip install --no-cache-dir     tensorflow-quantum==0.7.2     cirq==0.13.1     sympy==1.8     pillow==9.0.1     numpy==1.21.6     pandas==1.3.5     matplotlib==3.5.1     seaborn==0.11.2     tqdm==4.64.0     scikit-learn==1.0.2     pytest==7.1.2
+#7 CACHED
+
+#8 [4/7] WORKDIR /app
+#8 CACHED
+
+#9 [5/7] COPY . .
+#9 DONE 1.9s
+
+#10 [6/7] RUN mkdir -p /app/phase2/results /app/phase3/results /app/phase4/results /app/phase5/results /app/phase6/results /app/phase7/results /app/utils
+#10 DONE 0.2s
+
+#11 [7/7] RUN python -m pytest     /app/phase2/test_rigor_phase2.py     /app/phase3/test_rigor_phase3.py     /app/phase4/test_rigor.py     /app/phase5/test_rigor_phase5.py     /app/phase6/test_rigor_phase6.py     /app/phase7/test_rigor_phase7.py     -v --tb=short
+#11 0.480 ============================= test session starts ==============================
+#11 0.480 platform linux -- Python 3.8.10, pytest-7.1.2, pluggy-1.5.0 -- /usr/local/bin/python
+#11 0.480 cachedir: .pytest_cache
+#11 0.480 rootdir: /app
+#11 0.480 collecting ... collected 84 items
+#11 5.822 
+#11 5.822 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_determinism_with_seed PASSED [  1%]
+#11 6.115 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_different_seeds_different_splits PASSED [  2%]
+#11 6.245 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_overlap_between_train_test PASSED [  3%]
+#11 6.310 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_no_pca_leakage PASSED [  4%]
+#11 6.439 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_output_shape PASSED [  5%]
+#11 6.502 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_pca_values_in_unit_range PASSED [  7%]
+#11 6.603 phase2/test_rigor_phase2.py::TestPrepareDatasetReproducibility::test_stratified_balance PASSED [  8%]
+#11 6.666 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_determinism PASSED [  9%]
+#11 6.679 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_gate_count PASSED [ 10%]
+#11 6.686 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_qubit_count PASSED [ 11%]
+#11 6.692 phase2/test_rigor_phase2.py::TestConvertToCircuit::test_zero_features_trivial PASSED [ 13%]
+#11 6.693 phase2/test_rigor_phase2.py::TestQuantumModel::test_readout_qubit PASSED [ 14%]
+#11 6.770 phase2/test_rigor_phase2.py::TestQuantumModel::test_symbol_count PASSED  [ 15%]
+#11 6.792 phase2/test_rigor_phase2.py::TestQuantumModel::test_unique_symbol_names PASSED [ 16%]
+#11 6.812 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 17%]
+#11 7.017 phase2/test_rigor_phase2.py::TestBootstrapCI::test_ci_determinism PASSED [ 19%]
+#11 7.360 phase2/test_rigor_phase2.py::TestSeedFunction::test_numpy_determinism PASSED [ 20%]
+#11 7.363 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_gate_count PASSED [ 21%]
+#11 7.364 phase3/test_rigor_phase3.py::TestAngleEncoding::test_angle_qubit_count PASSED [ 22%]
+#11 7.366 phase3/test_rigor_phase3.py::TestAngleEncoding::test_rotation_angles_scale_with_pi PASSED [ 23%]
+#11 7.368 phase3/test_rigor_phase3.py::TestAngleEncoding::test_zero_features_identity_rotations PASSED [ 25%]
+#11 7.370 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_readout_qubit PASSED [ 26%]
+#11 7.377 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_single_layer_symbols PASSED [ 27%]
+#11 7.380 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_symbol_names_no_collision PASSED [ 28%]
+#11 7.386 phase3/test_rigor_phase3.py::TestVariableDepthModel::test_two_layer_symbols PASSED [ 29%]
+#11 7.391 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_all_keys_present PASSED [ 30%]
+#11 7.392 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_combination_count PASSED [ 32%]
+#11 7.393 phase3/test_rigor_phase3.py::TestHyperparamSweep::test_no_duplicates PASSED [ 33%]
+#11 7.394 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_folds_cover_all_samples PASSED [ 34%]
+#11 7.398 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_outer_test_disjoint_from_inner PASSED [ 35%]
+#11 7.402 phase3/test_rigor_phase3.py::TestNestedCVStructure::test_seed_reproducibility PASSED [ 36%]
+#11 7.404 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_all_determinism PASSED [ 38%]
+#11 8.631 phase4/test_rigor.py::TestDataLoaderDeterminism::test_load_determinism PASSED [ 39%]
+#11 9.848 phase4/test_rigor.py::TestDataLoaderDeterminism::test_sorted_file_listing PASSED [ 40%]
+#11 9.852 phase4/test_rigor.py::TestDataLoaderStratification::test_kfold_stratification PASSED [ 41%]
+#11 10.46 phase4/test_rigor.py::TestDataLoaderStratification::test_stratification_quality PASSED [ 42%]
+#11 11.08 phase4/test_rigor.py::TestDataNormalization::test_values_in_unit_range PASSED [ 44%]
+#11 11.69 phase4/test_rigor.py::TestDataSampling::test_max_per_class PASSED        [ 45%]
+#11 11.71 phase4/test_rigor.py::TestModelParameterCounts::test_fair_classical_params PASSED [ 46%]
+#11 11.77 phase4/test_rigor.py::TestModelParameterCounts::test_qnn_params PASSED   [ 47%]
+#11 13.00 phase4/test_rigor.py::TestQuantumCircuit::test_circuit_uses_all_qubits PASSED [ 48%]
+#11 13.00 phase4/test_rigor.py::TestQuantumCircuit::test_operation_count PASSED    [ 50%]
+#11 13.01 phase4/test_rigor.py::TestQuantumCircuit::test_zero_image_gives_identity_rotations PASSED [ 51%]
+#11 13.01 phase4/test_rigor.py::TestExperimentUtils::test_compute_metrics_perfect PASSED [ 52%]
+#11 13.02 phase4/test_rigor.py::TestExperimentUtils::test_compute_metrics_shape PASSED [ 53%]
+#11 13.02 phase4/test_rigor.py::TestExperimentUtils::test_holm_bonferroni PASSED   [ 54%]
+#11 13.02 phase4/test_rigor.py::TestExperimentUtils::test_majority_baseline PASSED [ 55%]
+#11 13.02 phase4/test_rigor.py::TestExperimentUtils::test_paired_test_identical PASSED [ 57%]
+#11 13.03 phase4/test_rigor.py::TestExperimentUtils::test_random_baseline PASSED   [ 58%]
+#11 13.03 phase4/test_rigor.py::TestExperimentUtils::test_set_seed_reproducibility PASSED [ 59%]
+#11 13.03 phase5/test_rigor_phase5.py::TestKCategoryDataDeterminism::test_load_k_all_determinism PASSED [ 60%]
+#11 13.08 phase5/test_rigor_phase5.py::TestKCategoryDataDeterminism::test_load_k_categories_determinism PASSED [ 61%]
+#11 14.29 phase5/test_rigor_phase5.py::TestKCategoryStratification::test_stratification_quality PASSED [ 63%]
+#11 15.06 phase5/test_rigor_phase5.py::TestPCANoLeakage::test_pca_deterministic PASSED [ 64%]
+#11 15.82 phase5/test_rigor_phase5.py::TestPCANoLeakage::test_pca_returns_correct_shapes PASSED [ 65%]
+#11 16.63 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 66%]
+#11 16.73 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_level PASSED       [ 67%]
+#11 16.94 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_narrows_with_low_variance PASSED [ 69%]
+#11 17.29 phase5/test_rigor_phase5.py::TestBootstrapCI::test_ci_reproducible PASSED [ 70%]
+#11 17.63 phase5/test_rigor_phase5.py::TestSeedReproducibility::test_set_seed PASSED [ 71%]
+#11 17.63 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_symbol_count PASSED [ 72%]
+#11 17.65 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_symbol_ordering PASSED [ 73%]
+#11 17.65 phase6/test_rigor_phase6.py::TestSaliencyCircuit::test_two_layer_circuit PASSED [ 75%]
+#11 17.66 phase6/test_rigor_phase6.py::TestSeedReproducibility::test_seed_produces_identical_rng PASSED [ 76%]
+#11 17.66 phase7/test_rigor_phase7.py::TestPQCConstruction::test_increasing_layers PASSED [ 77%]
+#11 17.67 phase7/test_rigor_phase7.py::TestPQCConstruction::test_qubit_count PASSED [ 78%]
+#11 17.67 phase7/test_rigor_phase7.py::TestPQCConstruction::test_symbol_count_per_layer PASSED [ 79%]
+#11 17.67 phase7/test_rigor_phase7.py::TestProductionPQC::test_data_qubit_grid PASSED [ 80%]
+#11 17.68 phase7/test_rigor_phase7.py::TestProductionPQC::test_entanglement_gate_count PASSED [ 82%]
+#11 17.68 phase7/test_rigor_phase7.py::TestProductionPQC::test_no_symbol_collisions PASSED [ 83%]
+#11 17.70 phase7/test_rigor_phase7.py::TestProductionPQC::test_qubit_count PASSED  [ 84%]
+#11 17.70 phase7/test_rigor_phase7.py::TestProductionPQC::test_readout_qubit_position PASSED [ 85%]
+#11 17.71 phase7/test_rigor_phase7.py::TestProductionPQC::test_symbol_names_match_phase5 PASSED [ 86%]
+#11 17.71 phase7/test_rigor_phase7.py::TestProductionPQC::test_symbols_per_layer PASSED [ 88%]
+#11 17.72 phase7/test_rigor_phase7.py::TestHaarDistribution::test_normalization PASSED [ 89%]
+#11 17.72 phase7/test_rigor_phase7.py::TestHaarDistribution::test_shape PASSED     [ 90%]
+#11 17.72 phase7/test_rigor_phase7.py::TestFidelitySampling::test_fidelity_range PASSED [ 91%]
+#11 17.87 phase7/test_rigor_phase7.py::TestFidelitySampling::test_reproducibility PASSED [ 92%]
+#11 17.93 phase7/test_rigor_phase7.py::TestExpressibility::test_kl_non_negative PASSED [ 94%]
+#11 18.33 phase7/test_rigor_phase7.py::TestMeyerWallach::test_entanglement_range PASSED [ 95%]
+#11 18.38 phase7/test_rigor_phase7.py::TestMeyerWallach::test_reproducibility PASSED [ 96%]
+#11 18.40 phase7/test_rigor_phase7.py::TestMeyerWallach::test_returns_dict PASSED  [ 97%]
+#11 18.41 phase7/test_rigor_phase7.py::TestBootstrapCI::test_ci_contains_mean PASSED [ 98%]
+#11 18.59 phase7/test_rigor_phase7.py::TestBootstrapCI::test_reproducibility PASSED [100%]
+#11 18.94 
+#11 18.94 =============================== warnings summary ===============================
+#11 18.94 phase2/plankton_ingress.py:1
+#11 18.94   /app/phase2/plankton_ingress.py:1: DeprecationWarning: invalid escape sequence \ 
+#11 18.94     """
+#11 18.94 
+#11 18.94 phase2/binary_quantum_classifier.py:1
+#11 18.94   /app/phase2/binary_quantum_classifier.py:1: DeprecationWarning: invalid escape sequence \ 
+#11 18.94     """
+#11 18.94 
+#11 18.94 ../usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19
+#11 18.94   /usr/local/lib/python3.8/dist-packages/flatbuffers/compat.py:19: DeprecationWarning: the imp module is deprecated in favour of importlib; see the module's documentation for alternative uses
+#11 18.94     import imp
+#11 18.94 
+#11 18.94 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+#11 18.94 ======================= 84 passed, 3 warnings in 18.46s ========================
+#11 DONE 19.4s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 4.9s done
+#12 exporting manifest sha256:bfadf500a8b117a145134652e88e08268131ef676caafeff3e88dbbed4cd8a97
+#12 exporting manifest sha256:bfadf500a8b117a145134652e88e08268131ef676caafeff3e88dbbed4cd8a97 done
+#12 exporting config sha256:f390c42a11dac6695cbb934db2dae542602e5af1f038877afcc7ef268cd2ca87 done
+#12 exporting attestation manifest sha256:e965449530c464341c5acac9939299b620d9291d3bb4d459a34bc3dd05befd62 done
+#12 exporting manifest list sha256:e820e5ef4f2f7f93efc97ce6eece804c87de1ca4b5b21facae0684c241c2e839 done
+#12 naming to docker.io/library/quantum-plankton:latest done
+#12 DONE 5.0s
+Completed: Build Docker Image (elapsed 30s)
+Cooling down for 60 seconds...
+
+--- Phase 2: Data Ingress ---
+Command: docker run --rm --platform linux/amd64 quantum-plankton python phase2/plankton_ingress.py
+Started: 2026-03-05 21:31:32
+Found 35 classes.
+Prepared dataset for aphanizomenon vs asplanchna
+Train size: 75, Test size: 25
+Completed: Data Ingress (elapsed 5s)
+Cooling down for 60 seconds...
+
+--- Phase 3: Binary Classifier (5-fold CV) ---
+Command: docker run --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase2/results:/app/phase2/results quantum-plankton python phase2/binary_quantum_classifier.py
+Started: 2026-03-05 21:32:38
+--- Phase 2: Binary Quantum Classification (Stratified 5-fold CV) ---
+Running Quantum Classification for aphanizomenon vs bosmina
+2026-03-06 03:32:41.585710: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+
+--- Fold 1/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 9s - loss: 1.0065 - hinge_accuracy: 0.4375 2/10 [=====>........................] - ETA: 4s - loss: 1.0078 - hinge_accuracy: 0.3750 3/10 [========>.....................] - ETA: 3s - loss: 1.0071 - hinge_accuracy: 0.3333 4/10 [===========>..................] - ETA: 3s - loss: 1.0071 - hinge_accuracy: 0.3281 5/10 [==============>...............] - ETA: 2s - loss: 1.0068 - hinge_accuracy: 0.3375 6/10 [=================>............] - ETA: 2s - loss: 1.0070 - hinge_accuracy: 0.3333 7/10 [====================>.........] - ETA: 1s - loss: 1.0059 - hinge_accuracy: 0.3661 8/10 [=======================>......] - ETA: 1s - loss: 1.0046 - hinge_accuracy: 0.4141 9/10 [==========================>...] - ETA: 0s - loss: 1.0037 - hinge_accuracy: 0.444410/10 [==============================] - ETA: 0s - loss: 1.0031 - hinge_accuracy: 0.453810/10 [==============================] - 6s 536ms/step - loss: 1.0031 - hinge_accuracy: 0.4538 - val_loss: 0.9931 - val_hinge_accuracy: 0.7244
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 1.0095 - hinge_accuracy: 0.1875 2/10 [=====>........................] - ETA: 3s - loss: 1.0044 - hinge_accuracy: 0.3750 3/10 [========>.....................] - ETA: 3s - loss: 1.0009 - hinge_accuracy: 0.5208 4/10 [===========>..................] - ETA: 3s - loss: 0.9998 - hinge_accuracy: 0.5469 5/10 [==============>...............] - ETA: 2s - loss: 0.9989 - hinge_accuracy: 0.5625 6/10 [=================>............] - ETA: 2s - loss: 0.9980 - hinge_accuracy: 0.5938 7/10 [====================>.........] - ETA: 1s - loss: 0.9978 - hinge_accuracy: 0.6071 8/10 [=======================>......] - ETA: 1s - loss: 0.9971 - hinge_accuracy: 0.6328 9/10 [==========================>...] - ETA: 0s - loss: 0.9972 - hinge_accuracy: 0.625010/10 [==============================] - ETA: 0s - loss: 0.9968 - hinge_accuracy: 0.647110/10 [==============================] - 5s 519ms/step - loss: 0.9968 - hinge_accuracy: 0.6471 - val_loss: 1.0007 - val_hinge_accuracy: 0.3523
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9903 - hinge_accuracy: 0.8125 2/10 [=====>........................] - ETA: 4s - loss: 0.9883 - hinge_accuracy: 0.8750 3/10 [========>.....................] - ETA: 3s - loss: 0.9910 - hinge_accuracy: 0.7708 4/10 [===========>..................] - ETA: 3s - loss: 0.9914 - hinge_accuracy: 0.7656 5/10 [==============>...............] - ETA: 2s - loss: 0.9919 - hinge_accuracy: 0.7375 6/10 [=================>............] - ETA: 2s - loss: 0.9908 - hinge_accuracy: 0.7604 7/10 [====================>.........] - ETA: 1s - loss: 0.9910 - hinge_accuracy: 0.7500 8/10 [=======================>......] - ETA: 1s - loss: 0.9905 - hinge_accuracy: 0.7656 9/10 [==========================>...] - ETA: 0s - loss: 0.9906 - hinge_accuracy: 0.756910/10 [==============================] - ETA: 0s - loss: 0.9903 - hinge_accuracy: 0.750510/10 [==============================] - 5s 523ms/step - loss: 0.9903 - hinge_accuracy: 0.7505 - val_loss: 1.0079 - val_hinge_accuracy: 0.2443
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9792 - hinge_accuracy: 0.9375 2/10 [=====>........................] - ETA: 4s - loss: 0.9850 - hinge_accuracy: 0.7812 3/10 [========>.....................] - ETA: 3s - loss: 0.9837 - hinge_accuracy: 0.7917 4/10 [===========>..................] - ETA: 3s - loss: 0.9845 - hinge_accuracy: 0.7812 5/10 [==============>...............] - ETA: 2s - loss: 0.9841 - hinge_accuracy: 0.7875 6/10 [=================>............] - ETA: 2s - loss: 0.9843 - hinge_accuracy: 0.7917 7/10 [====================>.........] - ETA: 1s - loss: 0.9849 - hinge_accuracy: 0.7768 8/10 [=======================>......] - ETA: 1s - loss: 0.9834 - hinge_accuracy: 0.7969 9/10 [==========================>...] - ETA: 0s - loss: 0.9833 - hinge_accuracy: 0.784710/10 [==============================] - ETA: 0s - loss: 0.9831 - hinge_accuracy: 0.767810/10 [==============================] - 5s 523ms/step - loss: 0.9831 - hinge_accuracy: 0.7678 - val_loss: 1.0167 - val_hinge_accuracy: 0.1989
+Fold 1 — Loss: 0.9985, Accuracy: 0.6304, Flipped: 0.3696
+
+--- Fold 2/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9952 - hinge_accuracy: 0.6875 2/10 [=====>........................] - ETA: 4s - loss: 0.9954 - hinge_accuracy: 0.7188 3/10 [========>.....................] - ETA: 3s - loss: 0.9949 - hinge_accuracy: 0.7292 4/10 [===========>..................] - ETA: 3s - loss: 0.9963 - hinge_accuracy: 0.6719 5/10 [==============>...............] - ETA: 2s - loss: 0.9965 - hinge_accuracy: 0.6625 6/10 [=================>............] - ETA: 2s - loss: 0.9972 - hinge_accuracy: 0.6354 7/10 [====================>.........] - ETA: 1s - loss: 0.9963 - hinge_accuracy: 0.6786 8/10 [=======================>......] - ETA: 1s - loss: 0.9950 - hinge_accuracy: 0.7031 9/10 [==========================>...] - ETA: 0s - loss: 0.9945 - hinge_accuracy: 0.708310/10 [==============================] - ETA: 0s - loss: 0.9946 - hinge_accuracy: 0.706710/10 [==============================] - 5s 545ms/step - loss: 0.9946 - hinge_accuracy: 0.7067 - val_loss: 1.0009 - val_hinge_accuracy: 0.3409
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9868 - hinge_accuracy: 0.9375 2/10 [=====>........................] - ETA: 4s - loss: 0.9924 - hinge_accuracy: 0.7812 3/10 [========>.....................] - ETA: 3s - loss: 0.9932 - hinge_accuracy: 0.7708 4/10 [===========>..................] - ETA: 3s - loss: 0.9937 - hinge_accuracy: 0.7656 5/10 [==============>...............] - ETA: 2s - loss: 0.9924 - hinge_accuracy: 0.7875 6/10 [=================>............] - ETA: 2s - loss: 0.9917 - hinge_accuracy: 0.7812 7/10 [====================>.........] - ETA: 1s - loss: 0.9911 - hinge_accuracy: 0.8036 8/10 [=======================>......] - ETA: 1s - loss: 0.9909 - hinge_accuracy: 0.7969 9/10 [==========================>...] - ETA: 0s - loss: 0.9907 - hinge_accuracy: 0.805610/10 [==============================] - ETA: 0s - loss: 0.9905 - hinge_accuracy: 0.801910/10 [==============================] - 5s 526ms/step - loss: 0.9905 - hinge_accuracy: 0.8019 - val_loss: 1.0035 - val_hinge_accuracy: 0.3864
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9926 - hinge_accuracy: 0.8125 2/10 [=====>........................] - ETA: 4s - loss: 0.9916 - hinge_accuracy: 0.7812 3/10 [========>.....................] - ETA: 3s - loss: 0.9919 - hinge_accuracy: 0.7500 4/10 [===========>..................] - ETA: 3s - loss: 0.9895 - hinge_accuracy: 0.7656 5/10 [==============>...............] - ETA: 2s - loss: 0.9881 - hinge_accuracy: 0.7875 6/10 [=================>............] - ETA: 2s - loss: 0.9881 - hinge_accuracy: 0.7917 7/10 [====================>.........] - ETA: 1s - loss: 0.9876 - hinge_accuracy: 0.7768 8/10 [=======================>......] - ETA: 1s - loss: 0.9868 - hinge_accuracy: 0.7969 9/10 [==========================>...] - ETA: 0s - loss: 0.9860 - hinge_accuracy: 0.805610/10 [==============================] - ETA: 0s - loss: 0.9859 - hinge_accuracy: 0.809610/10 [==============================] - 5s 522ms/step - loss: 0.9859 - hinge_accuracy: 0.8096 - val_loss: 1.0069 - val_hinge_accuracy: 0.3551
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9747 - hinge_accuracy: 1.0000 2/10 [=====>........................] - ETA: 4s - loss: 0.9815 - hinge_accuracy: 0.8125 3/10 [========>.....................] - ETA: 3s - loss: 0.9835 - hinge_accuracy: 0.8125 4/10 [===========>..................] - ETA: 3s - loss: 0.9858 - hinge_accuracy: 0.7812 5/10 [==============>...............] - ETA: 2s - loss: 0.9831 - hinge_accuracy: 0.8125 6/10 [=================>............] - ETA: 2s - loss: 0.9831 - hinge_accuracy: 0.8021 7/10 [====================>.........] - ETA: 1s - loss: 0.9821 - hinge_accuracy: 0.8036 8/10 [=======================>......] - ETA: 1s - loss: 0.9807 - hinge_accuracy: 0.8203 9/10 [==========================>...] - ETA: 0s - loss: 0.9798 - hinge_accuracy: 0.819410/10 [==============================] - ETA: 0s - loss: 0.9800 - hinge_accuracy: 0.814410/10 [==============================] - 5s 523ms/step - loss: 0.9800 - hinge_accuracy: 0.8144 - val_loss: 1.0111 - val_hinge_accuracy: 0.3239
+Fold 2 — Loss: 0.9935, Accuracy: 0.7826, Flipped: 0.2174
+
+--- Fold 3/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 5s - loss: 1.0043 - hinge_accuracy: 0.3750 2/10 [=====>........................] - ETA: 4s - loss: 1.0034 - hinge_accuracy: 0.3438 3/10 [========>.....................] - ETA: 3s - loss: 1.0017 - hinge_accuracy: 0.4167 4/10 [===========>..................] - ETA: 3s - loss: 1.0013 - hinge_accuracy: 0.4531 5/10 [==============>...............] - ETA: 2s - loss: 1.0017 - hinge_accuracy: 0.4500 6/10 [=================>............] - ETA: 2s - loss: 1.0016 - hinge_accuracy: 0.4271 7/10 [====================>.........] - ETA: 1s - loss: 1.0012 - hinge_accuracy: 0.4375 8/10 [=======================>......] - ETA: 1s - loss: 1.0020 - hinge_accuracy: 0.4219 9/10 [==========================>...] - ETA: 0s - loss: 1.0023 - hinge_accuracy: 0.423610/10 [==============================] - ETA: 0s - loss: 1.0017 - hinge_accuracy: 0.458210/10 [==============================] - 5s 524ms/step - loss: 1.0017 - hinge_accuracy: 0.4582 - val_loss: 0.9991 - val_hinge_accuracy: 0.4290
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9942 - hinge_accuracy: 0.5000 2/10 [=====>........................] - ETA: 4s - loss: 0.9964 - hinge_accuracy: 0.5312 3/10 [========>.....................] - ETA: 3s - loss: 0.9975 - hinge_accuracy: 0.5208 4/10 [===========>..................] - ETA: 3s - loss: 0.9968 - hinge_accuracy: 0.5938 5/10 [==============>...............] - ETA: 2s - loss: 0.9971 - hinge_accuracy: 0.6000 6/10 [=================>............] - ETA: 2s - loss: 0.9964 - hinge_accuracy: 0.6354 7/10 [====================>.........] - ETA: 1s - loss: 0.9968 - hinge_accuracy: 0.6429 8/10 [=======================>......] - ETA: 1s - loss: 0.9964 - hinge_accuracy: 0.6562 9/10 [==========================>...] - ETA: 0s - loss: 0.9959 - hinge_accuracy: 0.666710/10 [==============================] - ETA: 0s - loss: 0.9956 - hinge_accuracy: 0.669210/10 [==============================] - 5s 530ms/step - loss: 0.9956 - hinge_accuracy: 0.6692 - val_loss: 1.0057 - val_hinge_accuracy: 0.2614
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9895 - hinge_accuracy: 0.8125 2/10 [=====>........................] - ETA: 4s - loss: 0.9875 - hinge_accuracy: 0.8438 3/10 [========>.....................] - ETA: 3s - loss: 0.9896 - hinge_accuracy: 0.7917 4/10 [===========>..................] - ETA: 3s - loss: 0.9896 - hinge_accuracy: 0.7969 5/10 [==============>...............] - ETA: 2s - loss: 0.9902 - hinge_accuracy: 0.7625 6/10 [=================>............] - ETA: 2s - loss: 0.9904 - hinge_accuracy: 0.7604 7/10 [====================>.........] - ETA: 1s - loss: 0.9895 - hinge_accuracy: 0.7768 8/10 [=======================>......] - ETA: 1s - loss: 0.9908 - hinge_accuracy: 0.7344 9/10 [==========================>...] - ETA: 0s - loss: 0.9907 - hinge_accuracy: 0.729210/10 [==============================] - ETA: 0s - loss: 0.9897 - hinge_accuracy: 0.756310/10 [==============================] - 5s 522ms/step - loss: 0.9897 - hinge_accuracy: 0.7563 - val_loss: 1.0128 - val_hinge_accuracy: 0.1705
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9891 - hinge_accuracy: 0.6875 2/10 [=====>........................] - ETA: 4s - loss: 0.9898 - hinge_accuracy: 0.6875 3/10 [========>.....................] - ETA: 3s - loss: 0.9884 - hinge_accuracy: 0.6875 4/10 [===========>..................] - ETA: 3s - loss: 0.9885 - hinge_accuracy: 0.6875 5/10 [==============>...............] - ETA: 2s - loss: 0.9862 - hinge_accuracy: 0.7125 6/10 [=================>............] - ETA: 2s - loss: 0.9859 - hinge_accuracy: 0.7083 7/10 [====================>.........] - ETA: 1s - loss: 0.9862 - hinge_accuracy: 0.7054 8/10 [=======================>......] - ETA: 1s - loss: 0.9858 - hinge_accuracy: 0.7109 9/10 [==========================>...] - ETA: 0s - loss: 0.9837 - hinge_accuracy: 0.736110/10 [==============================] - ETA: 0s - loss: 0.9822 - hinge_accuracy: 0.762510/10 [==============================] - 5s 519ms/step - loss: 0.9822 - hinge_accuracy: 0.7625 - val_loss: 1.0211 - val_hinge_accuracy: 0.1080
+Fold 3 — Loss: 0.9983, Accuracy: 0.5870, Flipped: 0.4130
+
+--- Fold 4/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9999 - hinge_accuracy: 0.5000 2/10 [=====>........................] - ETA: 4s - loss: 0.9959 - hinge_accuracy: 0.4688 3/10 [========>.....................] - ETA: 3s - loss: 0.9976 - hinge_accuracy: 0.4792 4/10 [===========>..................] - ETA: 3s - loss: 0.9986 - hinge_accuracy: 0.4844 5/10 [==============>...............] - ETA: 2s - loss: 0.9983 - hinge_accuracy: 0.5125 6/10 [=================>............] - ETA: 2s - loss: 0.9990 - hinge_accuracy: 0.5000 7/10 [====================>.........] - ETA: 1s - loss: 0.9989 - hinge_accuracy: 0.5179 8/10 [=======================>......] - ETA: 1s - loss: 0.9981 - hinge_accuracy: 0.5391 9/10 [==========================>...] - ETA: 0s - loss: 0.9983 - hinge_accuracy: 0.534710/10 [==============================] - ETA: 0s - loss: 0.9979 - hinge_accuracy: 0.542810/10 [==============================] - 5s 524ms/step - loss: 0.9979 - hinge_accuracy: 0.5428 - val_loss: 0.9852 - val_hinge_accuracy: 0.8011
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9946 - hinge_accuracy: 0.6875 2/10 [=====>........................] - ETA: 4s - loss: 0.9941 - hinge_accuracy: 0.6875 3/10 [========>.....................] - ETA: 3s - loss: 0.9930 - hinge_accuracy: 0.6875 4/10 [===========>..................] - ETA: 3s - loss: 0.9933 - hinge_accuracy: 0.6719 5/10 [==============>...............] - ETA: 2s - loss: 0.9941 - hinge_accuracy: 0.6375 6/10 [=================>............] - ETA: 2s - loss: 0.9936 - hinge_accuracy: 0.6562 7/10 [====================>.........] - ETA: 1s - loss: 0.9932 - hinge_accuracy: 0.6607 8/10 [=======================>......] - ETA: 1s - loss: 0.9931 - hinge_accuracy: 0.6719 9/10 [==========================>...] - ETA: 0s - loss: 0.9934 - hinge_accuracy: 0.673610/10 [==============================] - ETA: 0s - loss: 0.9935 - hinge_accuracy: 0.683210/10 [==============================] - 5s 520ms/step - loss: 0.9935 - hinge_accuracy: 0.6832 - val_loss: 0.9921 - val_hinge_accuracy: 0.6619
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9974 - hinge_accuracy: 0.5625 2/10 [=====>........................] - ETA: 3s - loss: 0.9954 - hinge_accuracy: 0.6250 3/10 [========>.....................] - ETA: 3s - loss: 0.9947 - hinge_accuracy: 0.6667 4/10 [===========>..................] - ETA: 3s - loss: 0.9917 - hinge_accuracy: 0.7188 5/10 [==============>...............] - ETA: 2s - loss: 0.9906 - hinge_accuracy: 0.7250 6/10 [=================>............] - ETA: 2s - loss: 0.9909 - hinge_accuracy: 0.6979 7/10 [====================>.........] - ETA: 1s - loss: 0.9901 - hinge_accuracy: 0.7143 8/10 [=======================>......] - ETA: 1s - loss: 0.9900 - hinge_accuracy: 0.7266 9/10 [==========================>...] - ETA: 0s - loss: 0.9894 - hinge_accuracy: 0.729210/10 [==============================] - ETA: 0s - loss: 0.9887 - hinge_accuracy: 0.748610/10 [==============================] - 5s 517ms/step - loss: 0.9887 - hinge_accuracy: 0.7486 - val_loss: 1.0000 - val_hinge_accuracy: 0.4006
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9856 - hinge_accuracy: 0.8125 2/10 [=====>........................] - ETA: 4s - loss: 0.9855 - hinge_accuracy: 0.7500 3/10 [========>.....................] - ETA: 3s - loss: 0.9857 - hinge_accuracy: 0.7500 4/10 [===========>..................] - ETA: 3s - loss: 0.9855 - hinge_accuracy: 0.7344 5/10 [==============>...............] - ETA: 2s - loss: 0.9853 - hinge_accuracy: 0.7375 6/10 [=================>............] - ETA: 2s - loss: 0.9851 - hinge_accuracy: 0.7292 7/10 [====================>.........] - ETA: 1s - loss: 0.9842 - hinge_accuracy: 0.7500 8/10 [=======================>......] - ETA: 1s - loss: 0.9836 - hinge_accuracy: 0.7656 9/10 [==========================>...] - ETA: 0s - loss: 0.9837 - hinge_accuracy: 0.763910/10 [==============================] - ETA: 0s - loss: 0.9829 - hinge_accuracy: 0.772110/10 [==============================] - 5s 523ms/step - loss: 0.9829 - hinge_accuracy: 0.7721 - val_loss: 1.0081 - val_hinge_accuracy: 0.3239
+Fold 4 — Loss: 0.9942, Accuracy: 0.6957, Flipped: 0.3043
+
+--- Fold 5/5 (train=184, test=46) ---
+Epoch 1/15
+ 1/10 [==>...........................] - ETA: 5s - loss: 1.0006 - hinge_accuracy: 0.4375 2/10 [=====>........................] - ETA: 4s - loss: 0.9969 - hinge_accuracy: 0.6250 3/10 [========>.....................] - ETA: 3s - loss: 0.9982 - hinge_accuracy: 0.5833 4/10 [===========>..................] - ETA: 3s - loss: 0.9983 - hinge_accuracy: 0.5781 5/10 [==============>...............] - ETA: 2s - loss: 0.9978 - hinge_accuracy: 0.5875 6/10 [=================>............] - ETA: 2s - loss: 0.9966 - hinge_accuracy: 0.6146 7/10 [====================>.........] - ETA: 1s - loss: 0.9971 - hinge_accuracy: 0.5893 8/10 [=======================>......] - ETA: 1s - loss: 0.9982 - hinge_accuracy: 0.5859 9/10 [==========================>...] - ETA: 0s - loss: 0.9982 - hinge_accuracy: 0.583310/10 [==============================] - ETA: 0s - loss: 0.9978 - hinge_accuracy: 0.609610/10 [==============================] - 5s 530ms/step - loss: 0.9978 - hinge_accuracy: 0.6096 - val_loss: 0.9950 - val_hinge_accuracy: 0.4943
+Epoch 2/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 1.0011 - hinge_accuracy: 0.4375 2/10 [=====>........................] - ETA: 3s - loss: 1.0000 - hinge_accuracy: 0.5000 3/10 [========>.....................] - ETA: 3s - loss: 0.9977 - hinge_accuracy: 0.5625 4/10 [===========>..................] - ETA: 3s - loss: 0.9952 - hinge_accuracy: 0.6250 5/10 [==============>...............] - ETA: 2s - loss: 0.9946 - hinge_accuracy: 0.6625 6/10 [=================>............] - ETA: 2s - loss: 0.9942 - hinge_accuracy: 0.6771 7/10 [====================>.........] - ETA: 1s - loss: 0.9950 - hinge_accuracy: 0.6518 8/10 [=======================>......] - ETA: 1s - loss: 0.9942 - hinge_accuracy: 0.6875 9/10 [==========================>...] - ETA: 0s - loss: 0.9940 - hinge_accuracy: 0.701410/10 [==============================] - ETA: 0s - loss: 0.9938 - hinge_accuracy: 0.708210/10 [==============================] - 5s 523ms/step - loss: 0.9938 - hinge_accuracy: 0.7082 - val_loss: 0.9994 - val_hinge_accuracy: 0.4631
+Epoch 3/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9990 - hinge_accuracy: 0.5625 2/10 [=====>........................] - ETA: 3s - loss: 0.9953 - hinge_accuracy: 0.6562 3/10 [========>.....................] - ETA: 3s - loss: 0.9959 - hinge_accuracy: 0.6458 4/10 [===========>..................] - ETA: 3s - loss: 0.9943 - hinge_accuracy: 0.6719 5/10 [==============>...............] - ETA: 2s - loss: 0.9926 - hinge_accuracy: 0.7125 6/10 [=================>............] - ETA: 2s - loss: 0.9906 - hinge_accuracy: 0.7396 7/10 [====================>.........] - ETA: 1s - loss: 0.9905 - hinge_accuracy: 0.7411 8/10 [=======================>......] - ETA: 1s - loss: 0.9896 - hinge_accuracy: 0.7578 9/10 [==========================>...] - ETA: 0s - loss: 0.9901 - hinge_accuracy: 0.756910/10 [==============================] - ETA: 0s - loss: 0.9898 - hinge_accuracy: 0.758210/10 [==============================] - 5s 528ms/step - loss: 0.9898 - hinge_accuracy: 0.7582 - val_loss: 1.0041 - val_hinge_accuracy: 0.3239
+Epoch 4/15
+ 1/10 [==>...........................] - ETA: 4s - loss: 0.9968 - hinge_accuracy: 0.5625 2/10 [=====>........................] - ETA: 4s - loss: 0.9931 - hinge_accuracy: 0.6875 3/10 [========>.....................] - ETA: 3s - loss: 0.9883 - hinge_accuracy: 0.7708 4/10 [===========>..................] - ETA: 3s - loss: 0.9864 - hinge_accuracy: 0.7812 5/10 [==============>...............] - ETA: 2s - loss: 0.9869 - hinge_accuracy: 0.7500 6/10 [=================>............] - ETA: 2s - loss: 0.9874 - hinge_accuracy: 0.7396 7/10 [====================>.........] - ETA: 1s - loss: 0.9873 - hinge_accuracy: 0.7411 8/10 [=======================>......] - ETA: 1s - loss: 0.9864 - hinge_accuracy: 0.7422 9/10 [==========================>...] - ETA: 0s - loss: 0.9855 - hinge_accuracy: 0.750010/10 [==============================] - ETA: 0s - loss: 0.9845 - hinge_accuracy: 0.767310/10 [==============================] - 5s 535ms/step - loss: 0.9845 - hinge_accuracy: 0.7673 - val_loss: 1.0081 - val_hinge_accuracy: 0.3239
+Fold 5 — Loss: 0.9935, Accuracy: 0.7174, Flipped: 0.2826
+
+=== Phase 2 Results ===
+Accuracy: 0.6826 +/- 0.0682
+95% Bootstrap CI: [0.6261, 0.7391]
+Per-fold accuracies: [0.6304347826086957, 0.782608695652174, 0.5869565217391305, 0.6956521739130435, 0.717391304347826]
+Results saved to phase2/results/phase2_results.json
+Completed: Binary Classifier (5-fold CV) (elapsed 118s)
+Cooling down for 60 seconds...
+
+--- Phase 4: Hyperparameter Sweep (Nested 5x3 CV) ---
+Command: docker run --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=2.0 -e THERMAL_SLEEP=30 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase3/results:/app/phase3/results quantum-plankton python phase3/optimize_binary_classifier.py
+Started: 2026-03-05 21:35:36
+--- Phase 3: Hyperparameter Optimization (Nested CV) ---
+Using nested cross-validation to prevent data leakage.
+
+Optimizing Quantum Model for aphanizomenon vs bosmina
+2026-03-06 03:35:40.071925: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Hyperparameter combinations: 8
+
+=== Outer Fold 1/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 3/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 4/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 5/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 6/8 | Val Acc: 0.6719
+  Inner 1/3 | Config 7/8 | Val Acc: 0.6719
+  Inner 1/3 | Config 8/8 | Val Acc: 0.6406
+  Inner 2/3 | Config 1/8 | Val Acc: 0.5469
+  Inner 2/3 | Config 2/8 | Val Acc: 0.5156
+  Inner 2/3 | Config 3/8 | Val Acc: 0.5625
+  Inner 2/3 | Config 4/8 | Val Acc: 0.5625
+  Inner 2/3 | Config 5/8 | Val Acc: 0.6562
+  Inner 2/3 | Config 6/8 | Val Acc: 0.6562
+  Inner 2/3 | Config 7/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 8/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 1/8 | Val Acc: 0.6094
+  Inner 3/3 | Config 2/8 | Val Acc: 0.6094
+  Inner 3/3 | Config 3/8 | Val Acc: 0.6562
+  Inner 3/3 | Config 4/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 5/8 | Val Acc: 0.7656
+  Inner 3/3 | Config 6/8 | Val Acc: 0.7500
+  Inner 3/3 | Config 7/8 | Val Acc: 0.7344
+  Inner 3/3 | Config 8/8 | Val Acc: 0.7344
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.01, 'batch_size': 32} (mean inner acc: 0.6927)
+  Outer test accuracy: 0.7344
+
+=== Outer Fold 2/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.5469
+  Inner 1/3 | Config 2/8 | Val Acc: 0.5469
+  Inner 1/3 | Config 3/8 | Val Acc: 0.5625
+  Inner 1/3 | Config 4/8 | Val Acc: 0.5781
+  Inner 1/3 | Config 5/8 | Val Acc: 0.5625
+  Inner 1/3 | Config 6/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 7/8 | Val Acc: 0.5781
+  Inner 1/3 | Config 8/8 | Val Acc: 0.6406
+  Inner 2/3 | Config 1/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 2/3 | Config 3/8 | Val Acc: 0.5312
+  Inner 2/3 | Config 4/8 | Val Acc: 0.5312
+  Inner 2/3 | Config 5/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 6/8 | Val Acc: 0.7031
+  Inner 2/3 | Config 7/8 | Val Acc: 0.6562
+  Inner 2/3 | Config 8/8 | Val Acc: 0.6875
+  Inner 3/3 | Config 1/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 3/8 | Val Acc: 0.6094
+  Inner 3/3 | Config 4/8 | Val Acc: 0.6094
+  Inner 3/3 | Config 5/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 6/8 | Val Acc: 0.6719
+  Inner 3/3 | Config 7/8 | Val Acc: 0.6719
+  Inner 3/3 | Config 8/8 | Val Acc: 0.6719
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.001, 'batch_size': 32} (mean inner acc: 0.6667)
+  Outer test accuracy: 0.6875
+
+=== Outer Fold 3/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 3/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 4/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 5/8 | Val Acc: 0.6562
+  Inner 1/3 | Config 6/8 | Val Acc: 0.6562
+  Inner 1/3 | Config 7/8 | Val Acc: 0.6250
+  Inner 1/3 | Config 8/8 | Val Acc: 0.7188
+  Inner 2/3 | Config 1/8 | Val Acc: 0.5625
+  Inner 2/3 | Config 2/8 | Val Acc: 0.5000
+  Inner 2/3 | Config 3/8 | Val Acc: 0.4844
+  Inner 2/3 | Config 4/8 | Val Acc: 0.4844
+  Inner 2/3 | Config 5/8 | Val Acc: 0.5938
+  Inner 2/3 | Config 6/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 7/8 | Val Acc: 0.6562
+  Inner 2/3 | Config 8/8 | Val Acc: 0.6562
+  Inner 3/3 | Config 1/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 3/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 4/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 5/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 6/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 7/8 | Val Acc: 0.6406
+  Inner 3/3 | Config 8/8 | Val Acc: 0.6250
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.001, 'batch_size': 32} (mean inner acc: 0.6667)
+  Outer test accuracy: 0.6094
+
+=== Outer Fold 4/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 3/8 | Val Acc: 0.5781
+  Inner 1/3 | Config 4/8 | Val Acc: 0.5781
+  Inner 1/3 | Config 5/8 | Val Acc: 0.6562
+  Inner 1/3 | Config 6/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 7/8 | Val Acc: 0.5156
+  Inner 1/3 | Config 8/8 | Val Acc: 0.5156
+  Inner 2/3 | Config 1/8 | Val Acc: 0.5781
+  Inner 2/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 2/3 | Config 3/8 | Val Acc: 0.5938
+  Inner 2/3 | Config 4/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 5/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 6/8 | Val Acc: 0.6250
+  Inner 2/3 | Config 7/8 | Val Acc: 0.5312
+  Inner 2/3 | Config 8/8 | Val Acc: 0.5000
+  Inner 3/3 | Config 1/8 | Val Acc: 0.5781
+  Inner 3/3 | Config 2/8 | Val Acc: 0.5781
+  Inner 3/3 | Config 3/8 | Val Acc: 0.5938
+  Inner 3/3 | Config 4/8 | Val Acc: 0.5781
+  Inner 3/3 | Config 5/8 | Val Acc: 0.7031
+  Inner 3/3 | Config 6/8 | Val Acc: 0.7188
+  Inner 3/3 | Config 7/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 8/8 | Val Acc: 0.6094
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.01, 'batch_size': 16} (mean inner acc: 0.6562)
+  Outer test accuracy: 0.7031
+
+=== Outer Fold 5/5 ===
+  Inner 1/3 | Config 1/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 1/3 | Config 3/8 | Val Acc: 0.5781
+  Inner 1/3 | Config 4/8 | Val Acc: 0.5781
+  Inner 1/3 | Config 5/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 6/8 | Val Acc: 0.6094
+  Inner 1/3 | Config 7/8 | Val Acc: 0.6406
+  Inner 1/3 | Config 8/8 | Val Acc: 0.5781
+  Inner 2/3 | Config 1/8 | Val Acc: 0.5625
+  Inner 2/3 | Config 2/8 | Val Acc: 0.5938
+  Inner 2/3 | Config 3/8 | Val Acc: 0.5469
+  Inner 2/3 | Config 4/8 | Val Acc: 0.5469
+  Inner 2/3 | Config 5/8 | Val Acc: 0.5625
+  Inner 2/3 | Config 6/8 | Val Acc: 0.6094
+  Inner 2/3 | Config 7/8 | Val Acc: 0.5625
+  Inner 2/3 | Config 8/8 | Val Acc: 0.5625
+  Inner 3/3 | Config 1/8 | Val Acc: 0.6250
+  Inner 3/3 | Config 2/8 | Val Acc: 0.5625
+  Inner 3/3 | Config 3/8 | Val Acc: 0.5625
+  Inner 3/3 | Config 4/8 | Val Acc: 0.5625
+  Inner 3/3 | Config 5/8 | Val Acc: 0.5781
+  Inner 3/3 | Config 6/8 | Val Acc: 0.6406
+  Inner 3/3 | Config 7/8 | Val Acc: 0.5781
+  Inner 3/3 | Config 8/8 | Val Acc: 0.5938
+  Best inner config: {'n_layers': 2, 'learning_rate': 0.01, 'batch_size': 32} (mean inner acc: 0.6198)
+  Outer test accuracy: 0.7031
+
+=== Phase 3 Results (Nested CV) ===
+Accuracy: 0.6875 +/- 0.0419
+95% Bootstrap CI: [0.6469, 0.7188]
+Per outer-fold accuracies: [0.734375, 0.6875, 0.609375, 0.703125, 0.703125]
+  Fold 1: acc=0.7344, config={'n_layers': 2, 'learning_rate': 0.01, 'batch_size': 32}
+  Fold 2: acc=0.6875, config={'n_layers': 2, 'learning_rate': 0.001, 'batch_size': 32}
+  Fold 3: acc=0.6094, config={'n_layers': 2, 'learning_rate': 0.001, 'batch_size': 32}
+  Fold 4: acc=0.7031, config={'n_layers': 2, 'learning_rate': 0.01, 'batch_size': 16}
+  Fold 5: acc=0.7031, config={'n_layers': 2, 'learning_rate': 0.01, 'batch_size': 32}
+
+Results saved to phase3/results/phase3_results.json
+Completed: Hyperparameter Sweep (Nested 5x3 CV) (elapsed 844s)
+Cooling down for 60 seconds...
+
+--- Phase 5: Binary Comparison (5-fold CV, 25 pairs) ---
+Command: docker run --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=3.0 -e THERMAL_SLEEP=60 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase4/results:/app/phase4/results quantum-plankton python phase4/run_experiments.py
+Started: 2026-03-05 21:50:40
+2026-03-06 03:50:43.688867: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Phase 4 Rigorous Experiments
+  N_FOLDS=5  N_REPEATS=1  BASE_SEED=42
+  Q_SAMPLES=200  SMOKE=False
+  Results -> phase4/results/
+
+============================================================
+Experiment: aphanizomenon vs leptodora  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded aphanizomenon: 225 images, leptodora: 203 images
+  Loaded aphanizomenon: 225 images, leptodora: 203 images
+  [CNN_28x28] params=121345  train=200  test=86
+  [FairMLP_4x4] params=55  train=200  test=86
+  [QNN_4x4] params=160  train=200  test=86
+  Fold 0: CNN=0.895  Fair=0.616  QNN=0.721  majority=0.523
+  [CNN_28x28] params=121345  train=200  test=86
+  [FairMLP_4x4] params=55  train=200  test=86
+WARNING:tensorflow:5 out of the last 13 calls to <function Model.make_predict_function.<locals>.predict_function at 0x7fff990a50d0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has experimental_relax_shapes=True option that relaxes argument shapes that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+  [QNN_4x4] params=160  train=200  test=86
+WARNING:tensorflow:5 out of the last 13 calls to <function Model.make_predict_function.<locals>.predict_function at 0x7fff9887c9d0> triggered tf.function retracing. Tracing is expensive and the excessive number of tracings could be due to (1) creating @tf.function repeatedly in a loop, (2) passing tensors with different shapes, (3) passing Python objects instead of tensors. For (1), please define your @tf.function outside of the loop. For (2), @tf.function has experimental_relax_shapes=True option that relaxes argument shapes that can avoid unnecessary retracing. For (3), please refer to https://www.tensorflow.org/guide/function#controlling_retracing and https://www.tensorflow.org/api_docs/python/tf/function for  more details.
+  Fold 1: CNN=0.860  Fair=0.605  QNN=0.535  majority=0.523
+  [CNN_28x28] params=121345  train=200  test=86
+  [FairMLP_4x4] params=55  train=200  test=86
+  [QNN_4x4] params=160  train=200  test=86
+  Fold 2: CNN=0.849  Fair=0.523  QNN=0.523  majority=0.523
+  [CNN_28x28] params=121345  train=200  test=85
+  [FairMLP_4x4] params=55  train=200  test=85
+  [QNN_4x4] params=160  train=200  test=85
+  Fold 3: CNN=0.918  Fair=0.529  QNN=0.541  majority=0.529
+  [CNN_28x28] params=121345  train=200  test=85
+  [FairMLP_4x4] params=55  train=200  test=85
+  [QNN_4x4] params=160  train=200  test=85
+  Fold 4: CNN=0.929  Fair=0.482  QNN=0.541  majority=0.529
+
+Summary: QNN=0.572+/-0.083  Fair=0.551+/-0.057  p=0.5117 (paired_ttest)
+
+============================================================
+Experiment: asplanchna vs uroglena  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded asplanchna: 607 images, uroglena: 953 images
+  Loaded asplanchna: 607 images, uroglena: 953 images
+  [CNN_28x28] params=121345  train=200  test=312
+  [FairMLP_4x4] params=55  train=200  test=312
+  [QNN_4x4] params=160  train=200  test=312
+  Fold 0: CNN=0.968  Fair=0.609  QNN=0.766  majority=0.609
+  [CNN_28x28] params=121345  train=200  test=312
+  [FairMLP_4x4] params=55  train=200  test=312
+  [QNN_4x4] params=160  train=200  test=312
+  Fold 1: CNN=0.981  Fair=0.609  QNN=0.692  majority=0.609
+  [CNN_28x28] params=121345  train=200  test=312
+  [FairMLP_4x4] params=55  train=200  test=312
+  [QNN_4x4] params=160  train=200  test=312
+  Fold 2: CNN=0.984  Fair=0.615  QNN=0.663  majority=0.612
+  [CNN_28x28] params=121345  train=200  test=312
+  [FairMLP_4x4] params=55  train=200  test=312
+  [QNN_4x4] params=160  train=200  test=312
+  Fold 3: CNN=0.958  Fair=0.615  QNN=0.923  majority=0.612
+  [CNN_28x28] params=121345  train=200  test=312
+  [FairMLP_4x4] params=55  train=200  test=312
+  [QNN_4x4] params=160  train=200  test=312
+  Fold 4: CNN=0.949  Fair=0.612  QNN=0.641  majority=0.612
+
+Summary: QNN=0.737+/-0.114  Fair=0.612+/-0.003  p=0.0691 (paired_ttest)
+
+============================================================
+Experiment: asterionella vs diaphanosoma  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded asterionella: 1055 images, diaphanosoma: 1089 images
+  Loaded asterionella: 1055 images, diaphanosoma: 1089 images
+  [CNN_28x28] params=121345  train=200  test=429
+  [FairMLP_4x4] params=55  train=200  test=429
+  [QNN_4x4] params=160  train=200  test=429
+  Fold 0: CNN=0.918  Fair=0.636  QNN=0.746  majority=0.508
+  [CNN_28x28] params=121345  train=200  test=429
+  [FairMLP_4x4] params=55  train=200  test=429
+  [QNN_4x4] params=160  train=200  test=429
+  Fold 1: CNN=0.900  Fair=0.510  QNN=0.576  majority=0.508
+  [CNN_28x28] params=121345  train=200  test=429
+  [FairMLP_4x4] params=55  train=200  test=429
+  [QNN_4x4] params=160  train=200  test=429
+  Fold 2: CNN=0.935  Fair=0.576  QNN=0.639  majority=0.508
+  [CNN_28x28] params=121345  train=200  test=429
+  [FairMLP_4x4] params=55  train=200  test=429
+  [QNN_4x4] params=160  train=200  test=429
+  Fold 3: CNN=0.902  Fair=0.536  QNN=0.590  majority=0.508
+  [CNN_28x28] params=121345  train=200  test=428
+  [FairMLP_4x4] params=55  train=200  test=428
+  [QNN_4x4] params=160  train=200  test=428
+  Fold 4: CNN=0.897  Fair=0.505  QNN=0.640  majority=0.507
+
+Summary: QNN=0.638+/-0.067  Fair=0.553+/-0.055  p=0.0057 (paired_ttest)
+
+============================================================
+Experiment: asterionella vs rotifers  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded asterionella: 1055 images, rotifers: 744 images
+  Loaded asterionella: 1055 images, rotifers: 744 images
+  [CNN_28x28] params=121345  train=200  test=360
+  [FairMLP_4x4] params=55  train=200  test=360
+  [QNN_4x4] params=160  train=200  test=360
+  Fold 0: CNN=0.836  Fair=0.586  QNN=0.586  majority=0.586
+  [CNN_28x28] params=121345  train=200  test=360
+  [FairMLP_4x4] params=55  train=200  test=360
+  [QNN_4x4] params=160  train=200  test=360
+  Fold 1: CNN=0.897  Fair=0.583  QNN=0.589  majority=0.586
+  [CNN_28x28] params=121345  train=200  test=360
+  [FairMLP_4x4] params=55  train=200  test=360
+  [QNN_4x4] params=160  train=200  test=360
+  Fold 2: CNN=0.933  Fair=0.575  QNN=0.586  majority=0.586
+  [CNN_28x28] params=121345  train=200  test=360
+  [FairMLP_4x4] params=55  train=200  test=360
+  [QNN_4x4] params=160  train=200  test=360
+  Fold 3: CNN=0.889  Fair=0.586  QNN=0.597  majority=0.586
+  [CNN_28x28] params=121345  train=200  test=359
+  [FairMLP_4x4] params=55  train=200  test=359
+  [QNN_4x4] params=160  train=200  test=359
+  Fold 4: CNN=0.911  Fair=0.437  QNN=0.588  majority=0.588
+
+Summary: QNN=0.589+/-0.005  Fair=0.554+/-0.065  p=0.2831 (paired_ttest)
+
+============================================================
+Experiment: asterionella vs uroglena  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded asterionella: 1055 images, uroglena: 953 images
+  Loaded asterionella: 1055 images, uroglena: 953 images
+  [CNN_28x28] params=121345  train=200  test=402
+  [FairMLP_4x4] params=55  train=200  test=402
+  [QNN_4x4] params=160  train=200  test=402
+  Fold 0: CNN=0.993  Fair=0.567  QNN=0.933  majority=0.525
+  [CNN_28x28] params=121345  train=200  test=402
+  [FairMLP_4x4] params=55  train=200  test=402
+  [QNN_4x4] params=160  train=200  test=402
+  Fold 1: CNN=0.998  Fair=0.756  QNN=0.928  majority=0.525
+  [CNN_28x28] params=121345  train=200  test=402
+  [FairMLP_4x4] params=55  train=200  test=402
+  [QNN_4x4] params=160  train=200  test=402
+  Fold 2: CNN=0.993  Fair=0.729  QNN=0.811  majority=0.525
+  [CNN_28x28] params=121345  train=200  test=401
+  [FairMLP_4x4] params=55  train=200  test=401
+  [QNN_4x4] params=160  train=200  test=401
+  Fold 3: CNN=0.993  Fair=0.419  QNN=0.703  majority=0.526
+  [CNN_28x28] params=121345  train=200  test=401
+  [FairMLP_4x4] params=55  train=200  test=401
+  [QNN_4x4] params=160  train=200  test=401
+  Fold 4: CNN=0.980  Fair=0.499  QNN=0.925  majority=0.526
+
+Summary: QNN=0.860+/-0.101  Fair=0.594+/-0.146  p=0.0133 (paired_ttest)
+
+============================================================
+Experiment: bosmina vs brachionus  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded bosmina: 80 images, brachionus: 137 images
+  Loaded bosmina: 80 images, brachionus: 137 images
+  [CNN_28x28] params=121345  train=173  test=44
+  [FairMLP_4x4] params=55  train=173  test=44
+  [QNN_4x4] params=160  train=173  test=44
+  Fold 0: CNN=0.955  Fair=0.636  QNN=0.864  majority=0.636
+  [CNN_28x28] params=121345  train=173  test=44
+  [FairMLP_4x4] params=55  train=173  test=44
+  [QNN_4x4] params=160  train=173  test=44
+  Fold 1: CNN=0.955  Fair=0.636  QNN=0.886  majority=0.636
+  [CNN_28x28] params=121345  train=174  test=43
+  [FairMLP_4x4] params=55  train=174  test=43
+  [QNN_4x4] params=160  train=174  test=43
+  Fold 2: CNN=0.953  Fair=0.674  QNN=0.767  majority=0.628
+  [CNN_28x28] params=121345  train=174  test=43
+  [FairMLP_4x4] params=55  train=174  test=43
+  [QNN_4x4] params=160  train=174  test=43
+  Fold 3: CNN=0.907  Fair=0.535  QNN=0.465  majority=0.628
+  [CNN_28x28] params=121345  train=174  test=43
+  [FairMLP_4x4] params=55  train=174  test=43
+  [QNN_4x4] params=160  train=174  test=43
+  Fold 4: CNN=0.953  Fair=0.628  QNN=0.814  majority=0.628
+
+Summary: QNN=0.759+/-0.171  Fair=0.622+/-0.052  p=0.0781 (paired_ttest)
+
+============================================================
+Experiment: bosmina vs polyarthra  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded bosmina: 80 images, polyarthra: 80 images
+  Loaded bosmina: 80 images, polyarthra: 80 images
+  [CNN_28x28] params=121345  train=128  test=32
+  [FairMLP_4x4] params=55  train=128  test=32
+  [QNN_4x4] params=160  train=128  test=32
+  Fold 0: CNN=0.781  Fair=0.406  QNN=0.562  majority=0.500
+  [CNN_28x28] params=121345  train=128  test=32
+  [FairMLP_4x4] params=55  train=128  test=32
+  [QNN_4x4] params=160  train=128  test=32
+  Fold 1: CNN=0.906  Fair=0.469  QNN=0.500  majority=0.500
+  [CNN_28x28] params=121345  train=128  test=32
+  [FairMLP_4x4] params=55  train=128  test=32
+  [QNN_4x4] params=160  train=128  test=32
+  Fold 2: CNN=0.844  Fair=0.469  QNN=0.500  majority=0.500
+  [CNN_28x28] params=121345  train=128  test=32
+  [FairMLP_4x4] params=55  train=128  test=32
+  [QNN_4x4] params=160  train=128  test=32
+  Fold 3: CNN=0.875  Fair=0.500  QNN=0.500  majority=0.500
+  [CNN_28x28] params=121345  train=128  test=32
+  [FairMLP_4x4] params=55  train=128  test=32
+  [QNN_4x4] params=160  train=128  test=32
+  Fold 4: CNN=0.969  Fair=0.500  QNN=0.500  majority=0.500
+
+Summary: QNN=0.512+/-0.028  Fair=0.469+/-0.038  p=0.2056 (paired_ttest)
+
+============================================================
+Experiment: brachionus vs synchaeta  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded brachionus: 137 images, synchaeta: 142 images
+  Loaded brachionus: 137 images, synchaeta: 142 images
+  [CNN_28x28] params=121345  train=200  test=56
+  [FairMLP_4x4] params=55  train=200  test=56
+  [QNN_4x4] params=160  train=200  test=56
+  Fold 0: CNN=0.857  Fair=0.571  QNN=0.500  majority=0.500
+  [CNN_28x28] params=121345  train=200  test=56
+  [FairMLP_4x4] params=55  train=200  test=56
+  [QNN_4x4] params=160  train=200  test=56
+  Fold 1: CNN=0.911  Fair=0.607  QNN=0.661  majority=0.500
+  [CNN_28x28] params=121345  train=200  test=56
+  [FairMLP_4x4] params=55  train=200  test=56
+  [QNN_4x4] params=160  train=200  test=56
+  Fold 2: CNN=0.946  Fair=0.482  QNN=0.518  majority=0.518
+  [CNN_28x28] params=121345  train=200  test=56
+  [FairMLP_4x4] params=55  train=200  test=56
+  [QNN_4x4] params=160  train=200  test=56
+  Fold 3: CNN=0.893  Fair=0.482  QNN=0.482  majority=0.518
+  [CNN_28x28] params=121345  train=200  test=55
+  [FairMLP_4x4] params=55  train=200  test=55
+  [QNN_4x4] params=160  train=200  test=55
+  Fold 4: CNN=0.927  Fair=0.509  QNN=0.491  majority=0.509
+
+Summary: QNN=0.530+/-0.074  Fair=0.530+/-0.056  p=0.9978 (paired_ttest)
+
+============================================================
+Experiment: ceratium vs cyclops  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded ceratium: 814 images, cyclops: 866 images
+  Loaded ceratium: 814 images, cyclops: 866 images
+  [CNN_28x28] params=121345  train=200  test=336
+  [FairMLP_4x4] params=55  train=200  test=336
+  [QNN_4x4] params=160  train=200  test=336
+  Fold 0: CNN=0.964  Fair=0.539  QNN=0.506  majority=0.515
+  [CNN_28x28] params=121345  train=200  test=336
+  [FairMLP_4x4] params=55  train=200  test=336
+  [QNN_4x4] params=160  train=200  test=336
+  Fold 1: CNN=0.952  Fair=0.515  QNN=0.509  majority=0.515
+  [CNN_28x28] params=121345  train=200  test=336
+  [FairMLP_4x4] params=55  train=200  test=336
+  [QNN_4x4] params=160  train=200  test=336
+  Fold 2: CNN=0.946  Fair=0.625  QNN=0.491  majority=0.515
+  [CNN_28x28] params=121345  train=200  test=336
+  [FairMLP_4x4] params=55  train=200  test=336
+  [QNN_4x4] params=160  train=200  test=336
+  Fold 3: CNN=0.976  Fair=0.485  QNN=0.485  majority=0.515
+  [CNN_28x28] params=121345  train=200  test=336
+  [FairMLP_4x4] params=55  train=200  test=336
+  [QNN_4x4] params=160  train=200  test=336
+  Fold 4: CNN=0.961  Fair=0.518  QNN=0.485  majority=0.518
+
+Summary: QNN=0.495+/-0.011  Fair=0.536+/-0.053  p=0.1645 (paired_ttest)
+
+============================================================
+Experiment: conochilus vs daphnia  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded conochilus: 264 images, daphnia: 721 images
+  Loaded conochilus: 264 images, daphnia: 721 images
+  [CNN_28x28] params=121345  train=200  test=197
+  [FairMLP_4x4] params=55  train=200  test=197
+  [QNN_4x4] params=160  train=200  test=197
+  Fold 0: CNN=0.888  Fair=0.731  QNN=0.731  majority=0.731
+  [CNN_28x28] params=121345  train=200  test=197
+  [FairMLP_4x4] params=55  train=200  test=197
+  [QNN_4x4] params=160  train=200  test=197
+  Fold 1: CNN=0.853  Fair=0.731  QNN=0.731  majority=0.731
+  [CNN_28x28] params=121345  train=200  test=197
+  [FairMLP_4x4] params=55  train=200  test=197
+  [QNN_4x4] params=160  train=200  test=197
+  Fold 2: CNN=0.848  Fair=0.701  QNN=0.731  majority=0.731
+  [CNN_28x28] params=121345  train=200  test=197
+  [FairMLP_4x4] params=55  train=200  test=197
+  [QNN_4x4] params=160  train=200  test=197
+  Fold 3: CNN=0.878  Fair=0.604  QNN=0.731  majority=0.731
+  [CNN_28x28] params=121345  train=200  test=197
+  [FairMLP_4x4] params=55  train=200  test=197
+  [QNN_4x4] params=160  train=200  test=197
+  Fold 4: CNN=0.848  Fair=0.736  QNN=0.741  majority=0.736
+
+Summary: QNN=0.733+/-0.005  Fair=0.701+/-0.056  p=0.2517 (paired_ttest)
+
+============================================================
+Experiment: conochilus vs fragilaria  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded conochilus: 264 images, fragilaria: 306 images
+  Loaded conochilus: 264 images, fragilaria: 306 images
+  [CNN_28x28] params=121345  train=200  test=114
+  [FairMLP_4x4] params=55  train=200  test=114
+  [QNN_4x4] params=160  train=200  test=114
+  Fold 0: CNN=1.000  Fair=0.553  QNN=0.781  majority=0.535
+  [CNN_28x28] params=121345  train=200  test=114
+  [FairMLP_4x4] params=55  train=200  test=114
+  [QNN_4x4] params=160  train=200  test=114
+  Fold 1: CNN=0.956  Fair=0.544  QNN=0.553  majority=0.535
+  [CNN_28x28] params=121345  train=200  test=114
+  [FairMLP_4x4] params=55  train=200  test=114
+  [QNN_4x4] params=160  train=200  test=114
+  Fold 2: CNN=0.947  Fair=0.561  QNN=0.684  majority=0.535
+  [CNN_28x28] params=121345  train=200  test=114
+  [FairMLP_4x4] params=55  train=200  test=114
+  [QNN_4x4] params=160  train=200  test=114
+  Fold 3: CNN=0.974  Fair=0.474  QNN=0.693  majority=0.535
+  [CNN_28x28] params=121345  train=200  test=114
+  [FairMLP_4x4] params=55  train=200  test=114
+  [QNN_4x4] params=160  train=200  test=114
+  Fold 4: CNN=0.956  Fair=0.544  QNN=0.544  majority=0.544
+
+Summary: QNN=0.651+/-0.101  Fair=0.535+/-0.035  p=0.0778 (paired_ttest)
+
+============================================================
+Experiment: conochilus vs keratella_cochlearis  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded conochilus: 264 images, keratella_cochlearis: 112 images
+  Loaded conochilus: 264 images, keratella_cochlearis: 112 images
+  [CNN_28x28] params=121345  train=200  test=76
+  [FairMLP_4x4] params=55  train=200  test=76
+  [QNN_4x4] params=160  train=200  test=76
+  Fold 0: CNN=0.974  Fair=0.697  QNN=0.697  majority=0.697
+  [CNN_28x28] params=121345  train=200  test=75
+  [FairMLP_4x4] params=55  train=200  test=75
+  [QNN_4x4] params=160  train=200  test=75
+  Fold 1: CNN=0.987  Fair=0.707  QNN=0.707  majority=0.707
+  [CNN_28x28] params=121345  train=200  test=75
+  [FairMLP_4x4] params=55  train=200  test=75
+  [QNN_4x4] params=160  train=200  test=75
+  Fold 2: CNN=0.987  Fair=0.707  QNN=0.707  majority=0.707
+  [CNN_28x28] params=121345  train=200  test=75
+  [FairMLP_4x4] params=55  train=200  test=75
+  [QNN_4x4] params=160  train=200  test=75
+  Fold 3: CNN=0.987  Fair=0.707  QNN=0.707  majority=0.707
+  [CNN_28x28] params=121345  train=200  test=75
+  [FairMLP_4x4] params=55  train=200  test=75
+  [QNN_4x4] params=160  train=200  test=75
+  Fold 4: CNN=0.987  Fair=0.627  QNN=0.693  majority=0.693
+
+Summary: QNN=0.702+/-0.006  Fair=0.689+/-0.035  p=0.3739 (paired_ttest)
+
+============================================================
+Experiment: conochilus vs trichocerca  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded conochilus: 264 images, trichocerca: 255 images
+  Loaded conochilus: 264 images, trichocerca: 255 images
+  [CNN_28x28] params=121345  train=200  test=104
+  [FairMLP_4x4] params=55  train=200  test=104
+  [QNN_4x4] params=160  train=200  test=104
+  Fold 0: CNN=0.981  Fair=0.500  QNN=0.673  majority=0.510
+  [CNN_28x28] params=121345  train=200  test=104
+  [FairMLP_4x4] params=55  train=200  test=104
+  [QNN_4x4] params=160  train=200  test=104
+  Fold 1: CNN=0.962  Fair=0.452  QNN=0.500  majority=0.510
+  [CNN_28x28] params=121345  train=200  test=104
+  [FairMLP_4x4] params=55  train=200  test=104
+  [QNN_4x4] params=160  train=200  test=104
+  Fold 2: CNN=0.952  Fair=0.567  QNN=0.510  majority=0.510
+  [CNN_28x28] params=121345  train=200  test=104
+  [FairMLP_4x4] params=55  train=200  test=104
+  [QNN_4x4] params=160  train=200  test=104
+  Fold 3: CNN=0.971  Fair=0.510  QNN=0.510  majority=0.510
+  [CNN_28x28] params=121345  train=200  test=103
+  [FairMLP_4x4] params=55  train=200  test=103
+  [QNN_4x4] params=160  train=200  test=103
+  Fold 4: CNN=0.981  Fair=0.485  QNN=0.485  majority=0.505
+
+Summary: QNN=0.536+/-0.078  Fair=0.503+/-0.042  p=0.4479 (paired_ttest)
+
+============================================================
+Experiment: cyclops vs kellicottia  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded cyclops: 866 images, kellicottia: 519 images
+  Loaded cyclops: 866 images, kellicottia: 519 images
+  [CNN_28x28] params=121345  train=200  test=277
+  [FairMLP_4x4] params=55  train=200  test=277
+  [QNN_4x4] params=160  train=200  test=277
+  Fold 0: CNN=0.816  Fair=0.628  QNN=0.628  majority=0.628
+  [CNN_28x28] params=121345  train=200  test=277
+  [FairMLP_4x4] params=55  train=200  test=277
+  [QNN_4x4] params=160  train=200  test=277
+  Fold 1: CNN=0.841  Fair=0.625  QNN=0.621  majority=0.625
+  [CNN_28x28] params=121345  train=200  test=277
+  [FairMLP_4x4] params=55  train=200  test=277
+  [QNN_4x4] params=160  train=200  test=277
+  Fold 2: CNN=0.838  Fair=0.625  QNN=0.625  majority=0.625
+  [CNN_28x28] params=121345  train=200  test=277
+  [FairMLP_4x4] params=55  train=200  test=277
+  [QNN_4x4] params=160  train=200  test=277
+  Fold 3: CNN=0.863  Fair=0.625  QNN=0.625  majority=0.625
+  [CNN_28x28] params=121345  train=200  test=277
+  [FairMLP_4x4] params=55  train=200  test=277
+  [QNN_4x4] params=160  train=200  test=277
+  Fold 4: CNN=0.791  Fair=0.581  QNN=0.625  majority=0.625
+
+Summary: QNN=0.625+/-0.003  Fair=0.617+/-0.020  p=0.4213 (paired_ttest)
+
+============================================================
+Experiment: daphnia vs kellicottia  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded daphnia: 721 images, kellicottia: 519 images
+  Loaded daphnia: 721 images, kellicottia: 519 images
+  [CNN_28x28] params=121345  train=200  test=248
+  [FairMLP_4x4] params=55  train=200  test=248
+  [QNN_4x4] params=160  train=200  test=248
+  Fold 0: CNN=0.851  Fair=0.585  QNN=0.585  majority=0.585
+  [CNN_28x28] params=121345  train=200  test=248
+  [FairMLP_4x4] params=55  train=200  test=248
+  [QNN_4x4] params=160  train=200  test=248
+  Fold 1: CNN=0.919  Fair=0.573  QNN=0.581  majority=0.581
+  [CNN_28x28] params=121345  train=200  test=248
+  [FairMLP_4x4] params=55  train=200  test=248
+  [QNN_4x4] params=160  train=200  test=248
+  Fold 2: CNN=0.915  Fair=0.581  QNN=0.581  majority=0.581
+  [CNN_28x28] params=121345  train=200  test=248
+  [FairMLP_4x4] params=55  train=200  test=248
+  [QNN_4x4] params=160  train=200  test=248
+  Fold 3: CNN=0.919  Fair=0.581  QNN=0.581  majority=0.581
+  [CNN_28x28] params=121345  train=200  test=248
+  [FairMLP_4x4] params=55  train=200  test=248
+  [QNN_4x4] params=160  train=200  test=248
+  Fold 4: CNN=0.911  Fair=0.492  QNN=0.581  majority=0.581
+
+Summary: QNN=0.581+/-0.002  Fair=0.562+/-0.039  p=0.3285 (paired_ttest)
+
+============================================================
+Experiment: daphnia vs rotifers  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded daphnia: 721 images, rotifers: 744 images
+  Loaded daphnia: 721 images, rotifers: 744 images
+  [CNN_28x28] params=121345  train=200  test=293
+  [FairMLP_4x4] params=55  train=200  test=293
+  [QNN_4x4] params=160  train=200  test=293
+  Fold 0: CNN=0.945  Fair=0.556  QNN=0.884  majority=0.505
+  [CNN_28x28] params=121345  train=200  test=293
+  [FairMLP_4x4] params=55  train=200  test=293
+  [QNN_4x4] params=160  train=200  test=293
+  Fold 1: CNN=0.966  Fair=0.604  QNN=0.816  majority=0.509
+  [CNN_28x28] params=121345  train=200  test=293
+  [FairMLP_4x4] params=55  train=200  test=293
+  [QNN_4x4] params=160  train=200  test=293
+  Fold 2: CNN=0.986  Fair=0.857  QNN=0.874  majority=0.509
+  [CNN_28x28] params=121345  train=200  test=293
+  [FairMLP_4x4] params=55  train=200  test=293
+  [QNN_4x4] params=160  train=200  test=293
+  Fold 3: CNN=0.966  Fair=0.437  QNN=0.635  majority=0.509
+  [CNN_28x28] params=121345  train=200  test=293
+  [FairMLP_4x4] params=55  train=200  test=293
+  [QNN_4x4] params=160  train=200  test=293
+  Fold 4: CNN=0.976  Fair=0.601  QNN=0.870  majority=0.509
+
+Summary: QNN=0.816+/-0.105  Fair=0.611+/-0.153  p=0.0173 (paired_ttest)
+
+============================================================
+Experiment: dinobryon vs nauplius  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded dinobryon: 3321 images, nauplius: 1507 images
+  Loaded dinobryon: 3321 images, nauplius: 1507 images
+  [CNN_28x28] params=121345  train=200  test=966
+  [FairMLP_4x4] params=55  train=200  test=966
+  [QNN_4x4] params=160  train=200  test=966
+  Fold 0: CNN=0.688  Fair=0.688  QNN=0.688  majority=0.688
+  [CNN_28x28] params=121345  train=200  test=966
+  [FairMLP_4x4] params=55  train=200  test=966
+  [QNN_4x4] params=160  train=200  test=966
+  Fold 1: CNN=0.793  Fair=0.687  QNN=0.687  majority=0.687
+  [CNN_28x28] params=121345  train=200  test=966
+  [FairMLP_4x4] params=55  train=200  test=966
+  [QNN_4x4] params=160  train=200  test=966
+  Fold 2: CNN=0.846  Fair=0.687  QNN=0.687  majority=0.687
+  [CNN_28x28] params=121345  train=200  test=965
+  [FairMLP_4x4] params=55  train=200  test=965
+  [QNN_4x4] params=160  train=200  test=965
+  Fold 3: CNN=0.784  Fair=0.688  QNN=0.688  majority=0.688
+  [CNN_28x28] params=121345  train=200  test=965
+  [FairMLP_4x4] params=55  train=200  test=965
+  [QNN_4x4] params=160  train=200  test=965
+  Fold 4: CNN=0.792  Fair=0.302  QNN=0.688  majority=0.688
+
+Summary: QNN=0.688+/-0.000  Fair=0.611+/-0.173  p=0.3739 (paired_ttest)
+
+============================================================
+Experiment: eudiaptomus vs kellicottia  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded eudiaptomus: 537 images, kellicottia: 519 images
+  Loaded eudiaptomus: 537 images, kellicottia: 519 images
+  [CNN_28x28] params=121345  train=200  test=212
+  [FairMLP_4x4] params=55  train=200  test=212
+  [QNN_4x4] params=160  train=200  test=212
+  Fold 0: CNN=0.868  Fair=0.533  QNN=0.514  majority=0.509
+  [CNN_28x28] params=121345  train=200  test=211
+  [FairMLP_4x4] params=55  train=200  test=211
+  [QNN_4x4] params=160  train=200  test=211
+  Fold 1: CNN=0.858  Fair=0.578  QNN=0.526  majority=0.512
+  [CNN_28x28] params=121345  train=200  test=211
+  [FairMLP_4x4] params=55  train=200  test=211
+  [QNN_4x4] params=160  train=200  test=211
+  Fold 2: CNN=0.867  Fair=0.550  QNN=0.536  majority=0.507
+  [CNN_28x28] params=121345  train=200  test=211
+  [FairMLP_4x4] params=55  train=200  test=211
+  [QNN_4x4] params=160  train=200  test=211
+  Fold 3: CNN=0.882  Fair=0.507  QNN=0.498  majority=0.507
+  [CNN_28x28] params=121345  train=200  test=211
+  [FairMLP_4x4] params=55  train=200  test=211
+  [QNN_4x4] params=160  train=200  test=211
+  Fold 4: CNN=0.896  Fair=0.498  QNN=0.507  majority=0.507
+
+Summary: QNN=0.516+/-0.015  Fair=0.533+/-0.033  p=0.1638 (paired_ttest)
+
+============================================================
+Experiment: eudiaptomus vs uroglena  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded eudiaptomus: 537 images, uroglena: 953 images
+  Loaded eudiaptomus: 537 images, uroglena: 953 images
+  [CNN_28x28] params=121345  train=200  test=298
+  [FairMLP_4x4] params=55  train=200  test=298
+  [QNN_4x4] params=160  train=200  test=298
+  Fold 0: CNN=0.997  Fair=0.638  QNN=0.956  majority=0.638
+  [CNN_28x28] params=121345  train=200  test=298
+  [FairMLP_4x4] params=55  train=200  test=298
+  [QNN_4x4] params=160  train=200  test=298
+  Fold 1: CNN=0.993  Fair=0.638  QNN=0.943  majority=0.638
+  [CNN_28x28] params=121345  train=200  test=298
+  [FairMLP_4x4] params=55  train=200  test=298
+  [QNN_4x4] params=160  train=200  test=298
+  Fold 2: CNN=0.990  Fair=0.768  QNN=0.980  majority=0.641
+  [CNN_28x28] params=121345  train=200  test=298
+  [FairMLP_4x4] params=55  train=200  test=298
+  [QNN_4x4] params=160  train=200  test=298
+  Fold 3: CNN=0.997  Fair=0.644  QNN=0.987  majority=0.641
+  [CNN_28x28] params=121345  train=200  test=298
+  [FairMLP_4x4] params=55  train=200  test=298
+  [QNN_4x4] params=160  train=200  test=298
+  Fold 4: CNN=0.990  Fair=0.641  QNN=0.909  majority=0.641
+
+Summary: QNN=0.955+/-0.031  Fair=0.666+/-0.057  p=0.0002 (paired_ttest)
+
+============================================================
+Experiment: fragilaria vs keratella_cochlearis  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded fragilaria: 306 images, keratella_cochlearis: 112 images
+  Loaded fragilaria: 306 images, keratella_cochlearis: 112 images
+  [CNN_28x28] params=121345  train=200  test=84
+  [FairMLP_4x4] params=55  train=200  test=84
+  [QNN_4x4] params=160  train=200  test=84
+  Fold 0: CNN=0.810  Fair=0.738  QNN=0.738  majority=0.738
+  [CNN_28x28] params=121345  train=200  test=84
+  [FairMLP_4x4] params=55  train=200  test=84
+  [QNN_4x4] params=160  train=200  test=84
+  Fold 1: CNN=0.726  Fair=0.726  QNN=0.726  majority=0.726
+  [CNN_28x28] params=121345  train=200  test=84
+  [FairMLP_4x4] params=55  train=200  test=84
+  [QNN_4x4] params=160  train=200  test=84
+  Fold 2: CNN=0.833  Fair=0.726  QNN=0.726  majority=0.726
+  [CNN_28x28] params=121345  train=200  test=83
+  [FairMLP_4x4] params=55  train=200  test=83
+  [QNN_4x4] params=160  train=200  test=83
+  Fold 3: CNN=0.735  Fair=0.735  QNN=0.735  majority=0.735
+  [CNN_28x28] params=121345  train=200  test=83
+  [FairMLP_4x4] params=55  train=200  test=83
+  [QNN_4x4] params=160  train=200  test=83
+  Fold 4: CNN=0.735  Fair=0.313  QNN=0.735  majority=0.735
+
+Summary: QNN=0.732+/-0.006  Fair=0.648+/-0.187  p=0.3739 (paired_ttest)
+
+============================================================
+Experiment: keratella_quadrata vs paradileptus  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded keratella_quadrata: 420 images, paradileptus: 424 images
+  Loaded keratella_quadrata: 420 images, paradileptus: 424 images
+  [CNN_28x28] params=121345  train=200  test=169
+  [FairMLP_4x4] params=55  train=200  test=169
+  [QNN_4x4] params=160  train=200  test=169
+  Fold 0: CNN=0.822  Fair=0.521  QNN=0.592  majority=0.503
+  [CNN_28x28] params=121345  train=200  test=169
+  [FairMLP_4x4] params=55  train=200  test=169
+  [QNN_4x4] params=160  train=200  test=169
+  Fold 1: CNN=0.805  Fair=0.485  QNN=0.580  majority=0.503
+  [CNN_28x28] params=121345  train=200  test=169
+  [FairMLP_4x4] params=55  train=200  test=169
+  [QNN_4x4] params=160  train=200  test=169
+  Fold 2: CNN=0.799  Fair=0.586  QNN=0.657  majority=0.503
+  [CNN_28x28] params=121345  train=200  test=169
+  [FairMLP_4x4] params=55  train=200  test=169
+  [QNN_4x4] params=160  train=200  test=169
+  Fold 3: CNN=0.852  Fair=0.550  QNN=0.592  majority=0.503
+  [CNN_28x28] params=121345  train=200  test=168
+  [FairMLP_4x4] params=55  train=200  test=168
+  [QNN_4x4] params=160  train=200  test=168
+  Fold 4: CNN=0.792  Fair=0.500  QNN=0.625  majority=0.500
+
+Summary: QNN=0.609+/-0.032  Fair=0.528+/-0.040  p=0.0044 (paired_ttest)
+
+============================================================
+Experiment: keratella_quadrata vs rotifers  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded keratella_quadrata: 420 images, rotifers: 744 images
+  Loaded keratella_quadrata: 420 images, rotifers: 744 images
+  [CNN_28x28] params=121345  train=200  test=233
+  [FairMLP_4x4] params=55  train=200  test=233
+  [QNN_4x4] params=160  train=200  test=233
+  Fold 0: CNN=0.807  Fair=0.639  QNN=0.639  majority=0.639
+  [CNN_28x28] params=121345  train=200  test=233
+  [FairMLP_4x4] params=55  train=200  test=233
+  [QNN_4x4] params=160  train=200  test=233
+  Fold 1: CNN=0.828  Fair=0.639  QNN=0.639  majority=0.639
+  [CNN_28x28] params=121345  train=200  test=233
+  [FairMLP_4x4] params=55  train=200  test=233
+  [QNN_4x4] params=160  train=200  test=233
+  Fold 2: CNN=0.845  Fair=0.639  QNN=0.639  majority=0.639
+  [CNN_28x28] params=121345  train=200  test=233
+  [FairMLP_4x4] params=55  train=200  test=233
+  [QNN_4x4] params=160  train=200  test=233
+  Fold 3: CNN=0.871  Fair=0.601  QNN=0.639  majority=0.639
+  [CNN_28x28] params=121345  train=200  test=232
+  [FairMLP_4x4] params=55  train=200  test=232
+  [QNN_4x4] params=160  train=200  test=232
+  Fold 4: CNN=0.819  Fair=0.638  QNN=0.638  majority=0.638
+
+Summary: QNN=0.639+/-0.001  Fair=0.631+/-0.017  p=0.3739 (paired_ttest)
+
+============================================================
+Experiment: keratella_quadrata vs uroglena  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded keratella_quadrata: 420 images, uroglena: 953 images
+  Loaded keratella_quadrata: 420 images, uroglena: 953 images
+  [CNN_28x28] params=121345  train=200  test=275
+  [FairMLP_4x4] params=55  train=200  test=275
+  [QNN_4x4] params=160  train=200  test=275
+  Fold 0: CNN=0.967  Fair=0.695  QNN=0.698  majority=0.695
+  [CNN_28x28] params=121345  train=200  test=275
+  [FairMLP_4x4] params=55  train=200  test=275
+  [QNN_4x4] params=160  train=200  test=275
+  Fold 1: CNN=0.985  Fair=0.695  QNN=0.695  majority=0.695
+  [CNN_28x28] params=121345  train=200  test=275
+  [FairMLP_4x4] params=55  train=200  test=275
+  [QNN_4x4] params=160  train=200  test=275
+  Fold 2: CNN=0.975  Fair=0.695  QNN=0.695  majority=0.695
+  [CNN_28x28] params=121345  train=200  test=274
+  [FairMLP_4x4] params=55  train=200  test=274
+  [QNN_4x4] params=160  train=200  test=274
+  Fold 3: CNN=0.982  Fair=0.701  QNN=0.818  majority=0.693
+  [CNN_28x28] params=121345  train=200  test=274
+  [FairMLP_4x4] params=55  train=200  test=274
+  [QNN_4x4] params=160  train=200  test=274
+  Fold 4: CNN=0.971  Fair=0.693  QNN=0.693  majority=0.693
+
+Summary: QNN=0.720+/-0.055  Fair=0.696+/-0.003  p=0.3576 (paired_ttest)
+
+============================================================
+Experiment: leptodora vs paradileptus  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded leptodora: 203 images, paradileptus: 424 images
+  Loaded leptodora: 203 images, paradileptus: 424 images
+  [CNN_28x28] params=121345  train=200  test=126
+  [FairMLP_4x4] params=55  train=200  test=126
+  [QNN_4x4] params=160  train=200  test=126
+  Fold 0: CNN=0.905  Fair=0.698  QNN=0.675  majority=0.675
+  [CNN_28x28] params=121345  train=200  test=126
+  [FairMLP_4x4] params=55  train=200  test=126
+  [QNN_4x4] params=160  train=200  test=126
+  Fold 1: CNN=0.913  Fair=0.675  QNN=0.675  majority=0.675
+  [CNN_28x28] params=121345  train=200  test=125
+  [FairMLP_4x4] params=55  train=200  test=125
+  [QNN_4x4] params=160  train=200  test=125
+  Fold 2: CNN=0.864  Fair=0.832  QNN=0.672  majority=0.672
+  [CNN_28x28] params=121345  train=200  test=125
+  [FairMLP_4x4] params=55  train=200  test=125
+  [QNN_4x4] params=160  train=200  test=125
+  Fold 3: CNN=0.920  Fair=0.776  QNN=0.680  majority=0.680
+  [CNN_28x28] params=121345  train=200  test=125
+  [FairMLP_4x4] params=55  train=200  test=125
+  [QNN_4x4] params=160  train=200  test=125
+  Fold 4: CNN=0.944  Fair=0.680  QNN=0.680  majority=0.680
+
+Summary: QNN=0.676+/-0.004  Fair=0.732+/-0.069  p=0.1493 (paired_ttest)
+
+============================================================
+Experiment: maybe_cyano vs nauplius  (5-fold CV, Q_SAMPLES=200)
+============================================================
+  Loaded maybe_cyano: 1364 images, nauplius: 1507 images
+  Loaded maybe_cyano: 1364 images, nauplius: 1507 images
+  [CNN_28x28] params=121345  train=200  test=575
+  [FairMLP_4x4] params=55  train=200  test=575
+  [QNN_4x4] params=160  train=200  test=575
+  Fold 0: CNN=0.854  Fair=0.642  QNN=0.534  majority=0.525
+  [CNN_28x28] params=121345  train=200  test=574
+  [FairMLP_4x4] params=55  train=200  test=574
+  [QNN_4x4] params=160  train=200  test=574
+  Fold 1: CNN=0.887  Fair=0.531  QNN=0.526  majority=0.524
+  [CNN_28x28] params=121345  train=200  test=574
+  [FairMLP_4x4] params=55  train=200  test=574
+  [QNN_4x4] params=160  train=200  test=574
+  Fold 2: CNN=0.904  Fair=0.638  QNN=0.540  majority=0.524
+  [CNN_28x28] params=121345  train=200  test=574
+  [FairMLP_4x4] params=55  train=200  test=574
+  [QNN_4x4] params=160  train=200  test=574
+  Fold 3: CNN=0.828  Fair=0.476  QNN=0.526  majority=0.524
+  [CNN_28x28] params=121345  train=200  test=574
+  [FairMLP_4x4] params=55  train=200  test=574
+  [QNN_4x4] params=160  train=200  test=574
+  Fold 4: CNN=0.866  Fair=0.530  QNN=0.528  majority=0.526
+
+Summary: QNN=0.531+/-0.006  Fair=0.563+/-0.073  p=0.3471 (paired_ttest)
+
+Holm-Bonferroni correction applied across 25 pairs:
+  aphanizomenon_vs_leptodora: raw_p=0.5117 -> corrected_p=1.0000  ns
+  asplanchna_vs_uroglena: raw_p=0.0691 -> corrected_p=1.0000  ns
+  asterionella_vs_diaphanosoma: raw_p=0.0057 -> corrected_p=0.1317  ns
+  asterionella_vs_rotifers: raw_p=0.2831 -> corrected_p=1.0000  ns
+  asterionella_vs_uroglena: raw_p=0.0133 -> corrected_p=0.2918  ns
+  bosmina_vs_brachionus: raw_p=0.0781 -> corrected_p=1.0000  ns
+  bosmina_vs_polyarthra: raw_p=0.2056 -> corrected_p=1.0000  ns
+  brachionus_vs_synchaeta: raw_p=0.9978 -> corrected_p=0.9978  ns
+  ceratium_vs_cyclops: raw_p=0.1645 -> corrected_p=1.0000  ns
+  conochilus_vs_daphnia: raw_p=0.2517 -> corrected_p=1.0000  ns
+  conochilus_vs_fragilaria: raw_p=0.0778 -> corrected_p=1.0000  ns
+  conochilus_vs_keratella_cochlearis: raw_p=0.3739 -> corrected_p=1.0000  ns
+  conochilus_vs_trichocerca: raw_p=0.4479 -> corrected_p=1.0000  ns
+  cyclops_vs_kellicottia: raw_p=0.4213 -> corrected_p=1.0000  ns
+  daphnia_vs_kellicottia: raw_p=0.3285 -> corrected_p=1.0000  ns
+  daphnia_vs_rotifers: raw_p=0.0173 -> corrected_p=0.3628  ns
+  dinobryon_vs_nauplius: raw_p=0.3739 -> corrected_p=1.0000  ns
+  eudiaptomus_vs_kellicottia: raw_p=0.1638 -> corrected_p=1.0000  ns
+  eudiaptomus_vs_uroglena: raw_p=0.0002 -> corrected_p=0.0056  *
+  fragilaria_vs_keratella_cochlearis: raw_p=0.3739 -> corrected_p=1.0000  ns
+  keratella_quadrata_vs_paradileptus: raw_p=0.0044 -> corrected_p=0.1067  ns
+  keratella_quadrata_vs_rotifers: raw_p=0.3739 -> corrected_p=1.0000  ns
+  keratella_quadrata_vs_uroglena: raw_p=0.3576 -> corrected_p=1.0000  ns
+  leptodora_vs_paradileptus: raw_p=0.1493 -> corrected_p=1.0000  ns
+  maybe_cyano_vs_nauplius: raw_p=0.3471 -> corrected_p=1.0000  ns
+
+============================================================
+AGGREGATE TEST: QNN vs Fair Classical across 25 pairs
+============================================================
+  Mean delta (QNN - Fair): +0.0623
+  Std delta:               0.0883
+  95% CI on delta:         [+0.0302, +0.0985]
+  Effect size (Cohen's d): 0.71
+  One-sample t-test:       t=3.526, p=0.0017
+  Wilcoxon signed-rank:    p=0.0007
+  QNN wins: 20, losses: 5, ties: 0
+
+All experiments completed.
+  Per-fold results:   phase4/results/experiment_results.csv
+  Summary:            phase4/results/experiment_summary.csv
+  Aggregate test:     phase4/results/aggregate_test.json
+  Config:             phase4/results/experiment_config.json
+  Confusion matrices: phase4/results/confusion_matrices/
+Completed: Binary Comparison (5-fold CV, 25 pairs) (elapsed 12156s)
+Cooling down for 60 seconds...
+
+--- Phase 6: K-Scaling Benchmarks (5-fold CV) ---
+Command: docker run --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=2.0 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase5/results:/app/phase5/results quantum-plankton python phase5/run_experiments.py
+Started: 2026-03-06 01:14:16
+2026-03-06 07:14:19.556360: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Phase 5 Rigorous K-Scaling Experiments
+  K_VALUES=[2, 3, 4, 5, 8, 12, 16]  N_FOLDS=5  N_REPEATS=1
+  BASE_SEED=42  Q_SAMPLES=400
+
+============================================================
+K=2 Scaling Experiment (5-fold CV, Q_SAMPLES=400)
+============================================================
+  Top-2 categories: ['dinobryon', 'nauplius']  (counts: [3321, 1507])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+    PCA explained variance ratio (sum): 0.648
+  [QNN_k2] params=64  train=400  test=966
+  [FairMLP_k2] params=21  train=400  test=966
+  [CNN_k2] params=86786  train=400  test=966
+  Fold 0: QNN=0.689  Fair=0.688  CNN=0.769  majority=0.688
+    PCA explained variance ratio (sum): 0.644
+  [QNN_k2] params=64  train=400  test=966
+  [FairMLP_k2] params=21  train=400  test=966
+  [CNN_k2] params=86786  train=400  test=966
+  Fold 1: QNN=0.696  Fair=0.687  CNN=0.846  majority=0.687
+    PCA explained variance ratio (sum): 0.645
+  [QNN_k2] params=64  train=400  test=966
+  [FairMLP_k2] params=21  train=400  test=966
+  [CNN_k2] params=86786  train=400  test=966
+  Fold 2: QNN=0.761  Fair=0.687  CNN=0.719  majority=0.687
+    PCA explained variance ratio (sum): 0.652
+  [QNN_k2] params=64  train=400  test=965
+  [FairMLP_k2] params=21  train=400  test=965
+  [CNN_k2] params=86786  train=400  test=965
+  Fold 3: QNN=0.709  Fair=0.688  CNN=0.816  majority=0.688
+    PCA explained variance ratio (sum): 0.641
+  [QNN_k2] params=64  train=400  test=965
+  [FairMLP_k2] params=21  train=400  test=965
+  [CNN_k2] params=86786  train=400  test=965
+  Fold 4: QNN=0.696  Fair=0.688  CNN=0.768  majority=0.688
+
+============================================================
+K=3 Scaling Experiment (5-fold CV, Q_SAMPLES=400)
+============================================================
+  Top-3 categories: ['dinobryon', 'nauplius', 'maybe_cyano']  (counts: [3321, 1507, 1364])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+    PCA explained variance ratio (sum): 0.662
+  [QNN_k3] params=64  train=400  test=1239
+  [FairMLP_k3] params=23  train=400  test=1239
+  [CNN_k3] params=86819  train=400  test=1239
+  Fold 0: QNN=0.530  Fair=0.575  CNN=0.726  majority=0.537
+    PCA explained variance ratio (sum): 0.661
+  [QNN_k3] params=64  train=400  test=1239
+  [FairMLP_k3] params=23  train=400  test=1239
+  [CNN_k3] params=86819  train=400  test=1239
+  Fold 1: QNN=0.545  Fair=0.536  CNN=0.726  majority=0.536
+    PCA explained variance ratio (sum): 0.656
+  [QNN_k3] params=64  train=400  test=1238
+  [FairMLP_k3] params=23  train=400  test=1238
+  [CNN_k3] params=86819  train=400  test=1238
+  Fold 2: QNN=0.548  Fair=0.597  CNN=0.662  majority=0.536
+    PCA explained variance ratio (sum): 0.677
+  [QNN_k3] params=64  train=400  test=1238
+  [FairMLP_k3] params=23  train=400  test=1238
+  [CNN_k3] params=86819  train=400  test=1238
+  Fold 3: QNN=0.555  Fair=0.536  CNN=0.624  majority=0.536
+    PCA explained variance ratio (sum): 0.666
+  [QNN_k3] params=64  train=400  test=1238
+  [FairMLP_k3] params=23  train=400  test=1238
+  [CNN_k3] params=86819  train=400  test=1238
+  Fold 4: QNN=0.546  Fair=0.536  CNN=0.641  majority=0.536
+
+============================================================
+K=4 Scaling Experiment (5-fold CV, Q_SAMPLES=400)
+============================================================
+  Top-4 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma']  (counts: [3321, 1507, 1364, 1089])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+    PCA explained variance ratio (sum): 0.682
+  [QNN_k4] params=64  train=400  test=1457
+  [FairMLP_k4] params=25  train=400  test=1457
+  [CNN_k4] params=86852  train=400  test=1457
+  Fold 0: QNN=0.456  Fair=0.490  CNN=0.712  majority=0.456
+    PCA explained variance ratio (sum): 0.682
+  [QNN_k4] params=64  train=400  test=1456
+  [FairMLP_k4] params=25  train=400  test=1456
+  [CNN_k4] params=86852  train=400  test=1456
+  Fold 1: QNN=0.446  Fair=0.456  CNN=0.714  majority=0.456
+    PCA explained variance ratio (sum): 0.676
+  [QNN_k4] params=64  train=400  test=1456
+  [FairMLP_k4] params=25  train=400  test=1456
+  [CNN_k4] params=86852  train=400  test=1456
+  Fold 2: QNN=0.481  Fair=0.458  CNN=0.703  majority=0.456
+    PCA explained variance ratio (sum): 0.697
+  [QNN_k4] params=64  train=400  test=1456
+  [FairMLP_k4] params=25  train=400  test=1456
+  [CNN_k4] params=86852  train=400  test=1456
+  Fold 3: QNN=0.460  Fair=0.456  CNN=0.686  majority=0.456
+    PCA explained variance ratio (sum): 0.685
+  [QNN_k4] params=64  train=400  test=1456
+  [FairMLP_k4] params=25  train=400  test=1456
+  [CNN_k4] params=86852  train=400  test=1456
+  Fold 4: QNN=0.461  Fair=0.528  CNN=0.692  majority=0.456
+
+============================================================
+K=5 Scaling Experiment (5-fold CV, Q_SAMPLES=400)
+============================================================
+  Top-5 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma', 'asterionella']  (counts: [3321, 1507, 1364, 1089, 1055])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+  Class 4 (asterionella): 1055 images loaded
+    PCA explained variance ratio (sum): 0.685
+  [QNN_k5] params=64  train=400  test=1668
+  [FairMLP_k5] params=27  train=400  test=1668
+  [CNN_k5] params=86885  train=400  test=1668
+  Fold 0: QNN=0.418  Fair=0.427  CNN=0.594  majority=0.399
+    PCA explained variance ratio (sum): 0.694
+  [QNN_k5] params=64  train=400  test=1667
+  [FairMLP_k5] params=27  train=400  test=1667
+  [CNN_k5] params=86885  train=400  test=1667
+  Fold 1: QNN=0.274  Fair=0.398  CNN=0.619  majority=0.398
+    PCA explained variance ratio (sum): 0.688
+  [QNN_k5] params=64  train=400  test=1667
+  [FairMLP_k5] params=27  train=400  test=1667
+  [CNN_k5] params=86885  train=400  test=1667
+  Fold 2: QNN=0.389  Fair=0.403  CNN=0.607  majority=0.398
+    PCA explained variance ratio (sum): 0.699
+  [QNN_k5] params=64  train=400  test=1667
+  [FairMLP_k5] params=27  train=400  test=1667
+  [CNN_k5] params=86885  train=400  test=1667
+  Fold 3: QNN=0.418  Fair=0.398  CNN=0.596  majority=0.398
+    PCA explained variance ratio (sum): 0.693
+  [QNN_k5] params=64  train=400  test=1667
+  [FairMLP_k5] params=27  train=400  test=1667
+  [CNN_k5] params=86885  train=400  test=1667
+  Fold 4: QNN=0.389  Fair=0.398  CNN=0.574  majority=0.398
+
+============================================================
+K=8 Scaling Experiment (5-fold CV, Q_SAMPLES=400)
+============================================================
+  Top-8 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma', 'asterionella', 'uroglena', 'cyclops', 'ceratium']  (counts: [3321, 1507, 1364, 1089, 1055, 953, 866, 814])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+  Class 4 (asterionella): 1055 images loaded
+  Class 5 (uroglena): 953 images loaded
+  Class 6 (cyclops): 866 images loaded
+  Class 7 (ceratium): 814 images loaded
+    PCA explained variance ratio (sum): 0.713
+  [QNN_k8] params=64  train=400  test=2194
+  [FairMLP_k8] params=33  train=400  test=2194
+  [CNN_k8] params=86984  train=400  test=2194
+  Fold 0: QNN=0.303  Fair=0.323  CNN=0.521  majority=0.303
+    PCA explained variance ratio (sum): 0.726
+  [QNN_k8] params=64  train=400  test=2194
+  [FairMLP_k8] params=33  train=400  test=2194
+  [CNN_k8] params=86984  train=400  test=2194
+  Fold 1: QNN=0.290  Fair=0.303  CNN=0.556  majority=0.303
+    PCA explained variance ratio (sum): 0.725
+  [QNN_k8] params=64  train=400  test=2194
+  [FairMLP_k8] params=33  train=400  test=2194
+  [CNN_k8] params=86984  train=400  test=2194
+  Fold 2: QNN=0.303  Fair=0.359  CNN=0.558  majority=0.303
+    PCA explained variance ratio (sum): 0.731
+  [QNN_k8] params=64  train=400  test=2194
+  [FairMLP_k8] params=33  train=400  test=2194
+  [CNN_k8] params=86984  train=400  test=2194
+  Fold 3: QNN=0.301  Fair=0.303  CNN=0.521  majority=0.303
+    PCA explained variance ratio (sum): 0.729
+  [QNN_k8] params=64  train=400  test=2193
+  [FairMLP_k8] params=33  train=400  test=2193
+  [CNN_k8] params=86984  train=400  test=2193
+  Fold 4: QNN=0.314  Fair=0.303  CNN=0.548  majority=0.303
+
+============================================================
+K=12 Scaling Experiment (5-fold CV, Q_SAMPLES=400)
+============================================================
+  Top-12 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma', 'asterionella', 'uroglena', 'cyclops', 'ceratium', 'rotifers', 'daphnia', 'asplanchna', 'eudiaptomus']  (counts: [3321, 1507, 1364, 1089, 1055, 953, 866, 814, 744, 721, 607, 537])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+  Class 4 (asterionella): 1055 images loaded
+  Class 5 (uroglena): 953 images loaded
+  Class 6 (cyclops): 866 images loaded
+  Class 7 (ceratium): 814 images loaded
+  Class 8 (rotifers): 744 images loaded
+  Class 9 (daphnia): 721 images loaded
+  Class 10 (asplanchna): 607 images loaded
+  Class 11 (eudiaptomus): 537 images loaded
+    PCA explained variance ratio (sum): 0.714
+  [QNN_k12] params=64  train=400  test=2716
+  [FairMLP_k12] params=41  train=400  test=2716
+  [CNN_k12] params=87116  train=400  test=2716
+  Fold 0: QNN=0.245  Fair=0.245  CNN=0.464  majority=0.245
+    PCA explained variance ratio (sum): 0.725
+  [QNN_k12] params=64  train=400  test=2716
+  [FairMLP_k12] params=41  train=400  test=2716
+  [CNN_k12] params=87116  train=400  test=2716
+  Fold 1: QNN=0.244  Fair=0.244  CNN=0.458  majority=0.244
+    PCA explained variance ratio (sum): 0.723
+  [QNN_k12] params=64  train=400  test=2716
+  [FairMLP_k12] params=41  train=400  test=2716
+  [CNN_k12] params=87116  train=400  test=2716
+  Fold 2: QNN=0.244  Fair=0.308  CNN=0.452  majority=0.244
+    PCA explained variance ratio (sum): 0.728
+  [QNN_k12] params=64  train=400  test=2715
+  [FairMLP_k12] params=41  train=400  test=2715
+  [CNN_k12] params=87116  train=400  test=2715
+  Fold 3: QNN=0.189  Fair=0.245  CNN=0.425  majority=0.245
+    PCA explained variance ratio (sum): 0.720
+  [QNN_k12] params=64  train=400  test=2715
+  [FairMLP_k12] params=41  train=400  test=2715
+  [CNN_k12] params=87116  train=400  test=2715
+  Fold 4: QNN=0.245  Fair=0.245  CNN=0.459  majority=0.245
+
+============================================================
+K=16 Scaling Experiment (5-fold CV, Q_SAMPLES=400)
+============================================================
+  Top-16 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma', 'asterionella', 'uroglena', 'cyclops', 'ceratium', 'rotifers', 'daphnia', 'asplanchna', 'eudiaptomus', 'kellicottia', 'paradileptus', 'keratella_quadrata', 'filament']  (counts: [3321, 1507, 1364, 1089, 1055, 953, 866, 814, 744, 721, 607, 537, 519, 424, 420, 405])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+  Class 4 (asterionella): 1055 images loaded
+  Class 5 (uroglena): 953 images loaded
+  Class 6 (cyclops): 866 images loaded
+  Class 7 (ceratium): 814 images loaded
+  Class 8 (rotifers): 744 images loaded
+  Class 9 (daphnia): 721 images loaded
+  Class 10 (asplanchna): 607 images loaded
+  Class 11 (eudiaptomus): 537 images loaded
+  Class 12 (kellicottia): 519 images loaded
+  Class 13 (paradileptus): 424 images loaded
+  Class 14 (keratella_quadrata): 420 images loaded
+  Class 15 (filament): 405 images loaded
+    PCA explained variance ratio (sum): 0.722
+  [QNN_k16] params=64  train=400  test=3070
+  [FairMLP_k16] params=49  train=400  test=3070
+  [CNN_k16] params=87248  train=400  test=3070
+  Fold 0: QNN=0.217  Fair=0.217  CNN=0.408  majority=0.217
+    PCA explained variance ratio (sum): 0.726
+  [QNN_k16] params=64  train=400  test=3069
+  [FairMLP_k16] params=49  train=400  test=3069
+  [CNN_k16] params=87248  train=400  test=3069
+  Fold 1: QNN=0.216  Fair=0.216  CNN=0.399  majority=0.216
+    PCA explained variance ratio (sum): 0.726
+  [QNN_k16] params=64  train=400  test=3069
+  [FairMLP_k16] params=49  train=400  test=3069
+  [CNN_k16] params=87248  train=400  test=3069
+  Fold 2: QNN=0.138  Fair=0.222  CNN=0.384  majority=0.216
+    PCA explained variance ratio (sum): 0.734
+  [QNN_k16] params=64  train=400  test=3069
+  [FairMLP_k16] params=49  train=400  test=3069
+  [CNN_k16] params=87248  train=400  test=3069
+  Fold 3: QNN=0.216  Fair=0.216  CNN=0.389  majority=0.216
+    PCA explained variance ratio (sum): 0.724
+  [QNN_k16] params=64  train=400  test=3069
+  [FairMLP_k16] params=49  train=400  test=3069
+  [CNN_k16] params=87248  train=400  test=3069
+  Fold 4: QNN=0.128  Fair=0.216  CNN=0.366  majority=0.216
+
+Holm-Bonferroni correction across 7 K values:
+  K=2: raw_p=0.1647 -> corrected_p=1.0000  ns
+  K=3: raw_p=0.4827 -> corrected_p=0.4827  ns
+  K=4: raw_p=0.3376 -> corrected_p=0.6752  ns
+  K=5: raw_p=0.3338 -> corrected_p=1.0000  ns
+  K=8: raw_p=0.2378 -> corrected_p=0.9514  ns
+  K=12: raw_p=0.1792 -> corrected_p=0.8962  ns
+  K=16: raw_p=0.1770 -> corrected_p=1.0000  ns
+
+--- Final Summary ---
+    k  qnn_acc_mean  fair_acc_mean  cnn_acc_mean
+0   2      0.710229       0.687863      0.783558
+1   3      0.544737       0.556040      0.675694
+2   4      0.460652       0.477680      0.701413
+3   5      0.377514       0.404988      0.598009
+4   8      0.302125       0.317986      0.540706
+5  12      0.233537       0.257326      0.451464
+6  16      0.183042       0.217451      0.388960
+Plot saved to phase5/results/k_scaling_comparison.png
+
+All results saved to phase5/results/
+Completed: K-Scaling Benchmarks (5-fold CV) (elapsed 3252s)
+Cooling down for 60 seconds...
+
+--- Phase 7: Scientific Comparison (nested CV) ---
+Command: docker run --rm --platform linux/amd64 -e PYTHONUNBUFFERED=1 -e TF_THREADS=1 -e EPOCH_COOL=3.0 -e THERMAL_SLEEP=60 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase5/results:/app/phase5/results quantum-plankton python phase5/scientific_comparison.py
+Started: 2026-03-06 02:09:28
+2026-03-06 08:09:31.905306: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+Phase 5 Scientific Comparison (Nested CV)
+  K_VALUES=[2, 3, 4, 5, 8]  N_FOLDS=5  N_REPEATS=1
+  BASE_SEED=42  Q_SAMPLES=400  SMOKE=False
+
+============================================================
+K=2 NESTED CV EXPERIMENT (5x3, Q_SAMPLES=400)
+============================================================
+  Top-2 categories: ['dinobryon', 'nauplius']  (counts: [3321, 1507])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+
+--- Outer Fold 0 (repeat 0) ---
+    [Fold 0] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 0] Best quantum params: {'n_layers': 1, 'learning_rate': 0.05} (Inner Val Acc: 0.7325)
+    [Fold 0] Tuning classical hyperparameters (Inner CV)...
+    [Fold 0] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.7700)
+  Fold 0 Final: Q_acc=0.718, C_acc=0.766
+
+--- Outer Fold 1 (repeat 0) ---
+    [Fold 1] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 1] Best quantum params: {'n_layers': 1, 'learning_rate': 0.1} (Inner Val Acc: 0.7175)
+    [Fold 1] Tuning classical hyperparameters (Inner CV)...
+    [Fold 1] Best classical params: {'hidden_units': 1, 'learning_rate': 0.05} (Inner Val Acc: 0.7101)
+  Fold 1 Final: Q_acc=0.704, C_acc=0.687
+
+--- Outer Fold 2 (repeat 0) ---
+    [Fold 2] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 2] Best quantum params: {'n_layers': 1, 'learning_rate': 0.1} (Inner Val Acc: 0.7675)
+    [Fold 2] Tuning classical hyperparameters (Inner CV)...
+    [Fold 2] Best classical params: {'hidden_units': 1, 'learning_rate': 0.1} (Inner Val Acc: 0.7025)
+  Fold 2 Final: Q_acc=0.704, C_acc=0.687
+
+--- Outer Fold 3 (repeat 0) ---
+    [Fold 3] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 3] Best quantum params: {'n_layers': 3, 'learning_rate': 0.05} (Inner Val Acc: 0.7299)
+    [Fold 3] Tuning classical hyperparameters (Inner CV)...
+    [Fold 3] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.7324)
+  Fold 3 Final: Q_acc=0.707, C_acc=0.721
+
+--- Outer Fold 4 (repeat 0) ---
+    [Fold 4] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 4] Best quantum params: {'n_layers': 1, 'learning_rate': 0.1} (Inner Val Acc: 0.7300)
+    [Fold 4] Tuning classical hyperparameters (Inner CV)...
+    [Fold 4] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.7025)
+  Fold 4 Final: Q_acc=0.715, C_acc=0.736
+
+============================================================
+K=3 NESTED CV EXPERIMENT (5x3, Q_SAMPLES=400)
+============================================================
+  Top-3 categories: ['dinobryon', 'nauplius', 'maybe_cyano']  (counts: [3321, 1507, 1364])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+
+--- Outer Fold 0 (repeat 0) ---
+    [Fold 0] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 0] Best quantum params: {'n_layers': 3, 'learning_rate': 0.05} (Inner Val Acc: 0.5876)
+    [Fold 0] Tuning classical hyperparameters (Inner CV)...
+    [Fold 0] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.5799)
+  Fold 0 Final: Q_acc=0.551, C_acc=0.537
+
+--- Outer Fold 1 (repeat 0) ---
+    [Fold 1] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 1] Best quantum params: {'n_layers': 1, 'learning_rate': 0.1} (Inner Val Acc: 0.5649)
+    [Fold 1] Tuning classical hyperparameters (Inner CV)...
+    [Fold 1] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.5674)
+  Fold 1 Final: Q_acc=0.568, C_acc=0.584
+
+--- Outer Fold 2 (repeat 0) ---
+    [Fold 2] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 2] Best quantum params: {'n_layers': 1, 'learning_rate': 0.05} (Inner Val Acc: 0.5851)
+    [Fold 2] Tuning classical hyperparameters (Inner CV)...
+    [Fold 2] Best classical params: {'hidden_units': 4, 'learning_rate': 0.1} (Inner Val Acc: 0.5675)
+  Fold 2 Final: Q_acc=0.565, C_acc=0.536
+
+--- Outer Fold 3 (repeat 0) ---
+    [Fold 3] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 3] Best quantum params: {'n_layers': 2, 'learning_rate': 0.1} (Inner Val Acc: 0.5724)
+    [Fold 3] Tuning classical hyperparameters (Inner CV)...
+    [Fold 3] Best classical params: {'hidden_units': 4, 'learning_rate': 0.1} (Inner Val Acc: 0.5700)
+  Fold 3 Final: Q_acc=0.554, C_acc=0.535
+
+--- Outer Fold 4 (repeat 0) ---
+    [Fold 4] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 4] Best quantum params: {'n_layers': 1, 'learning_rate': 0.1} (Inner Val Acc: 0.5850)
+    [Fold 4] Tuning classical hyperparameters (Inner CV)...
+    [Fold 4] Best classical params: {'hidden_units': 4, 'learning_rate': 0.1} (Inner Val Acc: 0.5851)
+  Fold 4 Final: Q_acc=0.568, C_acc=0.536
+
+============================================================
+K=4 NESTED CV EXPERIMENT (5x3, Q_SAMPLES=400)
+============================================================
+  Top-4 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma']  (counts: [3321, 1507, 1364, 1089])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+
+--- Outer Fold 0 (repeat 0) ---
+    [Fold 0] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 0] Best quantum params: {'n_layers': 2, 'learning_rate': 0.1} (Inner Val Acc: 0.5250)
+    [Fold 0] Tuning classical hyperparameters (Inner CV)...
+    [Fold 0] Best classical params: {'hidden_units': 4, 'learning_rate': 0.1} (Inner Val Acc: 0.5999)
+  Fold 0 Final: Q_acc=0.491, C_acc=0.574
+
+--- Outer Fold 1 (repeat 0) ---
+    [Fold 1] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 1] Best quantum params: {'n_layers': 2, 'learning_rate': 0.01} (Inner Val Acc: 0.4975)
+    [Fold 1] Tuning classical hyperparameters (Inner CV)...
+    [Fold 1] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.5800)
+  Fold 1 Final: Q_acc=0.458, C_acc=0.456
+
+--- Outer Fold 2 (repeat 0) ---
+    [Fold 2] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 2] Best quantum params: {'n_layers': 2, 'learning_rate': 0.05} (Inner Val Acc: 0.5275)
+    [Fold 2] Tuning classical hyperparameters (Inner CV)...
+    [Fold 2] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.5900)
+  Fold 2 Final: Q_acc=0.459, C_acc=0.456
+
+--- Outer Fold 3 (repeat 0) ---
+    [Fold 3] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 3] Best quantum params: {'n_layers': 2, 'learning_rate': 0.01} (Inner Val Acc: 0.5000)
+    [Fold 3] Tuning classical hyperparameters (Inner CV)...
+    [Fold 3] Best classical params: {'hidden_units': 1, 'learning_rate': 0.05} (Inner Val Acc: 0.5676)
+  Fold 3 Final: Q_acc=0.486, C_acc=0.456
+
+--- Outer Fold 4 (repeat 0) ---
+    [Fold 4] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 4] Best quantum params: {'n_layers': 3, 'learning_rate': 0.1} (Inner Val Acc: 0.4700)
+    [Fold 4] Tuning classical hyperparameters (Inner CV)...
+    [Fold 4] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.5874)
+  Fold 4 Final: Q_acc=0.467, C_acc=0.568
+
+============================================================
+K=5 NESTED CV EXPERIMENT (5x3, Q_SAMPLES=400)
+============================================================
+  Top-5 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma', 'asterionella']  (counts: [3321, 1507, 1364, 1089, 1055])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+  Class 4 (asterionella): 1055 images loaded
+
+--- Outer Fold 0 (repeat 0) ---
+    [Fold 0] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 0] Best quantum params: {'n_layers': 1, 'learning_rate': 0.01} (Inner Val Acc: 0.4450)
+    [Fold 0] Tuning classical hyperparameters (Inner CV)...
+    [Fold 0] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.5449)
+  Fold 0 Final: Q_acc=0.421, C_acc=0.470
+
+--- Outer Fold 1 (repeat 0) ---
+    [Fold 1] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 1] Best quantum params: {'n_layers': 2, 'learning_rate': 0.05} (Inner Val Acc: 0.4250)
+    [Fold 1] Tuning classical hyperparameters (Inner CV)...
+    [Fold 1] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.4650)
+  Fold 1 Final: Q_acc=0.406, C_acc=0.504
+
+--- Outer Fold 2 (repeat 0) ---
+    [Fold 2] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 2] Best quantum params: {'n_layers': 2, 'learning_rate': 0.05} (Inner Val Acc: 0.4451)
+    [Fold 2] Tuning classical hyperparameters (Inner CV)...
+    [Fold 2] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.5475)
+  Fold 2 Final: Q_acc=0.401, C_acc=0.529
+
+--- Outer Fold 3 (repeat 0) ---
+    [Fold 3] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 3] Best quantum params: {'n_layers': 2, 'learning_rate': 0.05} (Inner Val Acc: 0.4225)
+    [Fold 3] Tuning classical hyperparameters (Inner CV)...
+    [Fold 3] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.4825)
+  Fold 3 Final: Q_acc=0.416, C_acc=0.398
+
+--- Outer Fold 4 (repeat 0) ---
+    [Fold 4] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 4] Best quantum params: {'n_layers': 3, 'learning_rate': 0.1} (Inner Val Acc: 0.4175)
+    [Fold 4] Tuning classical hyperparameters (Inner CV)...
+    [Fold 4] Best classical params: {'hidden_units': 2, 'learning_rate': 0.1} (Inner Val Acc: 0.5373)
+  Fold 4 Final: Q_acc=0.402, C_acc=0.398
+
+============================================================
+K=8 NESTED CV EXPERIMENT (5x3, Q_SAMPLES=400)
+============================================================
+  Top-8 categories: ['dinobryon', 'nauplius', 'maybe_cyano', 'diaphanosoma', 'asterionella', 'uroglena', 'cyclops', 'ceratium']  (counts: [3321, 1507, 1364, 1089, 1055, 953, 866, 814])
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+  Class 2 (maybe_cyano): 1364 images loaded
+  Class 3 (diaphanosoma): 1089 images loaded
+  Class 4 (asterionella): 1055 images loaded
+  Class 5 (uroglena): 953 images loaded
+  Class 6 (cyclops): 866 images loaded
+  Class 7 (ceratium): 814 images loaded
+
+--- Outer Fold 0 (repeat 0) ---
+    [Fold 0] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 0] Best quantum params: {'n_layers': 3, 'learning_rate': 0.1} (Inner Val Acc: 0.3576)
+    [Fold 0] Tuning classical hyperparameters (Inner CV)...
+    [Fold 0] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.4199)
+  Fold 0 Final: Q_acc=0.308, C_acc=0.473
+
+--- Outer Fold 1 (repeat 0) ---
+    [Fold 1] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 1] Best quantum params: {'n_layers': 3, 'learning_rate': 0.1} (Inner Val Acc: 0.3474)
+    [Fold 1] Tuning classical hyperparameters (Inner CV)...
+    [Fold 1] Best classical params: {'hidden_units': 4, 'learning_rate': 0.1} (Inner Val Acc: 0.3877)
+  Fold 1 Final: Q_acc=0.356, C_acc=0.303
+
+--- Outer Fold 2 (repeat 0) ---
+    [Fold 2] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 2] Best quantum params: {'n_layers': 3, 'learning_rate': 0.01} (Inner Val Acc: 0.3500)
+    [Fold 2] Tuning classical hyperparameters (Inner CV)...
+    [Fold 2] Best classical params: {'hidden_units': 4, 'learning_rate': 0.1} (Inner Val Acc: 0.4127)
+  Fold 2 Final: Q_acc=0.306, C_acc=0.303
+
+--- Outer Fold 3 (repeat 0) ---
+    [Fold 3] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 3] Best quantum params: {'n_layers': 2, 'learning_rate': 0.05} (Inner Val Acc: 0.3549)
+    [Fold 3] Tuning classical hyperparameters (Inner CV)...
+    [Fold 3] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.3775)
+  Fold 3 Final: Q_acc=0.315, C_acc=0.313
+
+--- Outer Fold 4 (repeat 0) ---
+    [Fold 4] Tuning quantum hyperparameters (Inner CV)...
+    [Fold 4] Best quantum params: {'n_layers': 3, 'learning_rate': 0.01} (Inner Val Acc: 0.3325)
+    [Fold 4] Tuning classical hyperparameters (Inner CV)...
+    [Fold 4] Best classical params: {'hidden_units': 4, 'learning_rate': 0.05} (Inner Val Acc: 0.3973)
+  Fold 4 Final: Q_acc=0.309, C_acc=0.303
+
+Rigorous Experiment Complete. Results in phase5/results_rigorous
+Completed: Scientific Comparison (nested CV) (elapsed 50112s)
+Cooling down for 60 seconds...
+
+--- Phase 8: Saliency Maps ---
+Command: docker run --rm --platform linux/amd64 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase6/results:/app/phase6/results quantum-plankton python phase6/quantum_saliency.py
+Started: 2026-03-06 16:05:40
+2026-03-06 22:05:44.238182: I tensorflow/core/platform/cpu_feature_guard.cc:151] This TensorFlow binary is optimized with oneAPI Deep Neural Network Library (oneDNN) to use the following CPU instructions in performance-critical operations:  AVX2 FMA
+To enable them in other operations, rebuild TensorFlow with the appropriate compiler flags.
+--- Phase 6: Quantum Interpretability ---
+  Top-2 categories: ['dinobryon', 'nauplius']  (counts: [3321, 1507])
+Categories: ['dinobryon', 'nauplius']
+  Class 0 (dinobryon): 3321 images loaded
+  Class 1 (nauplius): 1507 images loaded
+Training model on stratified subset...
+  Subset: 200 samples, class distribution: {0: 138, 1: 62}
+Epoch 1/5
+1/7 [===>..........................] - ETA: 11s - loss: 0.6541 - accuracy: 0.56252/7 [=======>......................] - ETA: 3s - loss: 0.6623 - accuracy: 0.5781 3/7 [===========>..................] - ETA: 2s - loss: 0.6328 - accuracy: 0.64584/7 [================>.............] - ETA: 2s - loss: 0.6206 - accuracy: 0.64845/7 [====================>.........] - ETA: 1s - loss: 0.6069 - accuracy: 0.68126/7 [========================>.....] - ETA: 0s - loss: 0.5938 - accuracy: 0.69797/7 [==============================] - ETA: 0s - loss: 0.5912 - accuracy: 0.70007/7 [==============================] - 6s 633ms/step - loss: 0.5912 - accuracy: 0.7000
+Epoch 2/5
+1/7 [===>..........................] - ETA: 4s - loss: 0.6003 - accuracy: 0.65622/7 [=======>......................] - ETA: 3s - loss: 0.5950 - accuracy: 0.71883/7 [===========>..................] - ETA: 2s - loss: 0.5899 - accuracy: 0.71884/7 [================>.............] - ETA: 2s - loss: 0.5788 - accuracy: 0.73445/7 [====================>.........] - ETA: 1s - loss: 0.5874 - accuracy: 0.71256/7 [========================>.....] - ETA: 0s - loss: 0.5952 - accuracy: 0.71357/7 [==============================] - ETA: 0s - loss: 0.5882 - accuracy: 0.72007/7 [==============================] - 4s 628ms/step - loss: 0.5882 - accuracy: 0.7200
+Epoch 3/5
+1/7 [===>..........................] - ETA: 4s - loss: 0.5403 - accuracy: 0.75002/7 [=======>......................] - ETA: 3s - loss: 0.5881 - accuracy: 0.68753/7 [===========>..................] - ETA: 2s - loss: 0.5998 - accuracy: 0.68754/7 [================>.............] - ETA: 2s - loss: 0.5910 - accuracy: 0.68755/7 [====================>.........] - ETA: 1s - loss: 0.5815 - accuracy: 0.70636/7 [========================>.....] - ETA: 0s - loss: 0.5771 - accuracy: 0.70837/7 [==============================] - ETA: 0s - loss: 0.5850 - accuracy: 0.69507/7 [==============================] - 4s 632ms/step - loss: 0.5850 - accuracy: 0.6950
+Epoch 4/5
+1/7 [===>..........................] - ETA: 4s - loss: 0.5291 - accuracy: 0.84382/7 [=======>......................] - ETA: 3s - loss: 0.5368 - accuracy: 0.82813/7 [===========>..................] - ETA: 2s - loss: 0.5546 - accuracy: 0.79174/7 [================>.............] - ETA: 2s - loss: 0.5750 - accuracy: 0.73445/7 [====================>.........] - ETA: 1s - loss: 0.5766 - accuracy: 0.70636/7 [========================>.....] - ETA: 0s - loss: 0.5855 - accuracy: 0.69277/7 [==============================] - ETA: 0s - loss: 0.5873 - accuracy: 0.69507/7 [==============================] - 4s 628ms/step - loss: 0.5873 - accuracy: 0.6950
+Epoch 5/5
+1/7 [===>..........................] - ETA: 4s - loss: 0.6049 - accuracy: 0.68752/7 [=======>......................] - ETA: 3s - loss: 0.6030 - accuracy: 0.71883/7 [===========>..................] - ETA: 2s - loss: 0.6044 - accuracy: 0.68754/7 [================>.............] - ETA: 2s - loss: 0.6093 - accuracy: 0.69535/7 [====================>.........] - ETA: 1s - loss: 0.5935 - accuracy: 0.70006/7 [========================>.....] - ETA: 0s - loss: 0.5817 - accuracy: 0.70837/7 [==============================] - ETA: 0s - loss: 0.5840 - accuracy: 0.70507/7 [==============================] - 4s 621ms/step - loss: 0.5840 - accuracy: 0.7050
+Selecting representative test examples for saliency...
+  Selected 5 examples: ['correct_dinobryon_high_conf', 'correct_nauplius_high_conf', 'correct_dinobryon_low_conf', 'correct_nauplius_low_conf', 'misclassified']
+Generating 5 saliency maps...
+Saved 5 saliency maps to phase6/results/
+Completed: Saliency Maps (elapsed 35s)
+Cooling down for 60 seconds...
+
+--- Phase 9: Theoretical Rigor (Expressibility + Entanglement) ---
+Command: docker run --rm --platform linux/amd64 -v /Users/enrique/Desktop/fun_repos/quantum-mnist/phase7:/app/phase7 quantum-plankton python phase7/quantum_rigor.py
+Started: 2026-03-06 16:07:15
+Running Expressibility & Entanglement Analysis
+Architecture: Phase 5 production PQC (17 qubits, 4x4 data grid + readout)
+Global seed: 42
+Fidelity samples: 500, Entanglement samples: 50
+Layer sweep: [1, 2, 3]
+
+Layers: 1 | Expr: 0.0000 [0.0000, 0.0000] | Ent: 0.5306 [0.5081, 0.5525]
+Layers: 2 | Expr: 0.0000 [0.0000, 0.0000] | Ent: 0.7504 [0.7329, 0.7673]
+Layers: 3 | Expr: 0.0000 [0.0000, 0.0000] | Ent: 0.8686 [0.8552, 0.8806]
+
+--- Phase 7 Summary (17-qubit production PQC, 95% CIs) ---
+L=1: Expr=0.0000 95%CI[0.0000,0.0000], Ent=0.5306 95%CI[0.5081,0.5525]
+L=2: Expr=0.0000 95%CI[0.0000,0.0000], Ent=0.7504 95%CI[0.7329,0.7673]
+L=3: Expr=0.0000 95%CI[0.0000,0.0000], Ent=0.8686 95%CI[0.8552,0.8806]
+Completed: Theoretical Rigor (Expressibility + Entanglement) (elapsed 826s)
+Cooling down for 60 seconds...
+
+--- Phase 10: Publish Results ---
+Command: docker run --rm --platform linux/amd64 -v /Users/enrique/Desktop/fun_repos/quantum-mnist:/app quantum-plankton python tools/publish_results.py
+Started: 2026-03-06 16:22:01
+Traceback (most recent call last):
+  File "tools/publish_results.py", line 178, in <module>
+    publish_phase4()
+  File "tools/publish_results.py", line 117, in publish_phase4
+    df_sub = df[cols].copy()
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/frame.py", line 3464, in __getitem__
+    indexer = self.loc._get_listlike_indexer(key, axis=1)[1]
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/indexing.py", line 1314, in _get_listlike_indexer
+    self._validate_read_indexer(keyarr, indexer, axis)
+  File "/usr/local/lib/python3.8/dist-packages/pandas/core/indexing.py", line 1374, in _validate_read_indexer
+    raise KeyError(f"None of [{key}] are in the [{axis_name}]")
+KeyError: "None of [Index(['pair', 'qnn_acc_mean', 'fair_acc_mean', 'p_value', 'significant'], dtype='object')] are in the [columns]"
