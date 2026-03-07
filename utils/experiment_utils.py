@@ -68,7 +68,7 @@ r"""
                                                             __/                                                                                                         
                                                                                                     
                                             by Julian Henry                                                        
-"""
+r"""
 
 """Shared utilities for scientifically rigorous experiment execution.
 

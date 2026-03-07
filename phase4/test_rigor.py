@@ -68,7 +68,7 @@ r"""
                                                             __/                                                                                                         
                                                                                                     
                                             by Julian Henry                                                        
-"""
+r"""
 
 """Comprehensive scientific rigor tests for Phase 4.
 

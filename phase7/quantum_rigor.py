@@ -68,7 +68,7 @@ r"""
                                                             __/                                                                                                         
                                                                                                     
                                             by Julian Henry                                                        
-"""
+r"""
 
 import numpy as np
 import cirq

@@ -68,7 +68,7 @@ r"""
                                                             __/                                                                                                         
                                                                                                     
                                             by Julian Henry                                                        
-"""
+r"""
 
 """Phase 4: Rigorous binary quantum vs. classical comparison.
 
