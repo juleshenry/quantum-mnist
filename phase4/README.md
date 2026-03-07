@@ -1,6 +1,6 @@
 # Phase 4: Generalized Quantum vs. Classical Deep Learning
 
-In this phase, we compare the generalized quantum algorithm's performance against established classical deep learning architectures. This includes a high-capacity CNN, transfer learning via MobileNetV2, and a "Fair Classical" model designed to match the parameter constraints of the quantum circuit.
+This phase evaluates the generalized quantum algorithm against several classical baselines spanning high-capacity convolutional models, transfer learning, and a deliberately parameter-constrained multilayer perceptron. The objective is not only to compare raw accuracy, but also to distinguish the effects of representational capacity, input resolution, and parameter budget.
 
 ### 1. Hybrid Comparison Pipeline
 The Phase 4 evaluation employs a multi-resolution benchmarking strategy to isolate the effects of architectural capacity versus parameter efficiency.
@@ -66,28 +66,15 @@ graph TD
 
 ## 1. Classical Neural Architectures
 
-We evaluate three classical baselines to establish benchmarks across different scales of complexity.
+Three classical baselines are used to contextualize the quantum results across markedly different modeling regimes. `MobileNetV2` represents a high-capacity transfer-learning baseline, `SmallCNN` provides a task-specific convolutional reference model, and the `Fair Classical` multilayer perceptron is intentionally restricted to approximately the same parameter count as the quantum model.
 
-### A. MobileNetV2 (Transfer Learning)
-Leveraging a state-of-the-art architecture pretrained on ImageNet to identify complex morphological features in plankton.
-- **Base**: MobileNetV2 (Frozen convolutional layers).
-- **Head**: Custom classification head [Dropout(0.3) -> Linear(35)].
-- **Input**: 128x128 RGB images.
-- **Complexity**: High (Benefit of feature extraction from millions of images).
+| Model | Role in study | Input | Architecture summary | Approx. complexity |
+| :--- | :--- | :--- | :--- | :--- |
+| `MobileNetV2` | High-capacity transfer baseline | `128x128` RGB | Frozen pretrained backbone with a custom dropout-plus-linear classification head | High |
+| `SmallCNN` | Task-specific convolutional baseline | `128x128` RGB | Four convolutional blocks followed by a 256-unit fully connected layer with dropout | ~2.3M parameters |
+| `Fair Classical` MLP | Parameter-matched baseline | `4x4` grayscale | `Flatten(16) -> Dense(3, ReLU) -> Dense(1, Sigmoid)` | 55 parameters |
 
-### B. SmallCNN (Custom)
-A custom convolutional neural network designed specifically for this dataset.
-- **Layers**: 4x [Conv2D -> ReLU -> MaxPool].
-- **Channel Depth**: 32, 64, 128, 128.
-- **Fully Connected**: 256 units with 50% Dropout.
-- **Input**: 128x128 RGB images.
-- **Complexity**: Medium (~2.3M parameters).
-
-### C. "Fair" Classical Baseline
-A minimal Multi-Layer Perceptron (MLP) that matches the low parameter count (~48) of the Quantum Neural Network.
-- **Architecture**: Flatten(16) -> Dense(3 units, ReLU) -> Dense(1 unit, Sigmoid) = 55 parameters.
-- **Input**: 4x4 Grayscale images.
-- **Purpose**: To provide a direct comparison of "Parameter Efficiency" between classical and quantum regimes.
+The purpose of the parameter-matched model is especially important. It provides a direct comparison between classical and quantum learners under nearly identical information and parameter constraints, rather than allowing the classical model to dominate purely through scale.
 
 ---
 
@@ -142,30 +129,22 @@ graph TD
     %% Node-specific styles removed for theme compatibility
 ```
 
-### Key Quantum Components:
-*   **Angle Encoding:** Preserves 4-bit grayscale intensity by mapping pixel values to $Ry$ rotations.
-*   **Linear Entanglement:** A chain of $CZ$ gates allows for spatial feature correlation across the 4x4 grid.
-*   **Multi-Axis Interactions:** Uses parameterized $XX$, $ZZ$, and $YY$ interactions between data qubits and the readout qubit to capture non-commuting correlations.
-*   **Optimization:** Trained using the **Hinge Loss** function, which is naturally suited for the $[-1, 1]$ expectation value of the quantum readout.
+The QNN uses **Angle Encoding**, mapping each normalized pixel intensity to an $Ry$ rotation so that grayscale information is preserved rather than thresholded away. A linear chain of $CZ$ gates introduces spatial correlations across the 4x4 grid, after which parameterized $XX$, $ZZ$, and $YY$ interactions couple the data qubits to the readout qubit. Optimization is performed with **Hinge loss**, which aligns naturally with the $[-1, 1]$ expectation-value output of the quantum measurement.
 
 ---
 
 ## 3. Image Resolution & Normalization
 
-Unlike Phase 2, which primarily used a consistent 16x16 resolution for both classical and quantum models, Phase 4 employs a multi-resolution strategy to evaluate models at their intended scale:
+Unlike Phase 2, which largely operated at a single working resolution, Phase 4 adopts a multi-resolution evaluation strategy so that each model is assessed in a regime appropriate to its design.
 
-*   **128x128 RGB:** Used for high-capacity classical models (**MobileNetV2** and **SmallCNN**). This preserves color information and fine morphological details (e.g., cilia, vacuoles) that are lost at lower resolutions.
-*   **28x28 Grayscale:** Used for the standard custom **CNN** baseline to provide a middle-ground benchmark.
-*   **4x4 Grayscale:** Used for both the **Fair Classical** MLP and the **QNN**. 
-    *   For the QNN, this resolution is a technical constraint of simulating 16 qubits.
-    *   For the Fair Classical model, this ensures a "fair" comparison by forcing the classical model to learn from the exact same information density as the quantum model.
+High-capacity classical models (`MobileNetV2` and `SmallCNN`) receive `128x128` RGB inputs, preserving color and fine morphological detail. The intermediate CNN baseline uses `28x28` grayscale inputs to provide a mid-scale reference point. The `Fair Classical` MLP and the QNN both operate on `4x4` grayscale inputs. For the QNN, this is a practical consequence of simulating a 16-qubit data register; for the classical MLP, it is a deliberate constraint introduced to ensure that both models receive the same information density.
 
-All resolutions utilize **Bilinear Interpolation** for resizing to minimize aliasing artifacts during downsampling.
+All image resizing is performed with **bilinear interpolation** to reduce aliasing artifacts during downsampling.
 
-## 4. Swiss Paper Benchmark (EAWAG Greifensee)
-The dataset used in this project originated from the research by **Kyathanahally et al. (2021)**. Their state-of-the-art models (DenseNet, ResNet, and MobileNet ensembles) achieved **98% accuracy** on 35 classes using 128x128 resolution.
+## 4. EAWAG Zooplankton Benchmark
+The dataset used in this project was introduced in *Deep Learning Classification of Lake Zooplankton* by **S. Kyathanahally, T. Hardeman, E. Merz, T. Kozakiewicz, M. Reyes, P. Isles, F. Pomati, and M. Baity-Jesi** (Eawag, 2021). In that study, the authors reported **98% accuracy** on a 35-class task using ensembles of DenseNet, ResNet, and MobileNet models operating on `128x128` images.
 
-Phase 4 compares our binary QNN results against their feature-based MLP results (91.2%) to evaluate the efficiency of quantum feature extraction on a restricted 4x4 input space.
+The comparison in Phase 4 is intentionally narrower. Rather than reproducing the full multi-class, high-resolution setting of the EAWAG study, this phase compares the present binary QNN against the paper's reported feature-based MLP result (**91.2%**) under a strongly constrained `4x4` input representation. The goal is therefore to assess performance under matched low-information conditions, not to claim equivalence with the full-resolution benchmark.
 
 ## 5. Performance Comparison (Binary)
 We conduct head-to-head evaluations on **25 plankton pairs** selected via power analysis (see below) to establish the performance of the QNN against its classical counterparts with sufficient statistical power.
@@ -175,19 +154,14 @@ We conduct head-to-head evaluations on **25 plankton pairs** selected via power 
 ## 6. Statistical Design & Power Analysis
 
 ### Pair Selection
-The 25 plankton pairs were selected using a deterministic greedy algorithm that:
-1. Ensures all 25 eligible biological classes are represented at least once
-2. Prefers balanced-size pairs to avoid class-imbalance confounds
-3. Uses `seed=42` for full reproducibility
+The 25 plankton pairs were selected with a deterministic greedy algorithm that ensures every eligible biological class appears at least once, while preferentially selecting class pairs with similar sample sizes to reduce imbalance-related confounds. The procedure uses `seed=42` for reproducibility.
 
-Classes excluded: ambiguous categories (unknown, unknown_plankton, dirt, fish, filament) and classes with fewer than 80 images.
+Excluded classes include ambiguous categories (`unknown`, `unknown_plankton`, `dirt`, `fish`, `filament`) and any class with fewer than 80 images.
 
 ### Why 25 Pairs?
-A power analysis (see `utils/power_analysis.py`) revealed:
-- At n=5 folds, the **Wilcoxon signed-rank test cannot produce p < 0.05** (minimum p = 0.0625)
-- Per-pair paired t-tests require **Cohen's d >= 1.62** for 80% power at n=5 — unrealistically large
-- **Solution**: Treat pairs as the unit of replication. Run a one-sample t-test / Wilcoxon across all 25 pair-level accuracy deltas (QNN − Fair Classical)
-- At the pilot-observed effect size (d ≈ 0.65), 25 pairs provide **~88% power**
+A power analysis, implemented in `utils/power_analysis.py`, motivated the use of 25 pairs. With only five folds per pair, the **Wilcoxon signed-rank test cannot achieve p < 0.05** because its minimum attainable p-value is 0.0625. Per-pair paired t-tests are similarly underpowered, requiring **Cohen's d >= 1.62** to reach 80% power at `n = 5`, which is unrealistically large for this setting.
+
+To address this limitation, the study treats class pairs, rather than folds, as the unit of replication and performs one-sample t-tests and Wilcoxon tests on the distribution of pair-level accuracy differences (`QNN - Fair Classical`). At the pilot-observed effect size (`d ≈ 0.65`), 25 pairs provide approximately **88% power**.
 
 ### Statistical Testing (Two Levels)
 1. **Per-pair** (exploratory): Paired t-test across 5 folds for each pair. These are underpowered by design and should be interpreted with caution.
@@ -197,16 +171,11 @@ A power analysis (see `utils/power_analysis.py`) revealed:
 
 ## 7. Scientific Rigor & Reproducibility
 
-To ensure the validity of these results, Phase 4 incorporates several rigorous methodological standards:
+Phase 4 is designed around reproducibility and statistical discipline. All experiments run in a containerized environment with pinned dependencies, including `tensorflow==2.7.0` and `tensorflow-quantum==0.7.2`, to minimize hardware- and environment-specific variability. Each plankton pair is evaluated with **5-fold stratified cross-validation**, preserving class proportions across folds while recording per-fold performance for later aggregation.
 
-*   **Dockerized Environment:** All experiments are run within a containerized environment with pinned dependency versions (`tensorflow==2.7.0`, `tensorflow-quantum==0.7.2`, etc.) to ensure bit-for-bit reproducibility across different hardware.
-*   **5-Fold Stratified Cross-Validation:** Each pair is evaluated using 5-fold stratified CV. Per-fold accuracy is recorded, and per-pair statistics (mean, std) are computed across folds.
-*   **Equal Sample Budgets:** All models (QNN, Fair Classical, CNN) train on the same number of samples per fold to avoid data-quantity confounds.
-*   **Stratified Data Splitting:** We use stratified random sampling to ensure that each fold maintains the original class distribution, preventing bias from class imbalance.
-*   **Automated Verification:** A `test_rigor.py` suite is executed during the Docker build process to verify data loading integrity, parameter counts, and quantum circuit encoding before any experiments begin.
-*   **Two-Level Statistical Testing:** Per-pair tests (exploratory, underpowered) and aggregate test across all pairs (confirmatory, powered at ~88%). See Section 6.
-*   **Parameter Alignment:** The "Fair Classical" model was specifically tuned (3 hidden units) to align its parameter count (~55) as closely as possible with the QNN (~48), providing a statistically sound comparison of model capacity.
-*   **Repeated CV (optional):** Set `N_REPEATS` (and `BASE_SEED`) to run multiple independent CV shuffles per pair to quantify variability beyond a single split.
+All models are trained under equal sample budgets so that differences in performance are not confounded by unequal data exposure. The `Fair Classical` model is intentionally tuned to remain close to the QNN in parameter count (`~55` versus `~48`), which keeps the comparison focused on representation and inductive bias rather than raw model size. An automated `test_rigor.py` suite is executed during the Docker build to verify data loading, parameter counts, and circuit construction before experiments are run.
+
+The statistical analysis is explicitly two-tiered: per-pair tests are reported for transparency but treated as exploratory, while the aggregate analysis across all selected pairs serves as the confirmatory test. When additional variability estimates are required, repeated cross-validation can be enabled through `N_REPEATS` and `BASE_SEED`.
 
 ### Running the Experiments
 
