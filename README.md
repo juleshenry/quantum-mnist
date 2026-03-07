@@ -1,4 +1,4 @@
-# quantum-mnist
+# Quantum Plankton Machine Learning
 
 This repository investigates quantum image classification in two stages. First, it reproduces a published MNIST-based demonstration of quantum image classification. Second, it extends that line of inquiry to plankton image data derived from *Deep Learning Classification of Lake Zooplankton* by S. Kyathanahally, T. Hardeman, E. Merz, T. Kozakiewicz, M. Reyes, P. Isles, F. Pomati, and M. Baity-Jesi (Eawag, August 12, 2021): https://arxiv.org/pdf/2108.05258.pdf
 
