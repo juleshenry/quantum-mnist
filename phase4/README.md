@@ -232,19 +232,20 @@ The Phase 4 evaluation compares quantum and classical models across 25 plankton 
 
 ### Aggregate Test
 
-After all 25 pairs complete, `aggregate_test.json` contains the primary analysis:
-- **mean_delta**: Mean accuracy difference (QNN − Fair Classical) across all pairs
-- **effect_size_d**: Cohen's d for the aggregate effect
-- **ttest_p**: One-sample t-test p-value
-- **wilcoxon_p**: Wilcoxon signed-rank p-value
-- **qnn_wins / fair_wins**: Win/loss count across pairs
+The primary statistical analysis is performed at the level of plankton pairs rather than folds. This avoids over-interpreting per-pair tests that are intrinsically underpowered at `n = 5` folds.
 
-### Key Observations:
+<!-- P4_AGGREGATE_START -->
+| Metric | Value |
+| --- | --- |
+| Mean Delta (QNN − Fair) | +6.23% |
+| Std Delta | 8.83% |
+| Effect Size (Cohen's d) | 0.705 |
+| One-sample t-test p | 0.0017 |
+| Wilcoxon signed-rank p | 0.0007 |
+| QNN Wins | 20 / 25 |
+| Fair Classical Wins | 5 / 25 |
+<!-- P4_AGGREGATE_END -->
 
-*Results pending — the 25-pair experiment suite takes approximately 6 hours under x86 emulation. Previous 4-pair pilot data (mean delta = +8.95%, d = 0.66) suggests a moderate quantum advantage at 4×4 resolution, but the aggregate test across 25 pairs is needed to confirm this with adequate statistical power.*
-
-### Conclusion:
-
-*Pending aggregate test results. The expanded 25-pair design provides ~88% power to detect the pilot-observed effect size (d ≈ 0.65), compared to only ~9% power with the original 4-pair design.*
+These aggregate results indicate a positive pair-level advantage for the QNN under the constrained `4x4` comparison setting. The design provides approximately **88% power** to detect the pilot-observed effect size (`d ≈ 0.65`), which is a substantial improvement over the original low-power pilot configuration.
 
 Full experimental data is archived in `phase4/results/experiment_results.csv` and `phase4/results/aggregate_test.json`.

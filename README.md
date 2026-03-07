@@ -1,12 +1,12 @@
 # quantum-mnist
 
-This repository studies quantum image classification in two stages. It begins by reproducing a published MNIST-based demonstration of quantum image classification and then extends the analysis to plankton image data derived from *Deep Learning Classification of Lake Zooplankton* by S. Kyathanahally, T. Hardeman, E. Merz, T. Kozakiewicz, M. Reyes, P. Isles, F. Pomati, and M. Baity-Jesi (Eawag, August 12, 2021): https://arxiv.org/pdf/2108.05258.pdf
+This repository investigates quantum image classification in two stages. First, it reproduces a published MNIST-based demonstration of quantum image classification. Second, it extends that line of inquiry to plankton image data derived from *Deep Learning Classification of Lake Zooplankton* by S. Kyathanahally, T. Hardeman, E. Merz, T. Kozakiewicz, M. Reyes, P. Isles, F. Pomati, and M. Baity-Jesi (Eawag, August 12, 2021): https://arxiv.org/pdf/2108.05258.pdf
 
-The central aim is not to claim an unrestricted quantum advantage, but to evaluate how parameterized quantum circuits behave under tightly controlled, low-resolution, low-parameter conditions relative to classical baselines. Across the later phases, the repository emphasizes statistical rigor, reproducibility, parameter matching, and careful comparison against established classical results.
+The purpose of the repository is not to claim an unconstrained quantum advantage. Rather, it is to study how parameterized quantum circuits behave under tightly controlled conditions involving severe input compression, small parameter budgets, and explicitly matched classical baselines. The later phases therefore emphasize statistical power, reproducibility, parameter alignment, and the distinction between exploratory per-task findings and aggregate inferential claims.
 
 For a concise operational guide, see `quickstart.md`.
 
-Related reference:
+Additional reference:
 https://arxiv.org/pdf/2011.02831.pdf
 
 ## Citation
@@ -38,21 +38,19 @@ If you use this repository or the underlying zooplankton benchmark in academic o
 }
 ```
 
-## Project Structure
+## Study Design
 
-1. **Phase 1 - MNIST reproduction**: reproduces the original notebook-based MNIST demonstration in Google Colab.
-2. **Phase 2 - Binary quantum classification**: evaluates binary plankton classification with 5-fold stratified cross-validation and bootstrap confidence intervals.
-3. **Phase 3 - Hyperparameter optimization**: uses nested cross-validation to select robust hyperparameters without data leakage.
-4. **Phase 4 - Classical comparison**: compares the binary QNN against classical baselines and against the EAWAG benchmark context reported by Kyathanahally et al. (2021).
-5. **Phase 5 - Multi-class scaling**: studies performance as the number of classes increases from 2 to 16.
-6. **Phase 6 - Quantum saliency**: analyzes which input regions drive quantum model decisions.
-7. **Phase 7 - Expressibility and entanglement**: characterizes the production circuit through expressibility and entanglement metrics.
+The repository is organized as a progression from reproduction to controlled comparison and then to interpretability and circuit analysis. Throughout the study, the quantum input representation is deliberately restricted to a `4x4` grayscale encoding so that 16-qubit simulation remains tractable. As a result, the most informative comparisons are not against unconstrained full-resolution deep learning systems, but against classical baselines trained under the same informational and parameter constraints.
 
-## Research Summary
-
-The repository is organized as a progression from reproduction to controlled comparison. Phase 1 verifies the original MNIST demonstration. Phases 2 and 3 establish a more rigorous binary quantum workflow for plankton images, including bootstrap confidence intervals and nested cross-validation. Phase 4 then broadens the comparison to classical baselines under equalized sample budgets and parameter-aware controls. Phase 5 studies how the approach scales as class cardinality increases. Phases 6 and 7 shift from predictive performance to interpretability and circuit-level characterization.
-
-Throughout the project, the working quantum representation remains deliberately constrained. Inputs are reduced to a `4x4` grayscale representation to make 16-qubit simulation tractable, and the most meaningful comparisons are therefore not against unconstrained state-of-the-art deep models, but against classical baselines trained under the same information and parameter restrictions.
+| Phase | Scientific role |
+| :--- | :--- |
+| **Phase 1 - MNIST reproduction** | Verifies that the original notebook-based MNIST demonstration behaves as reported. |
+| **Phase 2 - Binary quantum classification** | Establishes a binary plankton classification pipeline with stratified cross-validation and bootstrap confidence intervals. |
+| **Phase 3 - Hyperparameter optimization** | Uses nested cross-validation to select quantum model settings without data leakage. |
+| **Phase 4 - Classical comparison** | Evaluates the binary QNN against matched classical baselines and situates the results relative to the EAWAG benchmark context. |
+| **Phase 5 - Multi-class scaling** | Examines how performance degrades as the number of plankton classes increases. |
+| **Phase 6 - Quantum saliency** | Studies which input regions most strongly influence the QNN decision function. |
+| **Phase 7 - Expressibility and entanglement** | Characterizes the production circuit through expressibility and entanglement metrics. |
 
 ## Phase 1: MNIST Reproduction
 
@@ -64,11 +62,13 @@ Phase 2 implements the binary quantum classifier in `phase2/binary_quantum_class
 
 ### Phase 2 Results
 
-From `phase2/results/phase2_results.json`:
+The current results reported in `phase2/results/phase2_results.json` are summarized below.
 
-- Mean accuracy: **38.44%** (+/- 4.13%)
-- 95% bootstrap CI: **[35.49%, 42.50%]**
-- Per-fold accuracies: **[0.3906, 0.4621, 0.3482, 0.3638, 0.3571]**
+| Metric | Value |
+| :--- | :--- |
+| Mean accuracy | **38.44%** (+/- 4.13%) |
+| 95% bootstrap CI | **[35.49%, 42.50%]** |
+| Per-fold accuracies | **[0.3906, 0.4621, 0.3482, 0.3638, 0.3571]** |
 
 ### Phase 2 Architecture
 
@@ -132,7 +132,7 @@ Phase 3 implements nested model selection in `phase3/optimize_binary_classifier.
 
 ### Representative Binary Results
 
-The tuned configuration consistently exceeded the 60% target on several biologically distinct plankton pairs.
+Under the tuned configuration, the model exceeded the 60% target on several biologically distinct plankton pairs.
 
 | Plankton Pair | Sample A | Sample B | Accuracy | Status |
 | :--- | :---: | :---: | :--- | :--- |
@@ -201,6 +201,12 @@ Our primary external reference is *Deep Learning Classification of Lake Zooplank
 
 The comparison in this repository is more restricted. Rather than reproducing the full multi-class, high-resolution setting of the EAWAG study, Phase 4 compares the present binary QNN against the paper's reported feature-based MLP result (**91.2%**) under a strongly constrained `4x4` representation. This makes the comparison informative about low-information, parameter-constrained learning, but not directly equivalent to the full-resolution benchmark.
 
+### Practical Realism Of The Comparison
+
+This point deserves explicit emphasis. As a comparison of **practical deployed classifiers**, the Phase 4 setting is not especially realistic: modern classical vision systems would rarely be restricted to a `4x4` grayscale representation, because such compression discards most of the morphological structure that makes plankton classification tractable at scale. In that sense, the study should not be read as asking whether a production quantum model can currently outperform the best available classical computer-vision pipeline on the original task.
+
+What the comparison does provide is a controlled test of a narrower scientific question: under a severe information bottleneck and under roughly matched parameter budgets, does the QNN retain useful discriminative structure relative to a classical learner trained on the same compressed signal? That is a meaningful research question about representation under extreme compression, but it is not the same as a head-to-head contest with practical, high-resolution classical deep learning.
+
 Further implementation details are documented in `phase4/README.md`.
 
 ## Phase 5: Multi-Class Scaling
@@ -223,6 +229,8 @@ Phase 5 extends the analysis to `k`-class classification with `k` ranging from 2
 
 These results suggest that the quantum model remains competitive at low class counts, but the fair classical baseline becomes increasingly favorable as the task grows more complex. Additional details are available in `phase5/README.md`.
 
+The same interpretive caution applies here. The Phase 5 comparison is scientifically useful because both models are constrained to the same 16-dimensional representation, but it is not a realistic proxy for how a modern classical classifier would be deployed in practice. The `PCA 16` representation intentionally removes most of the spatial detail available in the original images. Consequently, the scaling results should be interpreted primarily as evidence about how quantum and classical learners behave under aggressive dimensional compression, not as evidence that such compression is itself an operationally sensible endpoint for real-world plankton recognition.
+
 ## Phase 6: Quantum Saliency
 
 Phase 6 introduces gradient-based quantum saliency maps to examine which input regions most influence the QNN decision. This analysis provides an interpretability layer for the compressed `4x4` input regime and tests whether the model attends to biologically meaningful structure rather than arbitrary background artifacts.
@@ -237,23 +245,21 @@ The goal of this phase is not merely descriptive. It provides a circuit-level ra
 
 ## Methodological Framework
 
-All experimental phases after Phase 1 are designed around statistical rigor, matched comparisons, and reproducibility.
+All experimental phases after Phase 1 are designed around statistical rigor, matched comparisons, and reproducibility. The experimental logic is intentionally conservative: model selection is separated from final evaluation, comparisons are performed under equalized sample budgets, and inferential claims rely on appropriately powered aggregate analyses rather than on unstable per-pair tests alone.
 
 ### Cross-Validation
 
-- **Phases 2, 4, and 6** use stratified 5-fold cross-validation, with metrics reported as mean +/- standard deviation together with bootstrap 95% confidence intervals.
-- **Phases 3 and 5** use nested cross-validation with `5` outer folds and `3` inner folds so that hyperparameter selection remains isolated from final evaluation.
-- **Repeated runs** are supported through `N_REPEATS` and `BASE_SEED` for Phase 4 and Phase 5, allowing variability beyond a single fold partition to be quantified deterministically.
+The repository uses two complementary validation regimes. **Phases 2, 4, and 6** employ stratified 5-fold cross-validation, with metrics reported as mean +/- standard deviation together with bootstrap 95% confidence intervals. **Phases 3 and 5** use nested cross-validation with `5` outer folds and `3` inner folds so that hyperparameter selection remains isolated from final evaluation. For Phase 4 and Phase 5, repeated runs can be enabled through `N_REPEATS` and `BASE_SEED`, allowing variability beyond a single fold partition to be quantified deterministically.
 
 ### Sample Equalization and Baselines
 
-All principal comparisons are performed under equalized sample budgets. The `Q_SAMPLES` parameter is applied uniformly across models so that observed differences are not artifacts of unequal data exposure. Each experiment also reports majority-class and random baselines to contextualize absolute performance.
+All principal comparisons are performed under equalized sample budgets. The `Q_SAMPLES` parameter is applied uniformly across models so that observed differences are not artifacts of unequal data exposure. Each experiment also reports majority-class and random baselines, ensuring that model performance is interpreted relative to meaningful task-specific null references.
 
 ### Statistical Testing and Power
 
-Per-pair tests are reported for transparency, but they are intrinsically underpowered at `n = 5` folds. For that reason, the primary Phase 4 inference treats class pairs as replication units and evaluates the distribution of pair-level accuracy differences (`QNN - Fair Classical`) through one-sample t-tests and Wilcoxon signed-rank tests.
+Per-pair tests are reported for transparency, but they are intrinsically underpowered at `n = 5` folds. For that reason, the primary Phase 4 inference treats class pairs, rather than folds, as replication units and evaluates the distribution of pair-level accuracy differences (`QNN - Fair Classical`) through one-sample t-tests and Wilcoxon signed-rank tests.
 
-The pair count itself is justified through `utils/power_analysis.py`. Because Wilcoxon cannot attain `p < 0.05` with only five folds per pair, aggregate testing across 25 pairs provides the meaningful inferential basis. At the pilot-observed effect size (`d ≈ 0.65`), this design yields approximately **88% power**.
+The pair count itself is justified through `utils/power_analysis.py`. Because the Wilcoxon signed-rank test cannot attain `p < 0.05` with only five folds per pair, aggregate testing across 25 pairs provides the meaningful inferential basis. At the pilot-observed effect size (`d ≈ 0.65`), this design yields approximately **88% power**.
 
 | Pairs (m) | Power (d = 0.65) | Compute Time |
 | :--- | :--- | :--- |
@@ -264,15 +270,11 @@ The pair count itself is justified through `utils/power_analysis.py`. Because Wi
 | **25** | **88%** | **~6.2 hrs** |
 | 30 | 93% | ~7.5 hrs |
 
-Eligible binary pairs are chosen from 25 biological classes with at least 80 images each, excluding ambiguous or irrelevant categories such as `unknown`, `dirt`, `fish`, and `filament`. A deterministic greedy class-coverage algorithm with `seed = 42` ensures that all eligible classes appear while favoring balanced class sizes.
+Eligible binary pairs are chosen from 25 biological classes with at least 80 images each, excluding ambiguous or irrelevant categories such as `unknown`, `dirt`, `fish`, and `filament`. A deterministic greedy class-coverage algorithm with `seed = 42` ensures that all eligible classes appear while favoring balanced class sizes, thereby reducing imbalance-related confounds without sacrificing broad biological coverage.
 
 ### Reproducibility
 
-- Deterministic file ordering is enforced through sorted directory listings.
-- Fold seeds are set as `42 + fold_id` across `numpy`, `tensorflow`, and Python's `random`.
-- Package versions are pinned in the `Dockerfile`.
-- Automated verification is built into the workflow through an 82-test suite spanning Phases 2 to 7.
-- Each experiment run records its full configuration as JSON.
+Reproducibility is supported at several levels. Deterministic file ordering is enforced through sorted directory listings, fold seeds are set as `42 + fold_id` across `numpy`, `tensorflow`, and Python's `random`, and package versions are pinned in the `Dockerfile`. In addition, an 82-test verification suite spanning Phases 2 through 7 is integrated into the workflow, and each experiment run records its full configuration as JSON.
 
 ## Limitations
 
@@ -285,7 +287,7 @@ Eligible binary pairs are chosen from 25 biological classes with at least 80 ima
 
 ## Reproducing the Experiments
 
-For a short operational overview, see `quickstart.md`. The commands below summarize the main workflows in this repository.
+For a short operational overview, see `quickstart.md`. The commands below summarize the main workflows in this repository. The emphasis here is on reproducibility rather than convenience: the documented commands match the containerized environment used for the reported experiments.
 
 ### Build the Environment
 
@@ -397,7 +399,7 @@ docker run --rm --platform linux/amd64 \
 
 ### Configurable Parameters
 
-All major experiments accept environment-variable overrides.
+All major experiments accept environment-variable overrides so that the same scripts can be used for smoke testing, reduced-compute exploratory runs, and full experimental replication.
 
 | Variable | Default | Description |
 | :--- | :--- | :--- |
@@ -411,15 +413,19 @@ All major experiments accept environment-variable overrides.
 
 ### Reading the Outputs
 
-- `phase4/results/experiment_summary.csv` contains per-pair aggregate metrics and corrected p-values.
-- `phase4/results/aggregate_test.json` contains the primary pair-level aggregate comparison between the QNN and the fair classical baseline.
-- `phase5/results/comprehensive_k_summary.csv` summarizes multi-class scaling performance across `k`.
-- `phase6/results/` contains saliency images.
-- `phase7/results_rigor.json` and `phase7/results_rigor.txt` contain expressibility and entanglement summaries.
+The principal output artifacts are summarized below.
+
+| Path | Interpretation |
+| :--- | :--- |
+| `phase4/results/experiment_summary.csv` | Per-pair aggregate metrics together with corrected p-values |
+| `phase4/results/aggregate_test.json` | Primary pair-level aggregate comparison between the QNN and the fair classical baseline |
+| `phase5/results/comprehensive_k_summary.csv` | Multi-class scaling summary across `k` |
+| `phase6/results/` | Saliency visualizations |
+| `phase7/results_rigor.json` and `phase7/results_rigor.txt` | Expressibility and entanglement summaries |
 
 ## Thermal Guidance for Emulated Runs
 
-AMD64 emulation on Apple Silicon can be thermally demanding. The repository therefore supports pacing controls such as `TF_THREADS`, `EPOCH_COOL`, `THERMAL_SLEEP`, and `BREATHE_SLEEP`. A conservative example for long runs is:
+AMD64 emulation on Apple Silicon can be thermally demanding. The repository therefore supports pacing controls such as `TF_THREADS`, `EPOCH_COOL`, `THERMAL_SLEEP`, and `BREATHE_SLEEP`. A conservative example for long runs is shown below.
 
 ```bash
 docker run -it --rm --platform linux/amd64 \

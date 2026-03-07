@@ -148,6 +148,7 @@ def publish_phase4():
 
 def format_aggregate_results(agg):
     """Format aggregate_test.json into a markdown summary."""
+    fair_wins = agg.get('fair_wins', agg.get('qnn_losses', 0))
     lines = []
     lines.append(f"| Metric | Value |")
     lines.append(f"| --- | --- |")
@@ -157,7 +158,7 @@ def format_aggregate_results(agg):
     lines.append(f"| One-sample t-test p | {agg.get('ttest_p', 1):.4f} |")
     lines.append(f"| Wilcoxon signed-rank p | {agg.get('wilcoxon_p', 1):.4f} |")
     lines.append(f"| QNN Wins | {agg.get('qnn_wins', 0)} / {agg.get('n_pairs', 0)} |")
-    lines.append(f"| Fair Classical Wins | {agg.get('fair_wins', 0)} / {agg.get('n_pairs', 0)} |")
+    lines.append(f"| Fair Classical Wins | {fair_wins} / {agg.get('n_pairs', 0)} |")
     return "\n".join(lines)
 
 def publish_phase5():
