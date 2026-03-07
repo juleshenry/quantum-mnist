@@ -4,6 +4,23 @@ This repository investigates quantum image classification in two stages. First, 
 
 The purpose of the repository is not to claim an unconstrained quantum advantage. Rather, it is to study how parameterized quantum circuits behave under tightly controlled conditions involving severe input compression, small parameter budgets, and explicitly matched classical baselines. The later phases therefore emphasize statistical power, reproducibility, parameter alignment, and the distinction between exploratory per-task findings and aggregate inferential claims.
 
+## Abstract
+
+This repository presents a staged investigation of quantum image classification under deliberately constrained conditions. After reproducing a previously published MNIST-based demonstration, the project turns to plankton image classification using data derived from *Deep Learning Classification of Lake Zooplankton*. The core experimental design restricts both quantum and classical models to heavily compressed inputs and closely matched parameter budgets, allowing the study to focus on representational behavior under severe information bottlenecks rather than on unrestricted benchmark performance. Methodologically, the project emphasizes stratified and nested cross-validation, bootstrap confidence intervals, power analysis, and aggregate inference across biological class pairs. Empirically, the later phases suggest that quantum models can remain competitive under extreme compression at low class counts, but the results do not support broad claims of practical superiority over modern high-resolution classical vision systems. Instead, the repository should be understood as a rigorous study of compressed-representation learning, statistical comparison, and circuit characterization in a tractable quantum-simulation regime.
+
+## Key Findings
+
+| Theme | Main observation |
+| :--- | :--- |
+| **Phase 4 aggregate comparison** | Across 25 binary plankton pairs, the QNN achieved a mean accuracy advantage of **+6.23%** over the parameter-matched classical baseline, with **20 wins in 25 pairs** and statistically significant aggregate tests. |
+| **Phase 5 scaling behavior** | The QNN remained competitive at low class counts, but the classical baseline became increasingly favorable as the number of categories increased. |
+| **Interpretation of the benchmark** | The comparison is scientifically informative under severe compression, but it is not a realistic proxy for practical high-resolution classical computer vision. |
+| **Circuit-level interpretation** | Later phases complement predictive evaluation with saliency analysis, expressibility estimates, and entanglement measurements to interpret how the production circuit behaves beyond headline accuracy. |
+
+## Scope Of Claims
+
+The repository supports a narrow but meaningful set of claims. It supports statements about how a parameterized quantum circuit behaves relative to matched classical baselines when both are restricted to aggressively compressed representations and evaluated with statistically explicit protocols. It does **not** support the stronger claim that present-day quantum models outperform practical, state-of-the-art classical vision systems on the original plankton task. Any such broader claim would require comparison at substantially higher input fidelity, with modern classical architectures trained on the full informational content of the data and, ideally, with hardware-relevant quantum noise considerations included.
+
 For a concise operational guide, see `quickstart.md`.
 
 Additional reference:
